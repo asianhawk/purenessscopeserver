@@ -71,6 +71,9 @@ public:
 	uint8  GetConsoleSupport();
 	int    GetConsolePort();
 	const char* GetConsoleIP();
+	uint16 GetRecvQueueTimeout();
+	uint16 GetSendQueueTimeout();
+	uint16 GetSendQueueCount();
 
 	bool CompareConsoleClinetIP(const char* pConsoleClientIP);
 
@@ -84,6 +87,7 @@ public:
 	uint32 GetValidPacketCount();
 	uint32 GetValidRecvSize();
 	uint16 GetForbiddenTime();
+	uint8 GetCommandAccount();
 
 private:
 	CAppConfig m_AppConfig;
@@ -119,12 +123,16 @@ private:
 	uint32     m_u4ValidPacketCount;               //单位时间内允许的数据包数量
 	uint32     m_u4ValidRecvSize;                  //单位时间允许的数据包发送数量
 	uint16     m_u2ForbiddenTime;                  //链接封禁时间
+	uint16     m_u2RecvQueueTimeout;               //接收队列处理超时时间限定
+	uint16     m_u2SendQueueTimeout;               //发送队列处理超时时间限定
+	uint16     m_u2SendQueueCount;                 //框架发送线程数
+	uint8      m_u1CommandAccount;                 //是否需要统计命令出入服务器的信息，0是关闭，1是打开。打开后会生成相应的报表
 
 	uint8      m_u1ConsoleSupport;                 //是否支持Console服务，如果是1则是支持，0是不支持
 	char       m_szConsoleIP[MAX_BUFF_100];        //Console服务器IP
 	int        m_nConsolePort;                     //Console服务器的端口
 
-	uint32     m_u4ReactorCount;                    //系统中遇到的反应器的个数
+	uint32     m_u4ReactorCount;                   //系统中遇到的反应器的个数
 
 	typedef vector<_ServerInfo> vecServerInfo;
 	vecServerInfo m_vecServerInfo;

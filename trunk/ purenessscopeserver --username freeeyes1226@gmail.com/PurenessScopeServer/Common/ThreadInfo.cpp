@@ -12,7 +12,9 @@ CThreadInfo::CThreadInfo(void)
 
 CThreadInfo::~CThreadInfo(void)
 {
+	OUR_DEBUG((LM_ERROR, "[CThreadInfo::~CThreadInfo].\n"));
 	Close();
+	OUR_DEBUG((LM_ERROR, "[CThreadInfo::~CThreadInfo]End.\n"));
 }
 
 bool CThreadInfo::AddThreadInfo(uint32 u4ThreadID)
@@ -40,10 +42,7 @@ bool CThreadInfo::AddThreadInfo(uint32 u4ThreadID)
 
 void CThreadInfo::Close()
 {
-	mapThreadInfo::iterator b = m_mapThreadInfo.begin();
-	mapThreadInfo::iterator e = m_mapThreadInfo.end();
-
-	for(b; b != e; b++)
+	for(mapThreadInfo::iterator b = m_mapThreadInfo.begin(); b != m_mapThreadInfo.end(); b++)
 	{
 		_ThreadInfo* pThreadInfo = (_ThreadInfo* )b->second;
 		if(NULL != pThreadInfo)

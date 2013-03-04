@@ -22,6 +22,8 @@
 #include "BuffPacketManager.h"
 #include "ClientReConnectManager.h"
 #include "ReUDPManager.h"
+#include "CommandAccount.h"
+#include "ModuleMessageManager.h"
 
 class CServerManager
 {
@@ -36,6 +38,7 @@ public:
 private:
 	CConnectAcceptorManager m_ConnectAcceptorManager;    //普通客户端链接
 	ConnectConsoleAcceptor  m_ConnectConsoleAcceptor;    //后台管理链接
+	CFileLogger*            m_pFileLogger;               //日志类型
 };
 
 typedef ACE_Singleton<CServerManager, ACE_Null_Mutex> App_ServerManager;

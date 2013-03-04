@@ -1,3 +1,5 @@
+#ifdef WIN32
+
 #include "WindowsCPU.h"
 
 typedef  LONG  (WINAPI  *PROCNTQSI)(UINT,PVOID,ULONG,PULONG); 
@@ -82,3 +84,4 @@ int GetProcessMemorySize()
 	return -1;  
 }
 
+#endif

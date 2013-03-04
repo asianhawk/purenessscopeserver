@@ -13,18 +13,21 @@
 #include "IPacketManager.h"
 #include "IClientManager.h"
 #include "IUDPConnectManager.h"
+#include "ITimerManager.h"
+#include "IModuleMessageManager.h"
 
 class CServerObject
 {
 public:
 	CServerObject() 
 	{ 
-		m_pIMessageManager   = NULL;
-		m_pLogManager        = NULL;
-		m_pConnectManager    = NULL;
-		m_pPacketManager     = NULL;
-		m_pClientManager     = NULL;
-		m_pUDPConnectManager = NULL;
+		m_pIMessageManager      = NULL;
+		m_pLogManager           = NULL;
+		m_pConnectManager       = NULL;
+		m_pPacketManager        = NULL;
+		m_pClientManager        = NULL;
+		m_pUDPConnectManager    = NULL;
+		m_pModuleMessageManager = NULL;
 	}
 
 	~CServerObject() {};
@@ -34,21 +37,27 @@ public:
 	void SetPacketManager(IPacketManager*  pPacketManager) { m_pPacketManager = pPacketManager; };
 	void SetClientManager(IClientManager* pClientManager) { m_pClientManager = pClientManager; }
 	void SetUDPConnectManager(IUDPConnectManager* pUDPConnectManager) { m_pUDPConnectManager = pUDPConnectManager; };
+	void SetTimerManager(ActiveTimer* pTimerManager) { m_pTimerManager = pTimerManager; }
+	void SetModuleMessageManager(IModuleMessageManager* pModuleMessageManager) { m_pModuleMessageManager = pModuleMessageManager; }
 
-	IMessageManager*    GetMessageManager() { return m_pIMessageManager; };
-	ILogManager*        GetLogManager() { return m_pLogManager; };
-	IConnectManager*    GetConnectManager() { return m_pConnectManager; };
-	IPacketManager*     GetPacketManager() { return m_pPacketManager; };
-	IClientManager*     GetClientManager() { return m_pClientManager; }
-	IUDPConnectManager* GetUDPConnectManager() { return m_pUDPConnectManager; };
+	IMessageManager*       GetMessageManager() { return m_pIMessageManager; };
+	ILogManager*           GetLogManager() { return m_pLogManager; };
+	IConnectManager*       GetConnectManager() { return m_pConnectManager; };
+	IPacketManager*        GetPacketManager() { return m_pPacketManager; };
+	IClientManager*        GetClientManager() { return m_pClientManager; }
+	IUDPConnectManager*    GetUDPConnectManager() { return m_pUDPConnectManager; };
+	ActiveTimer*           GetTimerManager() { return m_pTimerManager; }
+	IModuleMessageManager* GetModuleMessageManager() { return m_pModuleMessageManager; }
 
 private:
-	IMessageManager*    m_pIMessageManager;
-	ILogManager*        m_pLogManager;
-	IConnectManager*    m_pConnectManager;
-	IPacketManager*     m_pPacketManager;
-	IClientManager*     m_pClientManager;
-	IUDPConnectManager* m_pUDPConnectManager;
+	IMessageManager*       m_pIMessageManager;
+	ILogManager*           m_pLogManager;
+	IConnectManager*       m_pConnectManager;
+	IPacketManager*        m_pPacketManager;
+	IClientManager*        m_pClientManager;
+	IUDPConnectManager*    m_pUDPConnectManager;
+	ActiveTimer*           m_pTimerManager;
+	IModuleMessageManager* m_pModuleMessageManager;
 };
 
 typedef ACE_Singleton<CServerObject, ACE_Null_Mutex> App_ServerObject; 

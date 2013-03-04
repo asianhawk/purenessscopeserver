@@ -25,42 +25,40 @@ public:
 
 	virtual void SetReadPtr(uint32 u4Pos)                                = 0;    //设置读指针的位置
 	virtual void SetPacketCount(uint32 u4PacketCount)                    = 0;    //设置缓存数据包的个数
-	virtual void ReadPtr(uint32 u4Size)                                  = 0;
-	virtual void WritePtr(uint32 u4Size)                                 = 0;
-	virtual bool WriteStream(const char* szData, uint32 u4Len)           = 0;
-	virtual bool ReadStream(char*& pData, uint32 u4MaxLen, uint32 u4Len) = 0;
+	virtual bool WriteStream(const char* szData, uint32 u4Len)           = 0;    //直接写入一个二进制数据块
+	virtual bool ReadStream(char*& pData, uint32 u4MaxLen, uint32 u4Len) = 0;    //直接读取出一个二进制数据块
 	virtual char* ReadPtr()                                              = 0;    //获得读指针
 	virtual char* WritePtr()                                             = 0;    //获得写指针
 	virtual bool RollBack(uint32 u4Len)                                  = 0;    //将取出的数据删除，将后面的数据加上
 
-	virtual void ReadBuffPtr(uint32 u4Size)                              = 0;
-	virtual void WriteBuffPtr(uint32 u4Size)                             = 0;
+	virtual void ReadBuffPtr(uint32 u4Size)                              = 0;    //移动指定长度的读指针
+	virtual void WriteBuffPtr(uint32 u4Size)                             = 0;    //移动指定长度的写指针
 
 	//读取
-	virtual IBuffPacket& operator >> (uint8& u1Data)   = 0;
-	virtual IBuffPacket& operator >> (uint16& u2Data)  = 0;
-	virtual IBuffPacket& operator >> (uint32& u4Data)  = 0;
-	virtual IBuffPacket& operator >> (uint64 &u8Data)  = 0;
+	virtual IBuffPacket& operator >> (uint8& u1Data)   = 0;        //读出一个uint8的1字节无符号整数
+	virtual IBuffPacket& operator >> (uint16& u2Data)  = 0;        //读出一个uint16的2字节无符号整数
+	virtual IBuffPacket& operator >> (uint32& u4Data)  = 0;        //读出一个uint32的4字节无符号整数
+	virtual IBuffPacket& operator >> (uint64 &u8Data)  = 0;        //读出一个uint64的8字节无符号整数
 
-	virtual IBuffPacket& operator >> (float32& f4Data) = 0;
-	virtual IBuffPacket& operator >> (float64& f8Data) = 0;
+	virtual IBuffPacket& operator >> (float32& f4Data) = 0;        //读出一个float32的4字节小数
+	virtual IBuffPacket& operator >> (float64& f8Data) = 0;        //读出一个float64的8字节小数
 
-	virtual IBuffPacket& operator >> (VCHARS_STR& str) = 0;
-	virtual IBuffPacket& operator >> (VCHARM_STR& str) = 0;
-	virtual IBuffPacket& operator >> (VCHARB_STR& str) = 0;
+	virtual IBuffPacket& operator >> (VCHARS_STR& str) = 0;        //读出一个一个字节长度的数据块（包括1个uint8的数据长度和后面的数据块实体）
+	virtual IBuffPacket& operator >> (VCHARM_STR& str) = 0;        //读出一个一个字节长度的数据块（包括1个uint16的数据长度和后面的数据块实体）
+	virtual IBuffPacket& operator >> (VCHARB_STR& str) = 0;        //读出一个一个字节长度的数据块（包括1个uint32的数据长度和后面的数据块实体）
 
 	//写入
-	virtual IBuffPacket& operator << (uint8 u1Data)    = 0;
-	virtual IBuffPacket& operator << (uint16 u2Data)   = 0;
-	virtual IBuffPacket& operator << (uint32 u4Data)   = 0;
-	virtual IBuffPacket& operator << (uint64 u8Data)   = 0;
+	virtual IBuffPacket& operator << (uint8 u1Data)    = 0;        //写入一个uint8的1字节无符号整数
+	virtual IBuffPacket& operator << (uint16 u2Data)   = 0;        //写入一个uint16的2字节无符号整数
+	virtual IBuffPacket& operator << (uint32 u4Data)   = 0;        //写入一个uint32的4字节无符号整数
+	virtual IBuffPacket& operator << (uint64 u8Data)   = 0;        //写入一个uint64的8字节无符号整数
 
-	virtual IBuffPacket& operator << (float32 f4Data)  = 0;
-	virtual IBuffPacket& operator << (float64 f8Data)  = 0;
+	virtual IBuffPacket& operator << (float32 f4Data)  = 0;        //写入一个float32的4字节小数
+	virtual IBuffPacket& operator << (float64 f8Data)  = 0;        //写入一个float64的8字节小数
 
-	virtual IBuffPacket& operator << (VCHARS_STR &str) = 0;
-	virtual IBuffPacket& operator << (VCHARM_STR &str) = 0;
-	virtual IBuffPacket& operator << (VCHARB_STR &str) = 0;
+	virtual IBuffPacket& operator << (VCHARS_STR &str) = 0;        //写入一个一个字节长度的数据块（包括1个uint8的数据长度和后面的数据块实体）
+	virtual IBuffPacket& operator << (VCHARM_STR &str) = 0;        //写入一个一个字节长度的数据块（包括1个uint16的数据长度和后面的数据块实体）
+	virtual IBuffPacket& operator << (VCHARB_STR &str) = 0;        //写入一个一个字节长度的数据块（包括1个uint32的数据长度和后面的数据块实体）
 };
 
 #endif

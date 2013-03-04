@@ -99,12 +99,14 @@ void CProactorUDPHandler::handle_read_dgram(const ACE_Asynch_Read_Dgram::Result&
 	{
 		size_t stRecvLen = MAX_UDP_PACKET_LEN;
 		//OUR_DEBUG((LM_INFO, "[CProactorUDPHandler::handle_read_dgram]pMBBuff=0x%08x.\n", pMBBuff));
-		int nRecvSize = m_Read.recv(pMBBuff, stRecvLen, 0, PF_INET, m_szAct);  
+		m_Read.recv(pMBBuff, stRecvLen, 0, PF_INET, m_szAct);  
 	}
 }
 
-bool CProactorUDPHandler::SendMessage(const char* pMessage, uint32 u4Len, const char* szIP, int nPort, bool blHead)
+bool CProactorUDPHandler::SendMessage(const char* pMessage, uint32 u4Len, const char* szIP, int nPort, bool blHead, uint16 u2CommandID)
 {
+	ACE_hrtime_t m_tvBegin = ACE_OS::gethrtime();
+
 	ACE_INET_Addr AddrRemote;
 	int nErr = AddrRemote.set(nPort, szIP);
 	if(nErr != 0)
@@ -130,31 +132,51 @@ bool CProactorUDPHandler::SendMessage(const char* pMessage, uint32 u4Len, const 
 
 		PacketParse.MakePacket(pMessage, u4Len, pMbData);
 
-		int nSize = (int)m_skRemote.send(pMbData->rd_ptr(), pMbData->length(), AddrRemote);
-		if(nSize == u4Len)
+		uint32 u4DataLen = (uint32)pMbData->length();
+		int nSize = (int)m_skRemote.send(pMbData->rd_ptr(), u4DataLen, AddrRemote);
+		if((uint32)nSize == u4DataLen)
 		{
 			m_atvOutput = ACE_OS::gettimeofday();
 			m_u4SendSize += u4Len;
 			m_u4SendPacketCount++;
 			SAFE_DELETE_ARRAY(pMessage);
+
+			//统计发送信息
+			uint32 u4Cost = (uint32)(ACE_OS::gethrtime() - m_tvBegin);
+			AppCommandAccount::instance()->SaveCommandData(u2CommandID, u4Cost, PACKET_UDP, u4DataLen, u4Len, COMMAND_TYPE_OUT);
+
+			//释放发送体
+			pMbData->release();
+
 			return true;
 		}
 		else
 		{
 			OUR_DEBUG((LM_ERROR, "[CProactorUDPHandler::SendMessage]send error(%d).\n", errno));
 			SAFE_DELETE_ARRAY(pMessage);
+
+			//释放发送体
+			pMbData->release();
+
 			return false;
 		}
+
+
 	}
 	else
 	{
 		int nSize = (int)m_skRemote.send(pMessage, u4Len, AddrRemote);
-		if(nSize == u4Len)
+		if((uint32)nSize == u4Len)
 		{
 			m_atvOutput = ACE_OS::gettimeofday();
 			m_u4SendSize += u4Len;
 			m_u4SendPacketCount++;
 			SAFE_DELETE_ARRAY(pMessage);
+
+			//统计发送信息
+			uint32 u4Cost = (uint32)(ACE_OS::gethrtime() - m_tvBegin);
+			AppCommandAccount::instance()->SaveCommandData(u2CommandID, u4Cost, PACKET_UDP, u4Len, u4Len, COMMAND_TYPE_OUT);
+
 			return true;
 		}
 		else

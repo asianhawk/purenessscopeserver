@@ -16,6 +16,7 @@
 #include "ace/OS_NS_sys_stat.h"
 #include "ace/OS_NS_sys_socket.h"
 #include "ace/OS_NS_unistd.h"
+#include "ace/High_Res_Timer.h"
 #include "ace/INET_Addr.h" 
 
 #include <vector>
@@ -77,17 +78,22 @@ using namespace std;
 #define MAX_ASYNCH_BACKLOG    100          //默认设置的BACKLOG数量
 #define MAX_LOADMODEL_CLOSE   5            //默认等待模块关闭时间
 #define MAX_CONNECT_COUNT     10000        //默认单位时间最大链接重连次数
+#define MAX_BLOCK_SIZE        2048         //默认阻塞缓冲数据块的大小
+#define MAX_BLOCK_COUNT       3            //默认最大的Block次数
+#define MAX_BLOCK_TIME        1            //默认等待重发时间（单位是秒）
+#define MAX_QUEUE_TIMEOUT     20           //默认队列超时处理时间
 
-#define PACKET_PARSE          1
-#define PACKET_CONNECT        2
-#define PACKET_CDISCONNECT    3
-#define PACKET_SDISCONNECT    4
+#define PACKET_PARSE          1            //消息处理包标志
+#define PACKET_CONNECT        2            //链接建立事件消息标志
+#define PACKET_CDISCONNECT    3            //客户端断开事件消息标志
+#define PACKET_SDISCONNECT    4            //服务器断开事件消息标志
 
 #define MAX_PACKET_PARSE      5000         //PACKETPARSE对象池个数
 #define MAX_MESSAGE_POOL      5000         //Message对象池个数
 
 #define PACKET_HEAD           4            //包头长度
-#define BUFFPACKET_MAX_COUNT  2000         //初始化BuffPacket包缓冲池的个数
+#define BUFFPACKET_MAX_COUNT  5000         //初始化BuffPacket包缓冲池的个数
+#define SENDQUEUECOUNT        1            //默认发送线程队列的数量
 
 #define MAX_POSTMESSAGE_SIZE  65536        //最大的PostMessage循环
 
@@ -107,6 +113,13 @@ using namespace std;
 
 #define CONNECT_TCP                       0      //链接类型为TCP
 #define CONNECT_UDP                       1      //链接类型为UDP
+
+#define SENDMESSAGE_NOMAL                 0      //默认发送数据包模式(走PacketPrase端口)
+#define SENDMESSAGE_JAMPNOMAL             1      //发送数据包模式(不走PacketPrase端口)
+
+#define COMMAND_TYPE_IN                   0      //进入服务器命令包状态（用于CommandData，统计命令信息类）
+#define COMMAND_TYPE_OUT                  1      //出服务器的命令包状态（用于CommandData，统计命令信息类）
+
 
 #define MAX_PACKET_SIZE     1024*1024
 
@@ -150,6 +163,9 @@ enum
 #define LOG_SYSTEM_PACKETTIME      1007
 #define LOG_SYSTEM_PACKETTHREAD    1008
 #define LOG_SYSTEM_CONNECTABNORMAL 1009
+#define LOG_SYSTEM_RECVQUEUEERROR  1010
+#define LOG_SYSTEM_SENDQUEUEERROR  1011
+#define LOG_SYSTEM_COMMANDDATA     1012
 
 #define OUR_DEBUG(X)  ACE_DEBUG((LM_INFO, "[%t]")); ACE_DEBUG(X)
 
@@ -286,7 +302,7 @@ struct _TimeConnectInfo
 		if(m_u1NeedCheck == 0)
 		{
 			//需要比较
-			if(m_u4PacketCount > m_u4ValidPacketCount || m_u4ValidRecvSize > m_u4ValidRecvSize)
+			if(m_u4PacketCount > m_u4ValidPacketCount || u4RecvSize > m_u4ValidRecvSize)
 			{
 				return false;
 			}
@@ -310,52 +326,61 @@ struct _TimerCheckID
 //Message里面数据块结构体
 struct _PacketInfo
 {
-	char* m_pData;
-	int   m_nDataLen;
+	char*   m_pData;            //解析后的数据头指针
+	int     m_nDataLen;         //解析后的数据长度
 
 	_PacketInfo()
 	{
-		m_pData    = NULL;
-		m_nDataLen = 0;
+		m_pData       = NULL;
+		m_nDataLen    = 0;
 	}
 };
 
 //客户端链接信息数据结构
 struct _ClientConnectInfo
 {
-	bool          m_blValid;           //当前链接是否有效
-	uint32        m_u4ConnectID;       //链接ID
-	ACE_INET_Addr m_addrRemote;        //远程链接地址
-	uint32        m_u4RecvCount;       //接收包数量
-	uint32        m_u4SendCount;       //发送包数量
-	uint32        m_u4AllRecvSize;     //接收字节数
-	uint32        m_u4AllSendSize;     //发送字节数
-	uint32        m_u4BeginTime;       //链接建立时间
-	uint32        m_u4AliveTime;       //存活时间秒数
+	bool          m_blValid;              //当前链接是否有效
+	uint32        m_u4ConnectID;          //链接ID
+	ACE_INET_Addr m_addrRemote;           //远程链接地址
+	uint32        m_u4RecvCount;          //接收包数量
+	uint32        m_u4SendCount;          //发送包数量
+	uint32        m_u4AllRecvSize;        //接收字节数
+	uint32        m_u4AllSendSize;        //发送字节数
+	uint32        m_u4BeginTime;          //链接建立时间
+	uint32        m_u4AliveTime;          //存活时间秒数
+	uint32        m_u4RecvQueueCount;     //接受逻辑处理包的个数
+	uint64        m_u8RecvQueueTimeCost;  //接受逻辑处理包总时间消耗
+	uint64        m_u8SendQueueTimeCost;  //发送数据总时间消耗
 
 	_ClientConnectInfo()
 	{
-		m_blValid       = false;
-		m_u4ConnectID   = 0;
-		m_u4RecvCount   = 0;
-		m_u4SendCount   = 0;
-		m_u4AllRecvSize = 0;
-		m_u4AllSendSize = 0;
-		m_u4BeginTime   = 0;
-		m_u4AliveTime   = 0;
+		m_blValid             = false;
+		m_u4ConnectID         = 0;
+		m_u4RecvCount         = 0;
+		m_u4SendCount         = 0;
+		m_u4AllRecvSize       = 0;
+		m_u4AllSendSize       = 0;
+		m_u4BeginTime         = 0;
+		m_u4AliveTime         = 0;
+		m_u4RecvQueueCount    = 0;
+		m_u8RecvQueueTimeCost = 0;
+		m_u8SendQueueTimeCost = 0;
 	}
 
 	_ClientConnectInfo& operator = (const _ClientConnectInfo& ar)
 	{
-		this->m_blValid       = ar.m_blValid;
-		this->m_u4ConnectID   = ar.m_u4ConnectID;
-		this->m_addrRemote    = ar.m_addrRemote;
-		this->m_u4RecvCount   = ar.m_u4RecvCount;
-		this->m_u4SendCount   = ar.m_u4SendCount;
-		this->m_u4AllRecvSize = ar.m_u4AllRecvSize;
-		this->m_u4AllSendSize = ar.m_u4AllSendSize;
-		this->m_u4BeginTime   = ar.m_u4BeginTime;
-		this->m_u4AliveTime   = ar.m_u4AliveTime;
+		this->m_blValid             = ar.m_blValid;
+		this->m_u4ConnectID         = ar.m_u4ConnectID;
+		this->m_addrRemote          = ar.m_addrRemote;
+		this->m_u4RecvCount         = ar.m_u4RecvCount;
+		this->m_u4SendCount         = ar.m_u4SendCount;
+		this->m_u4AllRecvSize       = ar.m_u4AllRecvSize;
+		this->m_u4AllSendSize       = ar.m_u4AllSendSize;
+		this->m_u4BeginTime         = ar.m_u4BeginTime;
+		this->m_u4AliveTime         = ar.m_u4AliveTime;
+		this->m_u4RecvQueueCount    = ar.m_u4RecvQueueCount;
+		this->m_u8RecvQueueTimeCost = ar.m_u8RecvQueueTimeCost;
+		this->m_u8SendQueueTimeCost = ar.m_u8SendQueueTimeCost;
 		return *this;
 	}
 };

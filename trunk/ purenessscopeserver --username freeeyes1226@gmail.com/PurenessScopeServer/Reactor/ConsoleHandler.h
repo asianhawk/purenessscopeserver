@@ -15,7 +15,6 @@
 #include "AceReactorManager.h"
 #include "MessageService.h"
 #include "IConnectManager.h"
-#include "ThreadLock.h"
 #include "ConsoleMessage.h"
 #include "MessageBlockManager.h"
 #include "PacketParsePool.h"

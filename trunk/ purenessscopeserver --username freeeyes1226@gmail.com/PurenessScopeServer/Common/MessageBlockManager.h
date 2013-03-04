@@ -17,6 +17,8 @@
 #include "ace/Task.h"
 #include "ace/Synch.h"
 
+#include "define.h"
+
 typedef  ACE_Malloc<ACE_LOCAL_MEMORY_POOL, ACE_SYNCH_MUTEX> MUTEX_MALLOC;
 typedef ACE_Allocator_Adapter<MUTEX_MALLOC> Mutex_Allocator;
 
@@ -29,7 +31,7 @@ public:
 	void Init();
 	void Close();
 
-	ACE_Message_Block* Create(int u4Size);
+	ACE_Message_Block* Create(uint32 u4Size);
 	bool Close(ACE_Message_Block* pMessageBlock);
 
 private:

@@ -1,11 +1,14 @@
 #ifndef _LOADMODULE_H
 #define _LOADMODULE_H
 
-#include "MapTemplate.h"
-#include "IObject.h"
+#include "ace/Date_Time.h"
 #include "ace/Thread_Mutex.h"
 #include "ace/Singleton.h"
 #include "ace/OS_NS_dlfcn.h"
+
+#include "MapTemplate.h"
+#include "IObject.h"
+
 #include <string>
 #include <vector>
 
@@ -13,13 +16,16 @@ using namespace std;
 
 struct _ModuleInfo
 {
-	string           strModuleName;
+	string           strModuleName;         //模块文件名称
+	string           strModulePath;         //模块路径
+	ACE_Date_Time    dtCreateTime;          //模块创建时间
 	ACE_SHLIB_HANDLE hModule;
 	int (*LoadModuleData)(CServerObject* pServerObject);
 	int (*UnLoadModuleData)(void);
 	const char* (*GetDesc)(void);
 	const char* (*GetName)(void);
 	const char* (*GetModuleKey)(void);
+	int (*DoModuleMessage)(uint16 u2CommandID, IBuffPacket* pBuffPacket, IBuffPacket* pReturnBuffPacket);
 
 	_ModuleInfo()
 	{
@@ -37,8 +43,11 @@ public:
 	bool LoadModule(const char* szModulePath, const char* szResourceName);
 	bool UnLoadModule(const char* szResourceName);
 
+	int  SendModuleMessage(const char* pModuleName, uint16 u2CommandID, IBuffPacket* pBuffPacket, IBuffPacket* pReturnBuffPacket);
+
 	int  GetCurrModuleCount();
 	_ModuleInfo* GetModuleIndex(int nIndex);
+	_ModuleInfo* GetModuleInfo(const char* pModuleName);
 
 
 private:

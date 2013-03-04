@@ -14,6 +14,7 @@
 #include "PacketParsePool.h"
 #include "MakePacket.h"
 #include "ForbiddenIP.h"
+#include "CommandAccount.h"
 
 class CProactorUDPHandler : public ACE_Service_Handler
 {
@@ -25,7 +26,7 @@ public:
 
 	int  OpenAddress(const ACE_INET_Addr& AddrLocal, ACE_Proactor* pProactor);
 	void Close();
-	bool SendMessage(const char* pMessage, uint32 u4Len, const char* szIP, int nPort, bool blHead = true);
+	bool SendMessage(const char* pMessage, uint32 u4Len, const char* szIP, int nPort, bool blHead = true, uint16 u2CommandID = 0);
 	_ClientConnectInfo GetClientConnectInfo();
 
 private:

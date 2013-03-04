@@ -15,14 +15,14 @@ using namespace std;
 class CBaseCommand : public CClientCommand
 {
 public:
-	CBaseCommand(void);
-	~CBaseCommand(void);
+  CBaseCommand(void);
+  ~CBaseCommand(void);
 
-	int DoMessage(IMessage* pMessage, bool& bDeleteFlag);
+  int DoMessage(IMessage* pMessage, bool& bDeleteFlag);
 
-	void SetServerObject(CServerObject* pServerObject);
+  void SetServerObject(CServerObject* pServerObject);
 
 private:
-	CServerObject* m_pServerObject;
-	int            m_nCount;
+  CServerObject* m_pServerObject;
+  int            m_nCount;
 };

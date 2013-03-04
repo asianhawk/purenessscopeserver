@@ -8,19 +8,9 @@
 #define _TIMEMANAGER_H
 
 #include "define.h"
-#include "ace/Log_Msg.h"
-#include "ace/Event_Handler.h"
-#include "ace/Singleton.h"
-#include "ace/Synch.h"
-#include "ace/Task.h"
-#include "ace/Timer_Queue.h"
-#include "ace/Timer_Heap.h"
-#include "ace/Timer_Wheel.h"
-#include "ace/Timer_Hash.h"
-#include "ace/Timer_List.h"
-#include "ace/Timer_Queue_Adapters.h"
+#include "ITimerManager.h"
 
-typedef ACE_Thread_Timer_Queue_Adapter<ACE_Timer_Heap> ActiveTimer;
+//freeeyes自己写的定时器实现（目前无用）
 
 class CTimerManager
 {

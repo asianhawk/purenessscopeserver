@@ -64,7 +64,7 @@ void CTimerManager::wait_for_event(void)
 		//	}
 		//}
 
-		int time = m_pTimerQueue->expire();
+		//int time = m_pTimerQueue->expire();
 		if(m_pTimerQueue->is_empty())
 		{
 			ACE_OS::sleep(1);
@@ -122,6 +122,11 @@ CTimerManagerTask::~CTimerManagerTask()
 
 int CTimerManagerTask::open(void* args)
 {
+	if(args != NULL)
+	{
+		OUR_DEBUG((LM_ERROR, "[CTimerManagerTask::open] args not NULL.\n"));
+	}
+	
 	OUR_DEBUG((LM_ERROR, "[CTimerManagerTask::open] Begin.\n"));
 	if(activate(THR_NEW_LWP | THR_BOUND | THR_DETACHED, MAX_TIMERMANAGER_THREADCOUNT)  == -1)
 	{

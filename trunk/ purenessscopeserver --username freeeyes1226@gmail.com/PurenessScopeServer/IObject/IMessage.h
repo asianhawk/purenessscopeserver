@@ -2,27 +2,33 @@
 #define _IMESSAGE_H
 
 #include "IBuffPacket.h"
+#include "ProfileTime.h"
 
 //记录消息的一些参数
 struct _MessageBase
 {
-	uint8  m_u1PacketType;        //数据包来源类型  
-	uint32 m_u4ConnectID;         //消息链接ConnectID，如果是UDP则这个值无效
-	uint32 m_u4PacketID;          //数据包的ID
-	uint16 m_u2Cmd;               //命令字的ID
-	uint32 m_u4MsgTime;           //消息接收到的时间
-	char   m_szIP[MAX_BUFF_20];   //客户端IP(目前只有UDP会赋值，TCP可以根据ConnectID自己去获取)
-	uint32 m_u4Port;              //客户端端口(目前只有UDP会赋值，TCP可以根据ConnectID自己去获取)
+	uint8          m_u1PacketType;        //数据包来源类型  
+	uint32         m_u4ConnectID;         //消息链接ConnectID，如果是UDP则这个值无效
+	uint32         m_u4PacketID;          //数据包的ID
+	uint16         m_u2Cmd;               //命令字的ID
+	uint32         m_u4HeadSrcSize;       //包头原始长度
+	uint32         m_u4BodySrcSize;       //包体原始长度
+	uint32         m_u4MsgTime;           //消息接收到的时间
+	char           m_szIP[MAX_BUFF_20];   //客户端IP(目前只有UDP会赋值，TCP可以根据ConnectID自己去获取)
+	uint32         m_u4Port;              //客户端端口(目前只有UDP会赋值，TCP可以根据ConnectID自己去获取)
+	CProfileTime   m_ProfileTime;         //消息到达时间
 
 	_MessageBase()
 	{
-		m_u1PacketType = PACKET_TCP;   //默认为TCP
-		m_u4ConnectID  = 0;
-		m_u4PacketID   = 0;
-		m_u2Cmd        = 0;
-		m_u4MsgTime    = 0;
-		m_szIP[0]      = '\0';
-		m_u4Port       = 0;
+		m_u1PacketType  = PACKET_TCP;   //默认为TCP
+		m_u4ConnectID   = 0;
+		m_u4PacketID    = 0;
+		m_u2Cmd         = 0;
+		m_u4MsgTime     = 0;
+		m_u4HeadSrcSize = 0;
+		m_u4BodySrcSize = 0;
+		m_szIP[0]       = '\0';
+		m_u4Port        = 0;
 	}
 };
 
@@ -35,16 +41,14 @@ public:
 	virtual void Close() = 0;
 	virtual void Clear() = 0;
 
-	virtual void SetMessageBase(_MessageBase* pMessageBase)              = 0;
-	virtual bool SetRecvPacket(IBuffPacket* pRecvPacket)                 = 0;
+	virtual void SetMessageBase(_MessageBase* pMessageBase)              = 0; //设置连接基本信息
 
-	virtual bool GetPacketHead(_PacketInfo& PacketInfo)    = 0;
-	virtual bool GetPacketBody(_PacketInfo& PacketInfo)    = 0;
-	virtual bool SetPacketHead(ACE_Message_Block* pmbHead) = 0;
-	virtual bool SetPacketBody(ACE_Message_Block* pmbBody) = 0;
+	virtual bool GetPacketHead(_PacketInfo& PacketInfo)    = 0;               //得到包头结构体，并赋值给_PacketInfo对象
+	virtual bool GetPacketBody(_PacketInfo& PacketInfo)    = 0;               //得到包体结构体，并赋值给_PacketInfo对象
+	virtual bool SetPacketHead(ACE_Message_Block* pmbHead) = 0;               //设置包头数据块
+	virtual bool SetPacketBody(ACE_Message_Block* pmbBody) = 0;               //设置包体数据块
 
-	virtual _MessageBase* GetMessageBase() = 0;
-	virtual IBuffPacket*  GetRecvPacket()  = 0;
+	virtual _MessageBase* GetMessageBase() = 0;                               //得到包连接基本信息
 
 	virtual const char* GetError()         = 0;
 };

@@ -1,6 +1,8 @@
 #ifndef _WINDOWSCPU_H
 #define _WINDOWSCPU_H
 
+#ifdef WIN32
+
 #include  <windows.h>
 #include  <Psapi.h>
 #include  <conio.h> 
@@ -48,5 +50,7 @@ typedef  struct
 
 int GetProcessCPU_Idel();
 int GetProcessMemorySize();
+
+#endif
 
 #endif

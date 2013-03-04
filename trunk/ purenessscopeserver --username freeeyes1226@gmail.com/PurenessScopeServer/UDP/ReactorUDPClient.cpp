@@ -47,6 +47,12 @@ ACE_HANDLE CReactorUDPClient::get_handle(void) const
 
 int CReactorUDPClient::handle_input(ACE_HANDLE fd)
 {
+	if(fd == ACE_INVALID_HANDLE)
+	{
+		ACE_DEBUG((LM_ERROR, "[CReactorUDPClient::handle_input]fd is ACE_INVALID_HANDLE.\n"));
+		return -1;
+	}
+	
 	char szBuff[MAX_UDP_PACKET_LEN] = {'\0'};
 
 	int nDataLen = m_skRemote.recv(szBuff, MAX_UDP_PACKET_LEN, m_addrRemote);
@@ -60,6 +66,11 @@ int CReactorUDPClient::handle_input(ACE_HANDLE fd)
 
 int CReactorUDPClient::handle_close(ACE_HANDLE handle, ACE_Reactor_Mask close_mask)
 {
+	if(handle == ACE_INVALID_HANDLE)
+	{
+		ACE_DEBUG((LM_ERROR, "[CReactorUDPClient::handle_close]close_mask = %d.\n", (uint32)close_mask));
+	}
+	
 	Close();
 	return 0;
 }
@@ -76,7 +87,7 @@ bool CReactorUDPClient::SendMessage(const char* pMessage, uint32 u4Len, const ch
 	}
 
 	int nSize = (int)m_skRemote.send(pMessage, u4Len, AddrRemote);
-	if(nSize == u4Len)
+	if((uint32)nSize == u4Len)
 	{
 		m_atvOutput = ACE_OS::gettimeofday();
 		m_u4SendSize += u4Len;

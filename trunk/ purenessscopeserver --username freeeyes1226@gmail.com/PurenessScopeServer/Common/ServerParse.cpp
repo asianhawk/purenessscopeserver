@@ -15,7 +15,7 @@ CServerParse::CServerParse()
 
 CServerParse::~CServerParse()
 {
-
+	OUR_DEBUG((LM_INFO, "[CServerParse::~CServerParse].\n"));
 }
 
 void CServerParse::Init()
@@ -120,8 +120,6 @@ bool CServerParse::MakePacket(const char* pData, uint32 u4Len, ACE_Message_Block
 	ACE_OS::memcpy(pMbData->wr_ptr() + sizeof(uint32), (const void*)pData, u4Len);
 	pMbData->wr_ptr(u4Len + sizeof(uint32));
 
-	char* pBuffData = pMbData->rd_ptr();
-
 	return true;
 }
 
@@ -141,3 +139,4 @@ void CServerParse::Close()
 
 	m_blIsHead = false;
 }
+

@@ -106,6 +106,12 @@ int CConsoleMessage::ParseCommand(const char* pCommand, IBuffPacket* pBuffPacket
 		DoMessage_UnLoadModule(CommandInfo, pBuffPacket);
 		return CONSOLE_MESSAGE_SUCCESS;
 	}
+	else if(ACE_OS::strcmp(CommandInfo.m_szCommandTitle, CONSOLEMESSAHE_RELOADMOUDLE) == 0)
+	{
+		//处理卸载模块的命令
+		DoMessage_ReLoadModule(CommandInfo, pBuffPacket);
+		return CONSOLE_MESSAGE_SUCCESS;
+	}
 	else if(ACE_OS::strcmp(CommandInfo.m_szCommandTitle, CONSOLEMESSAHE_CLIENTCOUNT) == 0)
 	{
 		//处理获得当前连接数的命令
@@ -187,6 +193,11 @@ int CConsoleMessage::ParseCommand(const char* pCommand, IBuffPacket* pBuffPacket
 	else if(ACE_OS::strcmp(CommandInfo.m_szCommandTitle, CONSOLEMESSAGE_CLIENTHISTORY) == 0)
 	{
 		DoMessage_ShowClientHisTory(CommandInfo, pBuffPacket);
+		return CONSOLE_MESSAGE_SUCCESS;
+	}
+	else if(ACE_OS::strcmp(CommandInfo.m_szCommandTitle, CONSOLEMESSAGE_ALLCOMMANDINFO) == 0)
+	{
+		DoMessage_ShowAllCommandInfo(CommandInfo, pBuffPacket);
 		return CONSOLE_MESSAGE_SUCCESS;
 	}
 	else
@@ -298,7 +309,27 @@ bool CConsoleMessage::DoMessage_LoadModule(_CommandInfo& CommandInfo, IBuffPacke
 
 bool CConsoleMessage::DoMessage_UnLoadModule(_CommandInfo& CommandInfo, IBuffPacket* pBuffPacket)
 {
-	if(true == App_ModuleLoader::instance()->UnLoadModule(CommandInfo.m_szCommandExp))
+	if(true == App_MessageManager::instance()->UnloadModuleCommand(CommandInfo.m_szCommandExp, (uint8)1))
+	{
+		if(NULL != pBuffPacket)
+		{
+			(*pBuffPacket) << (uint8)0;
+		}
+	}
+	else
+	{
+		if(NULL != pBuffPacket)
+		{
+			(*pBuffPacket) << (uint8)1;
+		}
+	}
+
+	return true;
+}
+
+bool CConsoleMessage::DoMessage_ReLoadModule(_CommandInfo& CommandInfo, IBuffPacket* pBuffPacket)
+{
+	if(true == App_MessageManager::instance()->UnloadModuleCommand(CommandInfo.m_szCommandExp, (uint8)2))
 	{
 		if(NULL != pBuffPacket)
 		{
@@ -381,6 +412,12 @@ bool CConsoleMessage::DoMessage_ShowModule(_CommandInfo& CommandInfo, IBuffPacke
 				strSModileDesc.u1Len = (uint8)ACE_OS::strlen(pModuleInfo->GetDesc());
 				strSModileDesc.text  = pModuleInfo->GetDesc();
 				(*pBuffPacket) << strSModileDesc;
+
+				char szTime[MAX_BUFF_100] = {'\0'};
+				sprintf_safe(szTime, MAX_BUFF_100, "%04d-%02d-%02d %02d:%02d:%02d", pModuleInfo->dtCreateTime.year(), pModuleInfo->dtCreateTime.month(), pModuleInfo->dtCreateTime.day(), pModuleInfo->dtCreateTime.hour(), pModuleInfo->dtCreateTime.minute(), pModuleInfo->dtCreateTime.second());
+				strSName.text  = (char* )szTime;
+				strSName.u1Len = (uint8)ACE_OS::strlen(szTime);
+				(*pBuffPacket) << strSName;
 			}
 		}
 		return true;
@@ -430,29 +467,7 @@ bool CConsoleMessage::DoMessage_WorkThreadState(_CommandInfo& CommandInfo, IBuff
 	if(ACE_OS::strcmp(CommandInfo.m_szCommandExp, "-s") == 0)
 	{
 		//获得当前加解密包线程状态
-		CThreadInfo* pThreadInfo = App_MakePacket::instance()->GetThreadInfo();
-		if(NULL != pThreadInfo)
-		{
-			int nThreadCount = pThreadInfo->GetThreadCount();
-			(*pBuffPacket) << (uint8)nThreadCount;
-
-			for(int i = 0; i < nThreadCount; i++)
-			{
-				_ThreadInfo* pCurrThreadInfo = pThreadInfo->GetThreadInfo(i);
-				(*pBuffPacket) << (uint8)i;
-				(*pBuffPacket) << (uint32)pCurrThreadInfo->m_tvUpdateTime.sec();
-				(*pBuffPacket) << (uint8)pCurrThreadInfo->m_u4State;
-				(*pBuffPacket) << (uint32)pCurrThreadInfo->m_u4RecvPacketCount;
-				(*pBuffPacket) << (uint32)pCurrThreadInfo->m_u4SendPacketCount;
-				(*pBuffPacket) << (uint16)pCurrThreadInfo->m_u2CommandID;
-				(*pBuffPacket) << (uint16)pCurrThreadInfo->m_u2PacketTime;
-				(*pBuffPacket) << (uint32)pCurrThreadInfo->m_u4CurrPacketCount;
-			}
-		}
-		else
-		{
-			return false;
-		}
+		CThreadInfo* pThreadInfo = NULL;
 
 		//获得当前工作线程状态
 		pThreadInfo = App_MessageService::instance()->GetThreadInfo();
@@ -516,6 +531,9 @@ bool CConsoleMessage::DoMessage_ClientInfo(_CommandInfo& CommandInfo, IBuffPacke
 				(*pBuffPacket) << ClientConnectInfo.m_u4AllSendSize;
 				(*pBuffPacket) << ClientConnectInfo.m_u4BeginTime;
 				(*pBuffPacket) << ClientConnectInfo.m_u4AliveTime;
+				(*pBuffPacket) << ClientConnectInfo.m_u4RecvQueueCount;
+				(*pBuffPacket) << ClientConnectInfo.m_u8RecvQueueTimeCost;
+				(*pBuffPacket) << ClientConnectInfo.m_u8SendQueueTimeCost;
 			}
 		}
 #else
@@ -542,6 +560,9 @@ bool CConsoleMessage::DoMessage_ClientInfo(_CommandInfo& CommandInfo, IBuffPacke
 				(*pBuffPacket) << ClientConnectInfo.m_u4AllSendSize;
 				(*pBuffPacket) << ClientConnectInfo.m_u4BeginTime;
 				(*pBuffPacket) << ClientConnectInfo.m_u4AliveTime;
+				(*pBuffPacket) << ClientConnectInfo.m_u4RecvQueueCount;
+				(*pBuffPacket) << ClientConnectInfo.m_u8RecvQueueTimeCost;
+				(*pBuffPacket) << ClientConnectInfo.m_u8SendQueueTimeCost;
 			}
 		}
 #endif
@@ -669,6 +690,9 @@ bool CConsoleMessage::DoMessage_UDPClientInfo(_CommandInfo& CommandInfo, IBuffPa
 				(*pBuffPacket) << ClientConnectInfo.m_u4AllSendSize;
 				(*pBuffPacket) << ClientConnectInfo.m_u4BeginTime;
 				(*pBuffPacket) << ClientConnectInfo.m_u4AliveTime;
+				(*pBuffPacket) << ClientConnectInfo.m_u4RecvQueueCount;
+				(*pBuffPacket) << ClientConnectInfo.m_u8RecvQueueTimeCost;
+				(*pBuffPacket) << ClientConnectInfo.m_u8SendQueueTimeCost;
 			}
 		}
 #else
@@ -694,6 +718,9 @@ bool CConsoleMessage::DoMessage_UDPClientInfo(_CommandInfo& CommandInfo, IBuffPa
 				(*pBuffPacket) << ClientConnectInfo.m_u4AllSendSize;
 				(*pBuffPacket) << ClientConnectInfo.m_u4BeginTime;
 				(*pBuffPacket) << ClientConnectInfo.m_u4AliveTime;
+				(*pBuffPacket) << ClientConnectInfo.m_u4RecvQueueCount;
+				(*pBuffPacket) << ClientConnectInfo.m_u8RecvQueueTimeCost;
+				(*pBuffPacket) << ClientConnectInfo.m_u8SendQueueTimeCost;
 			}
 		}
 #endif
@@ -729,6 +756,9 @@ bool CConsoleMessage::DoMessage_ServerConnectTCP(_CommandInfo& CommandInfo, IBuf
 				(*pBuffPacket) << ClientConnectInfo.m_u4AllSendSize;
 				(*pBuffPacket) << ClientConnectInfo.m_u4BeginTime;
 				(*pBuffPacket) << ClientConnectInfo.m_u4AliveTime;
+				(*pBuffPacket) << ClientConnectInfo.m_u4RecvQueueCount;
+				(*pBuffPacket) << ClientConnectInfo.m_u8RecvQueueTimeCost;
+				(*pBuffPacket) << ClientConnectInfo.m_u8SendQueueTimeCost;
 			}
 		}
 #else
@@ -754,6 +784,9 @@ bool CConsoleMessage::DoMessage_ServerConnectTCP(_CommandInfo& CommandInfo, IBuf
 				(*pBuffPacket) << ClientConnectInfo.m_u4AllSendSize;
 				(*pBuffPacket) << ClientConnectInfo.m_u4BeginTime;
 				(*pBuffPacket) << ClientConnectInfo.m_u4AliveTime;
+				(*pBuffPacket) << ClientConnectInfo.m_u4RecvQueueCount;
+				(*pBuffPacket) << ClientConnectInfo.m_u8RecvQueueTimeCost;
+				(*pBuffPacket) << ClientConnectInfo.m_u8SendQueueTimeCost;
 			}
 		}
 #endif
@@ -790,6 +823,9 @@ bool CConsoleMessage::DoMessage_ServerConnectUDP(_CommandInfo& CommandInfo, IBuf
 				(*pBuffPacket) << ClientConnectInfo.m_u4AllSendSize;
 				(*pBuffPacket) << ClientConnectInfo.m_u4BeginTime;
 				(*pBuffPacket) << ClientConnectInfo.m_u4AliveTime;
+				(*pBuffPacket) << ClientConnectInfo.m_u4RecvQueueCount;
+				(*pBuffPacket) << ClientConnectInfo.m_u8RecvQueueTimeCost;
+				(*pBuffPacket) << ClientConnectInfo.m_u8SendQueueTimeCost;
 			}
 		}
 #else
@@ -815,6 +851,9 @@ bool CConsoleMessage::DoMessage_ServerConnectUDP(_CommandInfo& CommandInfo, IBuf
 				(*pBuffPacket) << ClientConnectInfo.m_u4AllSendSize;
 				(*pBuffPacket) << ClientConnectInfo.m_u4BeginTime;
 				(*pBuffPacket) << ClientConnectInfo.m_u4AliveTime;
+				(*pBuffPacket) << ClientConnectInfo.m_u4RecvQueueCount;
+				(*pBuffPacket) << ClientConnectInfo.m_u8RecvQueueTimeCost;
+				(*pBuffPacket) << ClientConnectInfo.m_u8SendQueueTimeCost;
 			}
 		}
 #endif
@@ -879,7 +918,39 @@ bool CConsoleMessage::DoMessage_ShowClientHisTory(_CommandInfo& CommandInfo, IBu
 	return true;
 }
 
-
-
-
+bool CConsoleMessage::DoMessage_ShowAllCommandInfo(_CommandInfo& CommandInfo, IBuffPacket* pBuffPacket)
+{
+	if(ACE_OS::strcmp(CommandInfo.m_szCommandExp, "-a") == 0)
+	{
+		mapModuleClient* pmapModuleClient = App_MessageManager::instance()->GetModuleClient();
+		if(pmapModuleClient != NULL)
+		{
+			(*pBuffPacket) << (uint32)pmapModuleClient->size();
+			for(mapModuleClient::iterator b = pmapModuleClient->begin(); b != pmapModuleClient->end(); b++)
+			{
+				_ModuleClient* pModuleClient = (_ModuleClient* )b->second;
+				if(NULL != pModuleClient)
+				{
+					(*pBuffPacket) << (uint32)pModuleClient->m_vecClientCommandInfo.size();
+					for(int i = 0; i < (int)pModuleClient->m_vecClientCommandInfo.size(); i++)
+					{
+						_ClientCommandInfo* pClientCommandInfo = (_ClientCommandInfo* )pModuleClient->m_vecClientCommandInfo[i];
+						if(NULL != pClientCommandInfo)
+						{
+							VCHARS_STR strSName;
+							strSName.text  = pClientCommandInfo->m_szModuleName;
+							strSName.u1Len = (uint8)ACE_OS::strlen(pClientCommandInfo->m_szModuleName);							
+							(*pBuffPacket) << strSName;
+							(*pBuffPacket) << pClientCommandInfo->m_u2CommandID;
+							(*pBuffPacket) << pClientCommandInfo->m_u4Count;
+							(*pBuffPacket) << pClientCommandInfo->m_u4TimeCost;
+						}
+					}
+				}
+			}
+		}
+	}
+	
+	return true;	
+}
 

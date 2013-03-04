@@ -17,6 +17,12 @@
 #include "MainConfig.h"
 #include "TimerManager.h"
 
+#ifdef WIN32
+#include "ProConnectHandle.h"
+#else
+#include "ConnectHandler.h"
+#endif
+
 class CMessageService : public ACE_Task<ACE_MT_SYNCH>
 {
 public:
@@ -46,18 +52,20 @@ private:
 	int  SaveThreadInfoData(); 
 
 private:
-	ACE_Recursive_Thread_Mutex     m_RunMutex;           //线程锁级别
+	ACE_Recursive_Thread_Mutex     m_RunMutex;            //线程锁级别
 	ACE_RW_Thread_Mutex            m_rwMutex;
-	uint32                         m_u4ThreadCount;      //处理的线程总数
-	uint32                         m_u4ThreadNo;         //当前线程ID
-	uint32                         m_u4MaxQueue;         //线程中最大消息对象个数
-	uint32                         m_u4TimerID;          //定时器对象
-	bool                           m_blRun;              //线程是否在运行
+	uint32                         m_u4ThreadCount;       //处理的线程总数
+	uint32                         m_u4ThreadNo;          //当前线程ID
+	uint32                         m_u4MaxQueue;          //线程中最大消息对象个数
+	uint32                         m_u4TimerID;           //定时器对象
+	bool                           m_blRun;               //线程是否在运行
 	uint32                         m_u4HighMask;
 	uint32                         m_u4LowMask;
 	uint16                         m_u2ThreadTimeOut;  
 	uint16                         m_u2ThreadTimeCheck;
-	uint16                         m_u2PacketTimeOut;    //处理数据包超时判定阀值
+	uint16                         m_u2PacketTimeOut;     //处理数据包超时判定阀值
+	uint64                         m_u8TimeCost;          //Put到队列信息的数据处理时间
+	uint32                         m_u4Count;             //消息队列接受个数
 
 	CThreadInfo                    m_ThreadInfo;
 };

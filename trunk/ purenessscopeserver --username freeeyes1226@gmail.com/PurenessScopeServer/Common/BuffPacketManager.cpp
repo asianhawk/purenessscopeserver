@@ -8,7 +8,7 @@ CBuffPacketManager::CBuffPacketManager(void)
 CBuffPacketManager::~CBuffPacketManager(void)
 {
 	OUR_DEBUG((LM_ERROR, "[CBuffPacketManager::~CBuffPacketManager].\n"));
-	Close();
+	//Close();
 }
 
 IBuffPacket* CBuffPacketManager::Create()
@@ -80,23 +80,18 @@ bool CBuffPacketManager::Delete(IBuffPacket* pBuffPacket)
 void CBuffPacketManager::Close()
 {
 	//清理所有已存在的指针
-	mapPacket::iterator itorFreeB = m_mapPacketFree.begin();
-	mapPacket::iterator itorFreeE = m_mapPacketFree.end();
-
-	for(itorFreeB; itorFreeB != itorFreeE; itorFreeB++)
+	for(mapPacket::iterator itorFreeB = m_mapPacketFree.begin(); itorFreeB != m_mapPacketFree.end(); itorFreeB++)
 	{
 		CBuffPacket* pBuffPacket = (CBuffPacket* )itorFreeB->second;
 		pBuffPacket->Close();
 		SAFE_DELETE(pBuffPacket);
 	}
 
-	mapPacket::iterator itorUsedB = m_mapPacketUsed.begin();
-	mapPacket::iterator itorUsedE = m_mapPacketUsed.end();
-
-	for(itorUsedB; itorUsedB != itorUsedE; itorUsedB++)
+	for(mapPacket::iterator itorUsedB = m_mapPacketUsed.begin(); itorUsedB != m_mapPacketUsed.end(); itorUsedB++)
 	{
 		CBuffPacket* pBuffPacket = (CBuffPacket* )itorUsedB->second;
 		pBuffPacket->Close();
+		OUR_DEBUG((LM_ERROR, "[CBuffPacketManager::Close]CBuffPacket has used!!memory address[0x%08x].\n", pBuffPacket));
 		SAFE_DELETE(pBuffPacket);
 	}
 
@@ -122,4 +117,14 @@ void CBuffPacketManager::Init(uint32 u4PacketCount)
 		}
 	}
 
+}
+
+uint32 CBuffPacketManager::GetBuffPacketUsedCount()
+{
+	return (uint32)m_mapPacketUsed.size();
+}
+
+uint32 CBuffPacketManager::GetBuffPacketFreeCount()
+{
+	return (uint32)m_mapPacketFree.size();
 }

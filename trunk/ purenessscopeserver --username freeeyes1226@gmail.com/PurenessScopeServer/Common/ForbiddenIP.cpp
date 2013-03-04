@@ -7,7 +7,7 @@ CForbiddenIP::CForbiddenIP()
 
 CForbiddenIP::~CForbiddenIP()
 {
-
+	OUR_DEBUG((LM_INFO, "[CForbiddenIP::~CForbiddenIP].\n"));
 }
 
 bool CForbiddenIP::Init(const char* szConfigPath)
@@ -67,10 +67,7 @@ bool CForbiddenIP::CheckIP(const char* pIP, uint8 u1ConnectType)
 		}
 	}
 
-	VecForbiddenIP::iterator b = m_VecTempForbiddenIP.begin();
-	VecForbiddenIP::iterator e = m_VecTempForbiddenIP.end();
-
-	for(b; b != e; b++)
+	for(VecForbiddenIP::iterator b = m_VecTempForbiddenIP.begin(); b != m_VecTempForbiddenIP.end(); b++)
 	{
 		if(ACE_OS::strcmp(pIP, (*b).m_szClientIP) == 0 && (*b).m_u1ConnectType == u1ConnectType)
 		{
@@ -116,10 +113,7 @@ bool CForbiddenIP::AddTempIP(const char* pIP, uint32 u4Second, uint8 u1ConnectTy
 
 bool CForbiddenIP::DelForeverIP(const char* pIP, uint8 u1ConnectType)
 {
-	VecForbiddenIP::iterator b = m_VecForeverForbiddenIP.begin();
-	VecForbiddenIP::iterator e = m_VecForeverForbiddenIP.end();
-
-	for(b; b != e; b++)
+	for(VecForbiddenIP::iterator b = m_VecForeverForbiddenIP.begin(); b != m_VecForeverForbiddenIP.end(); b++)
 	{
 		if(ACE_OS::strcmp(pIP, (*b).m_szClientIP) == 0 && (*b).m_u1ConnectType == u1ConnectType)
 		{
@@ -134,10 +128,7 @@ bool CForbiddenIP::DelForeverIP(const char* pIP, uint8 u1ConnectType)
 
 bool CForbiddenIP::DelTempIP(const char* pIP, uint8 u1ConnectType)
 {
-	VecForbiddenIP::iterator b = m_VecTempForbiddenIP.begin();
-	VecForbiddenIP::iterator e = m_VecTempForbiddenIP.end();
-
-	for(b; b != e; b++)
+	for(VecForbiddenIP::iterator b = m_VecTempForbiddenIP.begin(); b !=  m_VecTempForbiddenIP.end(); b++)
 	{
 		if(ACE_OS::strcmp(pIP, (*b).m_szClientIP) == 0 && (*b).m_u1ConnectType == u1ConnectType)
 		{

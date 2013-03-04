@@ -89,7 +89,7 @@ void CProactorUDPClient::handle_read_dgram(const ACE_Asynch_Read_Dgram::Result& 
 	else
 	{
 		size_t stRecvLen = MAX_UDP_PACKET_LEN;
-		int nRecvSize = m_Read.recv(pMBBuff, stRecvLen, 0, PF_INET, pAct);  
+		m_Read.recv(pMBBuff, stRecvLen, 0, PF_INET, pAct);  
 	}
 }
 
@@ -105,7 +105,7 @@ bool CProactorUDPClient::SendMessage(const char* pMessage, uint32 u4Len, const c
 	}
 
 	int nSize = (int)m_skRemote.send(pMessage, u4Len, AddrRemote);
-	if(nSize == u4Len)
+	if((uint32)nSize == u4Len)
 	{
 		m_atvOutput = ACE_OS::gettimeofday();
 		m_u4SendSize += u4Len;

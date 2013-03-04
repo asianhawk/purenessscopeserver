@@ -11,7 +11,7 @@ static char *g_szName      = "UDPPost测试";       //模块的名字
 static char *g_szModuleKey = "BaseUDPPost";       //模块的Key
 
 #ifdef WIN32
-#if defined DLL_EXPORT
+#if defined TESTUDPPOST_EXPORTS
 #define DECLDIR __declspec(dllexport)
 #else
 #define DECLDIR __declspec(dllimport)
@@ -27,6 +27,7 @@ extern "C"
 	DECLDIR const char* GetDesc();
 	DECLDIR const char* GetName();
 	DECLDIR const char* GetModuleKey();
+	DECLDIR int DoModuleMessage(uint16 u2CommandID, IBuffPacket* pBuffPacket, IBuffPacket* pReturnBuffPacket);
 }
 
 static CBaseCommand g_BaseCommand;
@@ -96,5 +97,11 @@ const char* GetName()
 const char* GetModuleKey()
 {
 	return g_szModuleKey;
+}
+
+//用于模块间的调用接口
+int DoModuleMessage(uint16 u2CommandID, IBuffPacket* pBuffPacket, IBuffPacket* pReturnBuffPacket)
+{
+	return 0;
 }
 

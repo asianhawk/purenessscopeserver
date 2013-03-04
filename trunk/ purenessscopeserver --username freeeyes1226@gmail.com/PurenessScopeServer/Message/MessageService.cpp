@@ -17,6 +17,8 @@ CMessageService::CMessageService(void)
 	m_blRun           = false;
 	m_u4HighMask      = 0;
 	m_u4LowMask       = 0;
+	m_u8TimeCost      = 0;
+	m_u4Count         = 0;
 
 	uint16 u2ThreadTimeOut = App_MainConfig::instance()->GetThreadTimuOut();
 	if(u2ThreadTimeOut <= 0)
@@ -29,7 +31,7 @@ CMessageService::CMessageService(void)
 	}
 
 	uint16 u2ThreadTimeCheck = App_MainConfig::instance()->GetThreadTimeCheck();
-	if(u2ThreadTimeOut <= 0)
+	if(u2ThreadTimeCheck <= 0)
 	{
 		m_u2ThreadTimeCheck = MAX_MSG_TIMEDELAYTIME;
 	}
@@ -47,11 +49,11 @@ CMessageService::CMessageService(void)
 	{
 		m_u2PacketTimeOut = u2PacketTimeOut;
 	}
-
 }
 
 CMessageService::~CMessageService(void)
 {
+	OUR_DEBUG((LM_INFO, "[CMessageService::~CMessageService].\n"));
 }
 
 void CMessageService::Init(uint32 u4ThreadCount, uint32 u4MaxQueue, uint32 u4LowMask, uint32 u4HighMask)
@@ -86,6 +88,11 @@ bool CMessageService::IsRun()
 
 int CMessageService::open(void* args)
 {
+	if(args != NULL)
+	{
+		OUR_DEBUG((LM_INFO,"[CMessageService::open]args is not NULL.\n"));
+	}
+	
 	m_blRun = true;
 	msg_queue()->high_water_mark(m_u4HighMask);
 	msg_queue()->low_water_mark(m_u4LowMask);
@@ -139,8 +146,9 @@ int CMessageService::svc(void)
 		//xtime = ACE_OS::gettimeofday() + ACE_Time_Value(0, MAX_MSG_PUTTIMEOUT);
 		if(getq(mb, 0) == -1)
 		{
-			OUR_DEBUG((LM_ERROR,"[CMessageService::PutMessage] getq error errno = [%d].\n", errno));
-			continue;
+			OUR_DEBUG((LM_ERROR,"[CMessageService::svc] PutMessage error errno = [%d].\n", errno));
+			m_blRun = false;
+			break;
 		}
 		if (mb == NULL)
 		{
@@ -195,7 +203,7 @@ bool CMessageService::PutMessage(CMessage* pMessage)
 			return false;
 		}
 
-		ACE_Time_Value xtime = ACE_OS::gettimeofday() + ACE_Time_Value(0, MAX_MSG_PUTTIMEOUT);
+		ACE_Time_Value xtime = ACE_OS::gettimeofday();
 		if(this->putq(mb, &xtime) == -1)
 		{
 			OUR_DEBUG((LM_ERROR,"[CMessageService::PutMessage] Queue putq  error nQueueCount = [%d] errno = [%d].\n", nQueueCount, errno));
@@ -214,6 +222,9 @@ bool CMessageService::PutMessage(CMessage* pMessage)
 
 bool CMessageService::ProcessMessage(CMessage* pMessage, uint32 u4ThreadID)
 {
+	CProfileTime DisposeTime;
+	uint32 u4Cost = (uint32)(pMessage->GetMessageBase()->m_ProfileTime.Stop());
+
 	if(NULL == pMessage)
 	{
 		OUR_DEBUG((LM_ERROR,"[CMessageService::ProcessMessage] pMessage is NULL.\n"));
@@ -247,7 +258,6 @@ bool CMessageService::ProcessMessage(CMessage* pMessage, uint32 u4ThreadID)
 	}
 
 	//将要处理的数据放到逻辑处理的地方去
-	uint32 u4Len       = 0;          //数据包的长度
 	uint16 u2CommandID = 0;          //数据包的CommandID
 
 	_MessageBase* pMessageBase = pMessage->GetMessageBase();
@@ -261,21 +271,39 @@ bool CMessageService::ProcessMessage(CMessage* pMessage, uint32 u4ThreadID)
 	{
 		u2CommandID = pMessageBase->m_u2Cmd;
 	}
+	
+	DisposeTime.Start();
+	App_MessageManager::instance()->DoMessage(pMessage, u2CommandID);
+	pThreadInfo->m_u4State = THREAD_RUNEND;
 
-	ACE_Time_Value tvDisposeBegin(ACE_OS::gettimeofday());
 	if(pMessage->GetMessageBase()->m_u2Cmd != CLIENT_LINK_CONNECT && pMessage->GetMessageBase()->m_u2Cmd != CLIENT_LINK_CDISCONNET && pMessage->GetMessageBase()->m_u2Cmd != CLIENT_LINK_SDISCONNET)
 	{
 		pThreadInfo->m_u2CommandID   = u2CommandID;
 	}
 
-	App_MessageManager::instance()->DoMessage(pMessage, u4Len, u2CommandID);
-	pThreadInfo->m_u4State = THREAD_RUNEND;
+	//如果是windows服务器，默认用App_ProConnectManager，否则这里需要手动修改一下
+#ifdef WIN32
+	{
+		if(pMessage->GetMessageBase()->m_u2Cmd != CLIENT_LINK_CONNECT && pMessage->GetMessageBase()->m_u2Cmd != CLIENT_LINK_CDISCONNET && pMessage->GetMessageBase()->m_u2Cmd != CLIENT_LINK_SDISCONNET)
+		{
+			//其实感觉这里意义不大，因为在windows下的时钟精度到不了微秒，所以这个值很有可能没有意义。
+			App_ProConnectManager::instance()->SetRecvQueueTimeCost(pMessage->GetMessageBase()->m_u4ConnectID, u4Cost);
+		}
+	}
+#else
+	{
+		if(pMessage->GetMessageBase()->m_u2Cmd != CLIENT_LINK_CONNECT && pMessage->GetMessageBase()->m_u2Cmd != CLIENT_LINK_CDISCONNET && pMessage->GetMessageBase()->m_u2Cmd != CLIENT_LINK_SDISCONNET)
+		{
+			//linux可以精确到微秒，这个值就变的有意义了
+			App_ConnectManager::instance()->SetRecvQueueTimeCost(pMessage->GetMessageBase()->m_u4ConnectID, u4Cost);
+		}
+	}
+#endif
 
 	//开始测算数据包处理的时间
-	ACE_Time_Value tvDisposeEnd(ACE_OS::gettimeofday());
-	ACE_Time_Value tvDisposeTime(tvDisposeEnd - tvDisposeBegin);
+	uint64 u8DisposeCost = DisposeTime.Stop();
 
-	uint16 u2DisposeTime = (uint16)tvDisposeTime.msec();
+	uint16 u2DisposeTime = (uint16)(u8DisposeCost / 1000000);
 	if(pThreadInfo->m_u2PacketTime == 0)
 	{
 		pThreadInfo->m_u2PacketTime = u2DisposeTime;
@@ -308,6 +336,11 @@ int CMessageService::Close()
 
 int CMessageService::handle_timeout(const ACE_Time_Value &tv, const void *arg)
 {
+	if(arg != NULL)
+	{
+		OUR_DEBUG((LM_ERROR,"[CMessageService::handle_timeout] arg is not NULL, time is (%d).\n", tv.sec()));
+	}
+	
 	return SaveThreadInfoData();
 }
 
@@ -329,7 +362,7 @@ int CMessageService::SaveThreadInfoData()
 			//开始查看线程是否超时
 			if(pThreadInfo->m_u4State == THREAD_RUNBEGIN && tvNow.sec() - pThreadInfo->m_tvUpdateTime.sec() > m_u2ThreadTimeOut)
 			{
-				AppLogManager::instance()->WriteLog(LOG_SYSTEM_WORKTHREAD, "[CMessageService::handle_timeout] pThreadInfo = [%d] State = [%d] Time = [%04d-%02d-%02d %02d:%02d:%02d] PacketCount = [%d] LastCommand = [0x%x] PacketTime = [%d] TimeOut > %d[%d] CurrPacketCount = [%d] QueueCount = [%d].", 
+				AppLogManager::instance()->WriteLog(LOG_SYSTEM_WORKTHREAD, "[CMessageService::handle_timeout] pThreadInfo = [%d] State = [%d] Time = [%04d-%02d-%02d %02d:%02d:%02d] PacketCount = [%d] LastCommand = [0x%x] PacketTime = [%d] TimeOut > %d[%d] CurrPacketCount = [%d] QueueCount = [%d] BuffPacketUsed = [%d] BuffPacketFree = [%d].", 
 					pThreadInfo->m_u4ThreadID,
 					pThreadInfo->m_u4State, 
 					dt.year(), dt.month(), dt.day(), dt.hour(), dt.minute(), dt.second(), 
@@ -339,17 +372,19 @@ int CMessageService::SaveThreadInfoData()
 					m_u2ThreadTimeOut,
 					tvNow.sec() - pThreadInfo->m_tvUpdateTime.sec(),
 					pThreadInfo->m_u4CurrPacketCount,
-					(int)msg_queue()->message_count());
+					(int)msg_queue()->message_count(),
+					App_BuffPacketManager::instance()->GetBuffPacketUsedCount(),
+					App_BuffPacketManager::instance()->GetBuffPacketFreeCount());
 
-				//发现阻塞线程，重启相应的线程
-				ACE_OS::thr_kill(pThreadInfo->m_u4ThreadIndex, SIGALRM);
-				AppLogManager::instance()->WriteLog(LOG_SYSTEM_WORKTHREAD, "[CMessageService::handle_timeout]  pThreadInfo = [%d] ThreadID = [%d] Thread is reset.", pThreadInfo->m_u4ThreadID, pThreadInfo->m_u4ThreadIndex);
-				m_ThreadInfo.CloseThread(pThreadInfo->m_u4ThreadID);
-				ResumeThread(1);
+				  //发现阻塞线程，重启相应的线程
+				  //ACE_OS::thr_kill(pThreadInfo->m_u4ThreadIndex, SIGALRM);
+				  AppLogManager::instance()->WriteLog(LOG_SYSTEM_WORKTHREAD, "[CMessageService::handle_timeout]  pThreadInfo = [%d] ThreadID = [%d] Thread is reset.", pThreadInfo->m_u4ThreadID, pThreadInfo->m_u4ThreadIndex);
+				  //m_ThreadInfo.CloseThread(pThreadInfo->m_u4ThreadID);
+				  //ResumeThread(1);
 			}
 			else
 			{
-				AppLogManager::instance()->WriteLog(LOG_SYSTEM_WORKTHREAD, "[CMessageService::handle_timeout] pThreadInfo = [%d] State = [%d] Time = [%04d-%02d-%02d %02d:%02d:%02d] PacketCount = [%d] LastCommand = [0x%x] PacketTime = [%d] CurrPacketCount = [%d] QueueCount = [%d].", 
+				AppLogManager::instance()->WriteLog(LOG_SYSTEM_WORKTHREAD, "[CMessageService::handle_timeout] pThreadInfo = [%d] State = [%d] Time = [%04d-%02d-%02d %02d:%02d:%02d] PacketCount = [%d] LastCommand = [0x%x] PacketTime = [%d] CurrPacketCount = [%d] QueueCount = [%d] BuffPacketUsed = [%d] BuffPacketFree = [%d].", 
 					pThreadInfo->m_u4ThreadID, 
 					pThreadInfo->m_u4State, 
 					dt.year(), dt.month(), dt.day(), dt.hour(), dt.minute(), dt.second(), 
@@ -357,7 +392,9 @@ int CMessageService::SaveThreadInfoData()
 					pThreadInfo->m_u2CommandID,
 					pThreadInfo->m_u2PacketTime,
 					pThreadInfo->m_u4CurrPacketCount,
-					(int)msg_queue()->message_count());
+					(int)msg_queue()->message_count(),
+					App_BuffPacketManager::instance()->GetBuffPacketUsedCount(),
+					App_BuffPacketManager::instance()->GetBuffPacketFreeCount());
 			}
 			pThreadInfo->m_u4CurrPacketCount = 0;
 		}
@@ -372,6 +409,7 @@ int CMessageService::SaveThreadInfoData()
 
 bool CMessageService::ResumeThread(int nThreadCount)
 {
+	OUR_DEBUG((LM_INFO,"[CMessageService::ResumeThread] nThreadCount = [%d].\n", nThreadCount));
 	ACE_Thread::spawn_n(1, &ACE_Task_Base::svc_run, (void *)this);
 
 	return true;

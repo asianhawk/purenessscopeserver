@@ -30,7 +30,6 @@ public:
 	int UnRegisterLog(CServerLogger * pServerLogger);
 
 	int WriteLog(int nLogType, const char* fmt, ...);
-	int WriteLog(int nLogType, int nIndex, char* szLofText);
 
 private:
 	int ProcessLog(int nLogType, ACE_TString *pLogText);

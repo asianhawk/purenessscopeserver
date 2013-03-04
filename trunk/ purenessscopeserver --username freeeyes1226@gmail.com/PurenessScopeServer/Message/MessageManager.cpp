@@ -5,6 +5,16 @@
 // 2009-01-29
 
 #include "MessageManager.h"
+#ifdef WIN32
+	#include "ProConnectHandle.h"
+#else
+	#include "ConnectHandler.h"
+#endif
+
+bool Delete_CommandInfo(_ClientCommandInfo* pClientCommandInfo)
+{
+	return pClientCommandInfo->m_u4CurrUsedCount == 0;
+}
 
 CMessageManager::CMessageManager(void)
 {
@@ -12,12 +22,12 @@ CMessageManager::CMessageManager(void)
 
 CMessageManager::~CMessageManager(void)
 {
+	OUR_DEBUG((LM_INFO, "[CMessageManager::~CMessageManager].\n"));
 	//Close();
 }
 
-bool CMessageManager::DoMessage(IMessage* pMessage, uint32& u4Len, uint16& u2CommandID)
+bool CMessageManager::DoMessage(IMessage* pMessage, uint16& u2CommandID)
 {
-	ACE_Time_Value tvDisposeCost;
 	if(NULL == pMessage)
 	{
 		OUR_DEBUG((LM_ERROR, "[CMessageManager::DoMessage] pMessage is NULL.\n"));
@@ -26,7 +36,7 @@ bool CMessageManager::DoMessage(IMessage* pMessage, uint32& u4Len, uint16& u2Com
 
 	//放给需要继承的ClientCommand类去处理
 	bool bDeleteFlag = true;         //数据包是否用完后删除
-	//OUR_DEBUG((LM_ERROR, "[CMessageManager::DoMessage]u2Len = %d u2CommandID = %d pMessage = 0x%08x.\n",u4Len, u2CommandID, (int)pMessage));
+	//OUR_DEBUG((LM_ERROR, "[CMessageManager::DoMessage]u2CommandID = %d.\n", u2CommandID));
 
 	CClientCommandList* pClientCommandList = GetClientCommandList(u2CommandID);
 	if(pClientCommandList != NULL)
@@ -35,14 +45,43 @@ bool CMessageManager::DoMessage(IMessage* pMessage, uint32& u4Len, uint16& u2Com
 		for(int i = 0; i < nCount; i++)
 		{
 			_ClientCommandInfo* pClientCommandInfo = pClientCommandList->GetClientCommandIndex(i);
-			if(NULL != pClientCommandInfo)
+			if(NULL != pClientCommandInfo && pClientCommandInfo->m_u1State == 0)
 			{
-				ACE_Time_Value tvDisposeBegin(ACE_OS::gettimeofday());
+				m_ThreadWriteLock.acquire();
+				pClientCommandInfo->m_u4CurrUsedCount++;
+				m_ThreadWriteLock.release();
+
+				//获得包长
+				_PacketInfo PacketInfoHead;
+				_PacketInfo PacketInfoBody;
+
+				pMessage->GetPacketHead(PacketInfoHead);
+				pMessage->GetPacketBody(PacketInfoBody);
+
+				//OUR_DEBUG((LM_ERROR, "[CMessageManager::DoMessage]u2CommandID = %d Begin.\n", u2CommandID));
 				pClientCommandInfo->m_pClientCommand->DoMessage(pMessage, bDeleteFlag);
-				ACE_Time_Value tvDisposeEnd(ACE_OS::gettimeofday());
-				tvDisposeCost = tvDisposeEnd - tvDisposeBegin;
-				pClientCommandInfo->m_u4Count++;
-				pClientCommandInfo->m_u4TimeCost += tvDisposeCost.msec();
+				//OUR_DEBUG((LM_ERROR, "[CMessageManager::DoMessage]u2CommandID = %d End.\n", u2CommandID));
+				m_ThreadWriteLock.acquire();
+				uint32 u4Cost = (uint32)pMessage->GetMessageBase()->m_ProfileTime.Stop();
+
+				//添加统计信息
+				AppCommandAccount::instance()->SaveCommandData(u2CommandID, (uint64)u4Cost, 
+					                                           pMessage->GetMessageBase()->m_u1PacketType, 
+															   pMessage->GetMessageBase()->m_u4HeadSrcSize + pMessage->GetMessageBase()->m_u4BodySrcSize, 
+															   (uint32)(PacketInfoHead.m_nDataLen + PacketInfoBody.m_nDataLen), 
+															   COMMAND_TYPE_IN);
+
+				if(pClientCommandInfo->m_u4CurrUsedCount > 0)
+				{
+					pClientCommandInfo->m_u4CurrUsedCount--;
+
+					//这里加一个判断，判断是否需要关闭
+					if(pClientCommandInfo->m_u1State == 1)
+					{
+						CloseCommandInfo(pClientCommandInfo->m_szModuleName);
+					}
+				}
+				m_ThreadWriteLock.release();
 			}
 		}		
 	}
@@ -84,7 +123,40 @@ bool CMessageManager::AddClientCommand(uint16 u2CommandID, CClientCommand* pClie
 		CClientCommandList* pClientCommandList = (CClientCommandList* )f->second;
 		if(NULL != pClientCommandList)
 		{
-			pClientCommandList->AddClientCommand(pClientCommand, pModuleName);
+			_ClientCommandInfo* pClientCommandInfo = pClientCommandList->AddClientCommand(pClientCommand, pModuleName);
+			if(NULL != pClientCommandInfo) 
+			{
+				//设置命令绑定ID
+				pClientCommandInfo->m_u2CommandID = u2CommandID;
+				
+				//添加到模块里面
+				string strModule = pModuleName;
+				mapModuleClient::iterator f = m_mapModuleClient.find(strModule);
+				if(f == m_mapModuleClient.end())
+				{
+					//找不到，创建新的模块信息
+					_ModuleClient* pModuleClient = new _ModuleClient();
+					if(NULL != pModuleClient)
+					{
+						pModuleClient->m_vecClientCommandInfo.push_back(pClientCommandInfo);
+						m_mapModuleClient.insert(mapModuleClient::value_type(strModule, pModuleClient));
+					}
+				}
+				else
+				{
+					//找到了，添加进去
+					_ModuleClient* pModuleClient = (_ModuleClient* )f->second;
+					if(NULL != pModuleClient)
+					{
+						pModuleClient->m_vecClientCommandInfo.push_back(pClientCommandInfo);
+					}
+				}
+				return true;
+			}
+			else
+			{
+				return false;
+			}
 		}
 		else
 		{
@@ -100,7 +172,36 @@ bool CMessageManager::AddClientCommand(uint16 u2CommandID, CClientCommand* pClie
 	}
 	else
 	{
-		pClientCommandList->AddClientCommand(pClientCommand, pModuleName);
+		_ClientCommandInfo* pClientCommandInfo = pClientCommandList->AddClientCommand(pClientCommand, pModuleName);
+		if(NULL != pClientCommandInfo)
+		{
+			//设置命令绑定ID
+			pClientCommandInfo->m_u2CommandID = u2CommandID;			
+			
+			//添加到模块里面
+			string strModule = pModuleName;
+			mapModuleClient::iterator f = m_mapModuleClient.find(strModule);
+			if(f == m_mapModuleClient.end())
+			{
+				//找不到，创建新的模块信息
+				_ModuleClient* pModuleClient = new _ModuleClient();
+				if(NULL != pModuleClient)
+				{
+					pModuleClient->m_vecClientCommandInfo.push_back(pClientCommandInfo);
+					m_mapModuleClient.insert(mapModuleClient::value_type(strModule, pModuleClient));
+				}
+			}
+			else
+			{
+				//找到了，添加进去
+				_ModuleClient* pModuleClient = (_ModuleClient* )f->second;
+				if(NULL != pModuleClient)
+				{
+					pModuleClient->m_vecClientCommandInfo.push_back(pClientCommandInfo);
+				}
+			}
+		}
+
 		m_mapClientCommand.insert(mapClientCommand::value_type(u2CommandID, pClientCommandList));
 		OUR_DEBUG((LM_ERROR, "[CMessageManager::AddClientCommand] u2CommandID = %d Add OK***.\n", u2CommandID));
 		return true;
@@ -117,6 +218,7 @@ bool CMessageManager::DelClientCommand(uint16 u2CommandID, CClientCommand* pClie
 		{
 			if(true == pClientCommandList->DelClientCommand(pClientCommand))
 			{
+				SAFE_DELETE(pClientCommandList);
 				m_mapClientCommand.erase(f);
 			}
 		}
@@ -131,6 +233,69 @@ bool CMessageManager::DelClientCommand(uint16 u2CommandID, CClientCommand* pClie
 	}
 }
 
+bool CMessageManager::UnloadModuleCommand(const char* pModuleName, uint8 u1State)
+{
+	string strModuleName = pModuleName;
+	mapModuleClient::iterator f = m_mapModuleClient.find(strModuleName);
+	if(f != m_mapModuleClient.end())
+	{
+		_ModuleClient* pModuleClient = (_ModuleClient* )f->second;
+		if(NULL != pModuleClient)
+		{
+			pModuleClient->m_u1ModuleState = u1State;
+			for(int i = 0; i < (int)pModuleClient->m_vecClientCommandInfo.size(); i++)
+			{
+				_ClientCommandInfo* pClientCommandInfo = (_ClientCommandInfo* )pModuleClient->m_vecClientCommandInfo[i];
+				if(NULL != pClientCommandInfo)
+				{
+					pClientCommandInfo->m_u1State = 1;
+				}
+			}
+
+			//查找已经等于0的，删除之
+			vector<_ClientCommandInfo*>::iterator fd = std::remove_if(pModuleClient->m_vecClientCommandInfo.begin(), pModuleClient->m_vecClientCommandInfo.end(), Delete_CommandInfo);
+			pModuleClient->m_vecClientCommandInfo.erase (fd, pModuleClient->m_vecClientCommandInfo.end());
+
+			if((int)pModuleClient->m_vecClientCommandInfo.size() == 0)
+			{
+				//如果没有这个模块要处理的消息了，则关闭之。
+				if(pModuleClient->m_u1ModuleState == (uint8)1)
+				{
+					App_ModuleLoader::instance()->UnLoadModule(pModuleName);
+					m_mapModuleClient.erase(f);
+					SAFE_DELETE(pModuleClient);
+				}
+
+				//如果是2，则重新加载这个模块
+				if(pModuleClient->m_u1ModuleState == (uint8)2)
+				{
+					_ModuleInfo* pModuleInfo = App_ModuleLoader::instance()->GetModuleInfo(pModuleName);
+					if(NULL != pModuleInfo)
+					{
+						//获取对象信息
+						string strModuleName = pModuleInfo->strModuleName;
+						string strModulePath = pModuleInfo->strModulePath;
+
+						//关闭模块对象
+						App_ModuleLoader::instance()->UnLoadModule(pModuleName);
+						m_mapModuleClient.erase(f);
+						SAFE_DELETE(pModuleClient);
+
+						//重新加载
+						App_ModuleLoader::instance()->LoadModule(strModulePath.c_str(), strModuleName.c_str());
+					}
+				}
+			}
+
+		}
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
 int CMessageManager::GetCommandCount()
 {
 	return (int)m_mapClientCommand.size();
@@ -138,15 +303,84 @@ int CMessageManager::GetCommandCount()
 
 void CMessageManager::Close()
 {
-	mapClientCommand::iterator b = m_mapClientCommand.begin();
-	mapClientCommand::iterator e = m_mapClientCommand.end();
-
-	for(b; b != e; b++)
+	//类关闭的清理工作
+	for(mapClientCommand::iterator b = m_mapClientCommand.begin(); b != m_mapClientCommand.end(); b++)
 	{
 		 CClientCommandList* pClientCommandList = (CClientCommandList* )b->second;
 		 SAFE_DELETE(pClientCommandList);
 	}
 
+	for(mapModuleClient::iterator Mb = m_mapModuleClient.begin(); Mb != m_mapModuleClient.end(); Mb++)
+	{
+		_ModuleClient* pModuleClient = (_ModuleClient* )Mb->second;
+		SAFE_DELETE(pModuleClient);
+	}
+
 	m_mapClientCommand.clear();
 }
 
+bool CMessageManager::CloseCommandInfo(const char* pModuleName)
+{
+	string strModuleName = pModuleName;
+	mapModuleClient::iterator f = m_mapModuleClient.find(strModuleName);
+	if(f != m_mapModuleClient.end())
+	{
+		_ModuleClient* pModuleClient = (_ModuleClient* )f->second;
+		if(NULL != pModuleClient)
+		{
+			for(int i = 0; i < (int)pModuleClient->m_vecClientCommandInfo.size(); i++)
+			{
+				_ClientCommandInfo* pClientCommandInfo = (_ClientCommandInfo* )pModuleClient->m_vecClientCommandInfo[i];
+				if(NULL != pClientCommandInfo)
+				{
+					if(pClientCommandInfo->m_u4CurrUsedCount == 0)
+					{
+						pModuleClient->m_vecClientCommandInfo.erase((pModuleClient->m_vecClientCommandInfo.begin() + i));
+						break;
+					}
+				}
+			}
+
+			if((int)pModuleClient->m_vecClientCommandInfo.size() == 0)
+			{
+				//如果没有这个模块要处理的消息了，则关闭之。
+				if(pModuleClient->m_u1ModuleState == (uint8)1)
+				{
+					App_ModuleLoader::instance()->UnLoadModule(pModuleName);
+					m_mapModuleClient.erase(f);
+					SAFE_DELETE(pModuleClient);
+				}
+
+				//如果是2，则重新加载这个模块
+				if(pModuleClient->m_u1ModuleState == (uint8)2)
+				{
+					_ModuleInfo* pModuleInfo = App_ModuleLoader::instance()->GetModuleInfo(pModuleName);
+					if(NULL != pModuleInfo)
+					{
+						//获取对象信息
+						string strModuleName = pModuleInfo->strModuleName;
+						string strModulePath = pModuleInfo->strModulePath;
+
+						//关闭模块对象
+						App_ModuleLoader::instance()->UnLoadModule(pModuleName);
+						m_mapModuleClient.erase(f);
+						SAFE_DELETE(pModuleClient);
+
+						//重新加载
+						App_ModuleLoader::instance()->LoadModule(strModulePath.c_str(), strModuleName.c_str());
+					}
+				}
+			}
+		}
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+mapModuleClient* CMessageManager::GetModuleClient()
+{
+	return &m_mapModuleClient;
+}

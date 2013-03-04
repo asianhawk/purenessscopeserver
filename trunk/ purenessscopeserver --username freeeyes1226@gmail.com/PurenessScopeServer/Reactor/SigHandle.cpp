@@ -29,12 +29,17 @@ int CSigHandle::RegisterSignal(ACE_Reactor* pReactor)
 	}
 	else
 	{
+		OUR_DEBUG((LM_INFO,"[CSigHandle::handle_signal] pReactor=0x%08x.\n", pReactor));
 		return pReactor->register_handler(signalSet, this);
 	}
 }
 
 int CSigHandle::handle_signal(int nSigNum, siginfo_t* pSigInfo, ucontext_t* pContext)
 {
+	if(pSigInfo != NULL && pContext != NULL)
+	{
+	}
+	
 	switch(nSigNum)
 	{
 	case SIGINT:
