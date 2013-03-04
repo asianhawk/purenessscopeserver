@@ -1,5 +1,4 @@
 #include "ForbiddenIP.h"
-#include "strtk.hpp"
 
 CForbiddenIP::CForbiddenIP()
 {
@@ -14,24 +13,55 @@ CForbiddenIP::~CForbiddenIP()
 bool CForbiddenIP::Init(const char* szConfigPath)
 {
 	OUR_DEBUG((LM_INFO, "[CForbiddenIP::Init]Filename = %s.\n", szConfigPath));
-	
-	LoadListCommon(szConfigPath, m_VecForeverForbiddenIP);
+	if(!m_AppConfig.ReadConfig(szConfigPath))
+	{
+		OUR_DEBUG((LM_INFO, "[CForbiddenIP::Init]Read Filename = %s error.\n", szConfigPath));
+		return false;
+	}
+
+	m_VecForeverForbiddenIP.clear();
+	m_VecTempForbiddenIP.clear();
+
+	ACE_TString strValue;
+	char szName1[MAX_BUFF_20]       = {'\0'};
+	char szIP[MAX_BUFF_20]          = {'\0'};
+	char szConnectType[MAX_BUFF_20] = {'\0'};
+
+	_ForbiddenIP ForbiddenIP;
+
+	//获得反应器个数
+	m_AppConfig.GetValue("IPCount", strValue, "\\ForbiddenIP");
+	int nCount = ACE_OS::atoi((char*)strValue.c_str());
+
+	for(int i = 0; i < nCount; i++)
+	{
+		sprintf_safe(szName1, MAX_BUFF_20, "IP%d", i);
+		m_AppConfig.GetValue(szName1, strValue, "\\ForbiddenIP");
+
+		if(true == ParseTXT(strValue.c_str(), szIP, szConnectType))
+		{
+			sprintf_safe(ForbiddenIP.m_szClientIP, MAX_BUFF_20, "%s", szIP);
+			if(ACE_OS::strcmp(szConnectType, "TCP") == 0)
+			{
+				ForbiddenIP.m_u1ConnectType = CONNECT_TCP;
+			}
+			else
+			{
+				ForbiddenIP.m_u1ConnectType = CONNECT_UDP;
+			}
+		}		
+
+		m_VecForeverForbiddenIP.push_back(ForbiddenIP);
+	}
 
 	return true;
 }
 
-bool CForbiddenIP::CheckIP(uint32 clientip, uint8 u1ConnectType)
+bool CForbiddenIP::CheckIP(const char* pIP, uint8 u1ConnectType)
 {
-	uint32 tmpip = 0;
-
 	for(int i = 0; i < (int)m_VecForeverForbiddenIP.size(); i++)
 	{
-		if (m_VecForeverForbiddenIP[i].m_u1ConnectType != u1ConnectType)
-			continue;
-
-		tmpip = m_VecForeverForbiddenIP[i].pattern & clientip;
-
-		if(tmpip == m_VecForeverForbiddenIP[i].ip)
+		if(ACE_OS::strcmp(pIP, m_VecForeverForbiddenIP[i].m_szClientIP) == 0 && m_VecForeverForbiddenIP[i].m_u1ConnectType == u1ConnectType)
 		{
 			return false;
 		}
@@ -39,8 +69,7 @@ bool CForbiddenIP::CheckIP(uint32 clientip, uint8 u1ConnectType)
 
 	for(VecForbiddenIP::iterator b = m_VecTempForbiddenIP.begin(); b != m_VecTempForbiddenIP.end(); b++)
 	{
-		if ((*b).m_u1ConnectType != u1ConnectType)
-		if((*b).ip == clientip)
+		if(ACE_OS::strcmp(pIP, (*b).m_szClientIP) == 0 && (*b).m_u1ConnectType == u1ConnectType)
 		{
 			//如果是禁止时间段内，则返回false，否则删除定时信息。
 			if((*b).m_tvBegin.sec() + (*b).m_u4Second > (uint32)ACE_OS::gettimeofday().sec())
@@ -61,9 +90,7 @@ bool CForbiddenIP::CheckIP(uint32 clientip, uint8 u1ConnectType)
 bool CForbiddenIP::AddForeverIP(const char* pIP, uint8 u1ConnectType)
 {
 	_ForbiddenIP ForbiddenIP;
-	
-	ParseIp(pIP, ForbiddenIP);
-
+	sprintf_safe(ForbiddenIP.m_szClientIP, MAX_IP_SIZE, "%s", pIP);
 	ForbiddenIP.m_u1ConnectType = u1ConnectType;
 	m_VecForeverForbiddenIP.push_back(ForbiddenIP);
 	SaveConfig();
@@ -74,10 +101,7 @@ bool CForbiddenIP::AddForeverIP(const char* pIP, uint8 u1ConnectType)
 bool CForbiddenIP::AddTempIP(const char* pIP, uint32 u4Second, uint8 u1ConnectType)
 {
 	_ForbiddenIP ForbiddenIP;
-	
-	if (!ParseIp(pIP, ForbiddenIP))
-		return false;
-
+	sprintf_safe(ForbiddenIP.m_szClientIP, MAX_IP_SIZE, "%s", pIP);
 	ForbiddenIP.m_u1Type        = 1;
 	ForbiddenIP.m_tvBegin       = ACE_OS::gettimeofday();
 	ForbiddenIP.m_u4Second      = u4Second;
@@ -118,6 +142,7 @@ bool CForbiddenIP::DelTempIP(const char* pIP, uint8 u1ConnectType)
 
 bool CForbiddenIP::SaveConfig()
 {
+
 	//将修改的配置信息写入文件
 	FILE* pFile = ACE_OS::fopen(FORBIDDENIP_FILE, "wb+");
 	if(NULL == pFile)
@@ -127,21 +152,28 @@ bool CForbiddenIP::SaveConfig()
 	}
 
 	char szTemp[MAX_BUFF_500] = {'\0'};
+	sprintf_safe(szTemp, MAX_BUFF_500, "[ForbiddenIP]\r\nIPCount=%d\r\n", (int)m_VecForeverForbiddenIP.size());
 
-	size_t stSize = 0;
+	size_t stSize = ACE_OS::fwrite(szTemp, sizeof(char), ACE_OS::strlen(szTemp), pFile);
+	if(stSize !=  ACE_OS::strlen(szTemp))
+	{
+		OUR_DEBUG((LM_ERROR, "[CForbiddenIP::SaveConfig]Write file fail.\n"));
+		ACE_OS::fclose(pFile);
+		return false;
+	}
 
 	for(int i = 0; i < (int)m_VecForeverForbiddenIP.size(); i++)
 	{
 		if(m_VecForeverForbiddenIP[i].m_u1ConnectType == CONNECT_TCP)
 		{
-			sprintf_safe(szTemp, MAX_BUFF_500, "TCP,%s\r\n", i, m_VecForeverForbiddenIP[i].m_szClientIP); 
+			sprintf_safe(szTemp, MAX_BUFF_500, "IP%d=%s,TCP\r\n", i, m_VecForeverForbiddenIP[i].m_szClientIP); 
 		}
 		else
 		{
-			sprintf_safe(szTemp, MAX_BUFF_500, "UDP,%s\r\n", i, m_VecForeverForbiddenIP[i].m_szClientIP); 
+			sprintf_safe(szTemp, MAX_BUFF_500, "IP%d=%s,UDP\r\n", i, m_VecForeverForbiddenIP[i].m_szClientIP); 
 		}
 		
-		stSize = ACE_OS::fwrite(szTemp, sizeof(char), ACE_OS::strlen(szTemp), pFile);
+		size_t stSize = ACE_OS::fwrite(szTemp, sizeof(char), ACE_OS::strlen(szTemp), pFile);
 		if(stSize !=  ACE_OS::strlen(szTemp))
 		{
 			OUR_DEBUG((LM_ERROR, "[CForbiddenIP::SaveConfig]Write file fail.\n"));
@@ -155,6 +187,39 @@ bool CForbiddenIP::SaveConfig()
 	return true;
 }
 
+bool CForbiddenIP::ParseTXT(const char* pText, char* pIP, char* pConnectType)
+{
+	int i           = 0;
+	pIP[0]          = '\0';
+	pConnectType[0] = '\0';
+	int nLen        = (int)ACE_OS::strlen(pText);
+
+	bool bState = false;
+	for(i = 0; i < nLen; i++)
+	{
+		if(pText[i] == ',')
+		{
+			bState = true;
+			break;
+		}
+	}
+
+	if(i >= 20 || nLen >= 40)
+	{
+		bState = false;
+	}
+
+	if(bState == true)
+	{
+		ACE_OS::memcpy(pIP, pText, i);
+		pIP[i] = '\0';
+		ACE_OS::memcpy(pConnectType, &pText[i + 1], nLen - i - 1);
+		pConnectType[nLen - i - 1] = '\0';
+	}
+
+	return bState;
+}
+
 VecForbiddenIP* CForbiddenIP::ShowForeverIP() const
 {
 	return (VecForbiddenIP*)&m_VecForeverForbiddenIP;
@@ -163,113 +228,4 @@ VecForbiddenIP* CForbiddenIP::ShowForeverIP() const
 VecForbiddenIP* CForbiddenIP::ShowTemoIP() const
 {
 	return (VecForbiddenIP*)&m_VecTempForbiddenIP;
-}
-
-void CForbiddenIP::LoadListCommon( LPCTSTR pszFileName, VecForbiddenIP& iplist )
-{
-	iplist.clear();
-
-	_tifstream infile;
-
-	infile.open(pszFileName, ios::_Nocreate);
-
-	if (!infile.is_open())
-		return;
-
-	_ForbiddenIP ipadr;
-
-	TCHAR szIpLine[MAX_PATH] = {0};
-
-	while (!infile.eof())
-	{
-		infile.getline(szIpLine, MAX_PATH);
-
-		ACE_OS::memset(&ipadr, 0, sizeof(ipadr));
-
-		if (!ParseIp(szIpLine, ipadr))
-			continue;
-
-		iplist.push_back(ipadr);
-	}	
-}
-
-bool CForbiddenIP::ParseIp( const char* pszIp, _ForbiddenIP& ipadr )
-{
-	if (0 == pszIp)
-		return false;
-
-	int breakpos = -1;
-	int loc = 0;
-
-	_tstring s;
-	_tstring delimiters = TEXT(".");
-	std::vector<_tstring> strvector;
-
-	LPCSTR pszDelimiter = 0;
-
-	pszDelimiter = ACE_OS::strstr(pszIp, TEXT(","));
-
-	if(ACE_OS::strstr(pszIp, "udp") != 0 ||
-		ACE_OS::strstr(pszIp, "UDP") != 0)
-	{
-		ipadr.m_u1ConnectType = CONNECT_UDP;
-	}
-	else
-	{
-		ipadr.m_u1ConnectType = CONNECT_TCP;
-	}
-
-	if (pszDelimiter == 0)
-	{
-		s = pszIp;
-	}
-	else
-	{
-		pszDelimiter++;
-		s = pszDelimiter;
-	}
-
-	sprintf_safe(ipadr.m_szClientIP, MAX_BUFF_20, "%s", s.c_str());
-	strtk::parse(s, delimiters, strvector);
-
-	breakpos = -1;
-
-	for (int i = 0; i < 4 && i < strvector.size(); i++)
-	{
-		loc = strvector[i].find(TEXT('*'));
-
-		if (loc != _tstring::npos)
-		{
-			breakpos = i;
-			break;
-		}
-		else
-		{
-			ipadr.b[i] = ACE_OS::atoi(strvector[i].c_str());
-		}
-	}
-
-	if (ipadr.ip == 0)
-		return false;
-
-	uint32 pattern = 0xffffffff;
-
-	if (-1 != breakpos)
-	{
-		uint8* pPattern = (uint8*)&pattern;
-
-		breakpos = 4 - breakpos;
-
-		for (int i = 0; i < breakpos; i++)
-		{
-			pPattern[i] = 0;
-		}
-
-		if (pattern == 0)
-			pattern = 0xFFFFFFFF;
-	}
-
-	ipadr.pattern = pattern;
-
-	return true;
 }
