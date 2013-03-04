@@ -66,6 +66,18 @@ int main(int argc, char* argv[])
 
 int main(int argc, char* argv[])
 {
+	TCHAR szFileName[MAX_PATH] = {0};
+	GetModuleFileName(0, szFileName, MAX_PATH);
+	LPTSTR pszEnd = _tcsrchr(szFileName, TEXT('\\'));
+
+	if (pszEnd != 0)
+	{
+		pszEnd++;
+		*pszEnd = 0;
+	}
+
+	SetCurrentDirectory(szFileName);
+
 	ACE::init();
 	int nServerType = SERVER_ACTOR_PROACTOR;
 
