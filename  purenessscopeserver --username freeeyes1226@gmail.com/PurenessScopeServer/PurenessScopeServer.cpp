@@ -12,9 +12,16 @@
 
 int main(int argc, char* argv[])
 {
+	if(argc > 0)
+	{
+		OUR_DEBUG((LM_INFO, "[main]argc = %d.\n", argc));
+		for(int i = 0; i < argc; i++)
+		{
+			OUR_DEBUG((LM_INFO, "[main]argc(%d) = %s.\n", argc, argv[i]));
+		}
+	}
+	
 	ACE::init();
-
-	int nServerType = SERVER_ACTOR_REACTOR;
 
 	//第一步，读取配置文件
 	if(!App_MainConfig::instance()->Init(MAINCONFIG))
@@ -40,9 +47,13 @@ int main(int argc, char* argv[])
 	}
 
 	OUR_DEBUG((LM_INFO, "[main]Server Run is End.\n"));
-	App_ServerManager::instance()->Close();
+
+	ACE_Time_Value tvSleep(2, 0);
+	ACE_OS::sleep(tvSleep);
 
 	ACE::fini();
+
+	OUR_DEBUG((LM_INFO, "[main]Server Exit.\n"));
 
 	return 0;
 }

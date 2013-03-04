@@ -25,7 +25,9 @@ CConsoleHandler::CConsoleHandler(void)
 
 CConsoleHandler::~CConsoleHandler(void)
 {
+	OUR_DEBUG((LM_ERROR, "[CConsoleHandler::~CConsoleHandler].\n"));
 	SAFE_DELETE(m_pTCClose);
+	OUR_DEBUG((LM_ERROR, "[CConsoleHandler::~CConsoleHandler]End.\n"));
 }
 
 const char* CConsoleHandler::GetError()
@@ -289,8 +291,6 @@ int CConsoleHandler::handle_input(ACE_HANDLE fd)
 
 	m_pCurrMessage->wr_ptr(nDataLen);
 
-	int na = (int)m_pCurrMessage->length();
-
 	//如果没有读完，短读
 	if(m_pCurrMessage->size() > m_u4CurrSize)
 	{
@@ -398,6 +398,10 @@ int CConsoleHandler::handle_input(ACE_HANDLE fd)
 //关闭链接
 int CConsoleHandler::handle_close(ACE_HANDLE h, ACE_Reactor_Mask mask)
 {
+	if(h == ACE_INVALID_HANDLE)
+	{
+		OUR_DEBUG((LM_DEBUG,"[CConsoleHandler::handle_close] h is NULL mask=%d.\n", (int)mask));
+	}
 
 	OUR_DEBUG((LM_DEBUG,"[CConsoleHandler::handle_close]Connectid=[%d] begin(%d)...\n",GetConnectID(), errno));
 	Close(2);

@@ -17,14 +17,22 @@ CLogManager::CLogManager(void)
 
 CLogManager::~CLogManager(void)
 {
+	OUR_DEBUG((LM_ERROR,"[CLogManager::~CLogManager].\n"));
+	m_mapServerLogger.Clear();
+	OUR_DEBUG((LM_ERROR,"[CLogManager::~CLogManager]End.\n"));
 }
 
 int CLogManager::open(void *args)
 {
+	if(args != NULL)
+	{
+		OUR_DEBUG((LM_ERROR,"[CLogManager::open]args is not NULL.\n"));
+	}
+	
 	if(activate(THR_NEW_LWP | THR_DETACHED, m_nThreadCount) == -1)
 	{
 		m_blRun = false;
-		OUR_DEBUG((LM_ERROR,"[%D|%t] %p\n","[CLogManager::open] activate is error[%d].", errno));
+		OUR_DEBUG((LM_ERROR,"[CLogManager::open] activate is error[%d].", errno));
 		return -1;
 	}
 
@@ -39,13 +47,13 @@ int CLogManager::svc(void)
 	//ACE_Time_Value     xtime;
 	while(m_blRun)
 	{
-		int msgcount = (int)msg_queue()->message_count();
-
 		mb = NULL;
 		//xtime=ACE_OS::gettimeofday()+ACE_Time_Value(0, MAX_MSG_PUTTIMEOUT);
 		if(getq(mb, 0) == -1)
 		{
-			continue;
+			OUR_DEBUG((LM_ERROR,"[CLogManager::svc] get error errno = [%d].\n", errno));
+			m_blRun = false;
+			break;
 		}
 
 		if (mb == NULL)
@@ -74,7 +82,6 @@ int CLogManager::svc(void)
 
 int CLogManager::Close()
 {
-	m_blRun = false;
 	msg_queue()->deactivate();
 	msg_queue()->flush();
 	return 0;
@@ -144,10 +151,10 @@ int CLogManager::PutLog(int nLogType, ACE_TString *pLogText)
 			return 1;
 		}
 		ACE_Time_Value xtime;
-		xtime = ACE_OS::gettimeofday()+ACE_Time_Value(0, MAX_MSG_PUTTIMEOUT);
+		xtime = ACE_OS::gettimeofday();
 		if(this->putq(mb, &xtime) == -1)
 		{
-			OUR_DEBUG((LM_ERROR,"[CLogManager::PutLog] CLogManager putq error!\n"));
+			OUR_DEBUG((LM_ERROR,"[CLogManager::PutLog] CLogManager putq error(%s)!\n", pLogText->c_str()));
 			mb->release();
 			return -1;
 		}
@@ -258,32 +265,3 @@ int CLogManager::WriteLog(int nLogType, const char* fmt, ...)
 	return nRet;
 }
 
-int CLogManager::WriteLog(int nLogType, int nIndex, char* szLofText)
-{
-	int  nRet = 0;
-	char szTemp[MAX_BUFF_1024*5] = {'\0'};
-	ACE_TString* pstrLog= new ACE_TString(szTemp,ACE_OS::strlen(szLofText));
-	if (pstrLog)
-	{
-
-		if (IsRun()) 
-		{
-			nRet = PutLog(nLogType, pstrLog);
-			if (nRet) 
-			{
-				delete pstrLog;
-				pstrLog = NULL;
-			}
-		} 
-		else 
-		{
-			delete pstrLog;
-			pstrLog = NULL;
-		}
-	}
-	else 
-	{
-		nRet = -1;
-	}
-	return nRet;
-}

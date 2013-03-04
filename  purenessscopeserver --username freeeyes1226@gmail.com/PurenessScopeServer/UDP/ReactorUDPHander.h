@@ -13,6 +13,7 @@
 #include "MessageBlockManager.h"
 #include "PacketParsePool.h"
 #include "MakePacket.h"
+#include "CommandAccount.h"
 
 class CReactorUDPHander : public ACE_Event_Handler
 {
@@ -26,7 +27,7 @@ public:
 
 	int  OpenAddress(const ACE_INET_Addr& AddrRemote, ACE_Reactor* pReactor);
 	void Close();
-	bool SendMessage(const char* pMessage, uint32 u4Len, const char* szIP, int nPort, bool blHead = true);
+	bool SendMessage(const char* pMessage, uint32 u4Len, const char* szIP, int nPort, bool blHead = true, uint16 u2CommandID = 0);
 	_ClientConnectInfo GetClientConnectInfo();
 
 private:

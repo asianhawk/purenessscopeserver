@@ -20,6 +20,9 @@ public:
 
 	void Init(uint32 u4PacketCount);
 	void Close();
+	
+	uint32 GetBuffPacketUsedCount();
+	uint32 GetBuffPacketFreeCount();
 
 	IBuffPacket* Create();
 	bool Delete(IBuffPacket* pBuffPacket);

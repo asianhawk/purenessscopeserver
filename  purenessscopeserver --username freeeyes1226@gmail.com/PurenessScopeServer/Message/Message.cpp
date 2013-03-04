@@ -8,7 +8,6 @@
 
 CMessage::CMessage(void)
 {
-	m_pRecvPacket   = NULL;
 	m_pMessageBase  = NULL;
 	m_pmbHead       = NULL;
 	m_pmbBody       = NULL;
@@ -19,7 +18,9 @@ CMessage::CMessage(void)
 
 CMessage::~CMessage(void)
 {
+	//OUR_DEBUG((LM_INFO, "[CMessage::~CMessage].\n"));
 	Close();
+	//OUR_DEBUG((LM_INFO, "[CMessage::~CMessage]End.\n"));
 }
 
 const char* CMessage::GetError()
@@ -38,32 +39,9 @@ void CMessage::SetMessageBase(_MessageBase* pMessageBase)
 	m_pMessageBase = pMessageBase;
 }
 
-bool CMessage::SetRecvPacket(IBuffPacket* pRecvPacket)
-{
-	if(NULL == pRecvPacket)
-	{
-		sprintf_safe(m_szError, MAX_BUFF_500, "[CMessage::SetRecvPacket]Set RecvPacket is NULL");
-		return false;
-	}
-
-	if(NULL != m_pRecvPacket)
-	{
-		delete m_pRecvPacket;
-		m_pRecvPacket = NULL;
-	}
-	
-	m_pRecvPacket = pRecvPacket;
-	return true;
-}
-
 _MessageBase* CMessage::GetMessageBase()
 {
 	return m_pMessageBase;
-}
-
-IBuffPacket* CMessage::GetRecvPacket()
-{
-	return m_pRecvPacket;
 }
 
 bool CMessage::GetPacketHead(_PacketInfo& PacketInfo)
@@ -114,12 +92,6 @@ void CMessage::Close()
 		m_pMessageBase = NULL;
 	}
 
-	if(NULL != m_pRecvPacket)
-	{
-		delete m_pRecvPacket;
-		m_pRecvPacket = NULL;
-	}
-
 	if(NULL != m_pmbHead)
 	{
 		m_pmbHead->release();
@@ -154,7 +126,9 @@ CMessagePool::CMessagePool()
 
 CMessagePool::~CMessagePool()
 {
+	OUR_DEBUG((LM_INFO, "[CMessagePool::~CMessagePool].\n"));
 	Close();
+	OUR_DEBUG((LM_INFO, "[CMessagePool::~CMessagePool]End.\n"));
 }
 
 void CMessagePool::Init(uint32 u4PacketCount)
@@ -179,19 +153,13 @@ void CMessagePool::Init(uint32 u4PacketCount)
 void CMessagePool::Close()
 {
 	//清理所有已存在的指针
-	mapMessage::iterator itorFreeB = m_mapMessageFree.begin();
-	mapMessage::iterator itorFreeE = m_mapMessageFree.end();
-
-	for(itorFreeB; itorFreeB != itorFreeE; itorFreeB++)
+	for(mapMessage::iterator itorFreeB = m_mapMessageFree.begin(); itorFreeB != m_mapMessageFree.end(); itorFreeB++)
 	{
 		CMessage* pPacket = (CMessage* )itorFreeB->second;
 		SAFE_DELETE(pPacket);
 	}
 
-	mapMessage::iterator itorUsedB = m_mapMessageUsed.begin();
-	mapMessage::iterator itorUsedE = m_mapMessageUsed.end();
-
-	for(itorUsedB; itorUsedB != itorUsedE; itorUsedB++)
+	for(mapMessage::iterator itorUsedB = m_mapMessageUsed.begin(); itorUsedB != m_mapMessageUsed.end(); itorUsedB++)
 	{
 		CMessage* pPacket = (CMessage* )itorUsedB->second;
 		SAFE_DELETE(pPacket);

@@ -14,7 +14,7 @@ LIB_BASE = libTcpTest.so
 all:$(LIB_BASE) Makefile
 
 $(LIB_BASE):$(PATS)
-	$(CC) -shared -o $(LIB_BASE) $(LIB_BASE_OBJS)
+	$(CC) -shared -o $(LIB_BASE) $(LIB_BASE_OBJS) $(LIBS)
 
 # «Â¿Ì
 clean:

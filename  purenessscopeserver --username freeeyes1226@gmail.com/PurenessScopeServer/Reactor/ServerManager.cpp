@@ -2,16 +2,18 @@
 
 CServerManager::CServerManager(void)
 {
+	m_pFileLogger = NULL;
 }
 
 CServerManager::~CServerManager(void)
 {
+	OUR_DEBUG((LM_INFO, "[CServerManager::~CServerManager].\n"));
+	SAFE_DELETE(m_pFileLogger);
 }
 
 bool CServerManager::Init()
 {
 	int nServerPortCount    = App_MainConfig::instance()->GetServerPortCount();
-	int nUDPServerPortCount = App_MainConfig::instance()->GetUDPServerPortCount();
 	int nReactorCount       = App_MainConfig::instance()->GetReactorCount();
 
 	bool blState = false;
@@ -27,7 +29,7 @@ bool CServerManager::Init()
 	}
 
 	//初始化反应器
-	for(int i = 0 ; i < nReactorCount + 1; i++)
+	for(int i = 0 ; i < nReactorCount; i++)
 	{
 		OUR_DEBUG((LM_INFO, "[CServerManager::Init()]... i=[%d].\n",i));
 		if(i == 0)
@@ -65,16 +67,16 @@ bool CServerManager::Init()
 	}
 
 	//初始化日志系统线程
-	CFileLogger* pFileLogger = new CFileLogger();
-	if(NULL == pFileLogger)
+	m_pFileLogger = new CFileLogger();
+	if(NULL == m_pFileLogger)
 	{
 		OUR_DEBUG((LM_INFO, "[CServerManager::Init]pFileLogger new is NULL.\n"));
 		return false;
 	}
 
-	pFileLogger->Init();
+	m_pFileLogger->Init();
 	AppLogManager::instance()->Init();
-	if(0 != AppLogManager::instance()->RegisterLog(pFileLogger))
+	if(0 != AppLogManager::instance()->RegisterLog(m_pFileLogger))
 	{
 		OUR_DEBUG((LM_INFO, "[CServerManager::Init]AppLogManager::instance()->RegisterLog error.\n"));
 		return false;
@@ -83,6 +85,9 @@ bool CServerManager::Init()
 	{
 		OUR_DEBUG((LM_INFO, "[CServerManager::Init]AppLogManager is OK.\n"));
 	}
+
+	//初始化防攻击系统
+	App_IPAccount::instance()->Init(App_MainConfig::instance()->GetValidConnectCount());
 
 	//初始化BuffPacket缓冲池
 	App_BuffPacketManager::instance()->Init(BUFFPACKET_MAX_COUNT);
@@ -96,7 +101,7 @@ bool CServerManager::Init()
 	//初始化Message对象池
 	App_MessagePool::instance()->Init(MAX_MESSAGE_POOL);
 
-	//初始化ProConnectHandler对象池
+	//初始化ConnectHandler对象池
 	if(App_MainConfig::instance()->GetHandleCount() <= 0)
 	{
 		App_ConnectHandlerPool::instance()->Init(MAX_HANDLE_POOL);
@@ -105,6 +110,12 @@ bool CServerManager::Init()
 	{
 		App_ConnectHandlerPool::instance()->Init(App_MainConfig::instance()->GetHandleCount());
 	}
+	
+	//初始化统计模块功能
+	AppCommandAccount::instance()->Init(App_MainConfig::instance()->GetCommandAccount());
+
+	//初始化链接管理器
+	App_ConnectManager::instance()->Init(App_MainConfig::instance()->GetSendQueueCount());
 
 	//初始化消息处理线程
 	App_MessageService::instance()->Init(App_MainConfig::instance()->GetThreadCount(), App_MainConfig::instance()->GetMsgMaxQueue(), App_MainConfig::instance()->GetMgsHighMark(), App_MainConfig::instance()->GetMsgLowMark());
@@ -116,6 +127,8 @@ bool CServerManager::Init()
 	App_ServerObject::instance()->SetPacketManager((IPacketManager* )App_BuffPacketManager::instance());
 	App_ServerObject::instance()->SetClientManager((IClientManager* )App_ClientReConnectManager::instance());
 	App_ServerObject::instance()->SetUDPConnectManager((IUDPConnectManager* )App_ReUDPManager::instance());
+	App_ServerObject::instance()->SetTimerManager((ActiveTimer* )App_TimerManager::instance());
+	App_ServerObject::instance()->SetModuleMessageManager((IModuleMessageManager* )App_ModuleMessageManager::instance());
 
 	//初始化模块加载
 	blState = App_ModuleLoader::instance()->LoadModule(App_MainConfig::instance()->GetModulePath(), App_MainConfig::instance()->GetModuleString());
@@ -137,7 +150,6 @@ bool CServerManager::Start()
 
 	//启动TCP监听
 	int nServerPortCount = App_MainConfig::instance()->GetServerPortCount();
-	bool blState = false;
 
 	for(int i = 0 ; i < nServerPortCount; i++)
 	{
@@ -246,6 +258,15 @@ bool CServerManager::Start()
 		AppLogManager::instance()->WriteLog(LOG_SYSTEM, "[CServerManager::Init]AppLogManager is OK.");
 	}
 
+	/*
+	//设置定时器策略(使用高精度定时器)
+	(void) ACE_High_Res_Timer::global_scale_factor ();
+	auto_ptr<ACE_Timer_Heap_Variable_Time_Source> tq(new ACE_Timer_Heap_Variable_Time_Source);
+	tq->set_time_policy(&ACE_High_Res_Timer::gettimeofday_hr);
+	App_TimerManager::instance()->timer_queue(tq);
+	tq.release();
+	*/
+
 	//启动定时器
 	if(0 != App_TimerManager::instance()->activate())
 	{
@@ -263,9 +284,6 @@ bool CServerManager::Start()
 	//启动中间服务器链接管理器
 	App_ClientReConnectManager::instance()->Init(App_ReactorManager::instance()->GetAce_Reactor(REACTOR_POSTDEFINE));
 	App_ClientReConnectManager::instance()->StartConnectTask(CONNECT_LIMIT_RETRY);
-
-	//开始消息包分解线程
-	App_MakePacket::instance()->Start();
 
 	//开始消息处理线程
 	App_MessageService::instance()->Start();
@@ -290,17 +308,23 @@ bool CServerManager::Close()
 	OUR_DEBUG((LM_INFO, "[CServerManager::Close]Close begin....\n"));
 	m_ConnectAcceptorManager.Close();
 	m_ConnectConsoleAcceptor.close();
+	OUR_DEBUG((LM_INFO, "[CServerManager::Close]Close App_TimerManager OK.\n"));
+	App_TimerManager::instance()->deactivate();
+	OUR_DEBUG((LM_INFO, "[CServerManager::Close]Close App_ReUDPManager OK.\n"));
 	App_ReUDPManager::instance()->Close();
-	OUR_DEBUG((LM_INFO, "[CServerManager::Close]Close m_ConnectAcceptorManager OK.\n"));
-	App_MakePacket::instance()->Close();
-	OUR_DEBUG((LM_INFO, "[App_MessageService::Close]Close App_MakePacket OK.\n"));
+	OUR_DEBUG((LM_INFO, "[CServerManager::Close]Close App_ModuleLoader OK.\n"));
+	App_ModuleLoader::instance()->Close();
+	OUR_DEBUG((LM_INFO, "[CServerManager::Close]Close App_MessageManager OK.\n"));
+	App_MessageManager::instance()->Close();
+	OUR_DEBUG((LM_INFO, "[CServerManager::Close]Close App_ConnectManager OK.\n"));
 	App_MessageService::instance()->Close();
 	OUR_DEBUG((LM_INFO, "[App_MessageService::Close]Close App_MessageService OK.\n"));
-	App_TimerManager::instance()->close();
 	App_ConnectManager::instance()->CloseAll();
 	OUR_DEBUG((LM_INFO, "[CServerManager::Close]Close App_ConnectManager OK.\n"));
 	App_ClientReConnectManager::instance()->Close();
 	OUR_DEBUG((LM_INFO, "[CServerManager::Close]Close App_ClientReConnectManager OK.\n"));
+	AppCommandAccount::instance()->SaveCommandDataLog();
+	OUR_DEBUG((LM_INFO, "[CServerManager::Close]Save AppCommandAccount OK.\n"));
 	AppLogManager::instance()->Close();
 	OUR_DEBUG((LM_INFO, "[CServerManager::Close]AppLogManager OK\n"));
 	App_BuffPacketManager::instance()->Close();

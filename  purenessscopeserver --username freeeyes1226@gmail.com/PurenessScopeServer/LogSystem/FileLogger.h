@@ -36,7 +36,9 @@ public:
 
 	virtual ~CLogFile()
 	{
+		OUR_DEBUG((LM_INFO,"[CLogFile::~CLogFile].\n"));
 		m_File.close();
+		OUR_DEBUG((LM_INFO,"[CLogFile::~CLogFile] End.\n"));
 	};	
 
 	virtual int doLog(ACE_TString * pStrLog)
@@ -52,7 +54,7 @@ public:
 		strLog = szDateBuff + *pStrLog + '\n';
 
 		int nLen = m_File.send(strLog.c_str(), strLog.length());
-		if(nLen != strLog.length())
+		if(nLen != (int)strLog.length())
 		{
 			OUR_DEBUG((LM_INFO,"[%s]Write error[%s].\n", m_StrlogName.c_str(), strLog.c_str()));
 		}

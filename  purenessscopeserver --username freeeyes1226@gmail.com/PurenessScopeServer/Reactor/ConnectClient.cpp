@@ -54,6 +54,11 @@ void CConnectClient::ClinetClose()
 
 int CConnectClient::open(void* p)
 {
+	if(p != NULL)
+	{
+		OUR_DEBUG((LM_ERROR, "[CConnectClient::open]p is not NULL.\n"));
+	}
+	
 	ACE_Time_Value nowait(MAX_MSG_PACKETTIMEOUT);
 	m_nIOCount = 1;
 	int nRet = Super::open();
@@ -212,7 +217,7 @@ int CConnectClient::handle_input(ACE_HANDLE fd)
 	m_pCurrMessage->wr_ptr(nDataLen);
 
 	//如果没有读完，短读
-	if((int)m_pCurrMessage->size() > m_u4CurrSize)
+	if((uint32)m_pCurrMessage->size() > m_u4CurrSize)
 	{
 		return 0;
 	}
@@ -311,6 +316,11 @@ int CConnectClient::handle_input(ACE_HANDLE fd)
 
 int CConnectClient::handle_close(ACE_HANDLE h, ACE_Reactor_Mask mask)
 {
+	if(h == ACE_INVALID_HANDLE)
+	{
+		OUR_DEBUG((LM_DEBUG,"[CConnectClient::handle_close] h is NULL mask=%d.\n", GetServerID(), (int)mask));
+	}
+	
 	Close();
 	return 0;
 }
@@ -396,15 +406,14 @@ bool CConnectClient::SendData(ACE_Message_Block* pmblk)
 	//循环发送，直到数据发送完成。
 	while(true)
 	{
-		int nCurrSendSize = (int)(nSendLen - nIsSendSize);
-		if(nCurrSendSize <= 0)
+		if(nSendLen <= 0)
 		{
-			OUR_DEBUG((LM_ERROR, "[CConnectClient::SendData] ConnectID = %d, nCurrSendSize error is %d.\n", GetServerID(), nCurrSendSize));
+			OUR_DEBUG((LM_ERROR, "[CConnectClient::SendData] ConnectID = %d, nCurrSendSize error is %d.\n", GetServerID(), nSendLen));
 			pmblk->release();
 			return false;
 		}
 
-		int nDataLen = this->peer().send(pmblk->rd_ptr(), nCurrSendSize, &nowait);
+		int nDataLen = this->peer().send(pmblk->rd_ptr(), nSendLen, &nowait);
 		int nErr = ACE_OS::last_error();
 		if(nDataLen <= 0)
 		{
@@ -421,7 +430,7 @@ bool CConnectClient::SendData(ACE_Message_Block* pmblk)
 			Close();
 			return false;
 		}
-		else if(nDataLen >= nCurrSendSize)   //当数据包全部发送完毕，清空。
+		else if(nDataLen >= nSendLen)   //当数据包全部发送完毕，清空。
 		{
 			//OUR_DEBUG((LM_ERROR, "[CConnectHandler::handle_output] ConnectID = %d, send (%d) OK.\n", GetConnectID(), msg_queue()->is_empty()));
 			pmblk->release();

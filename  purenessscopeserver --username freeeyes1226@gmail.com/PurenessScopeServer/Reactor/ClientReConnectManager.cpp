@@ -132,7 +132,8 @@ CClientReConnectManager::CClientReConnectManager(void)
 
 CClientReConnectManager::~CClientReConnectManager(void)
 {
-	void Close();
+	OUR_DEBUG((LM_ERROR, "[CClientReConnectManager::~CClientReConnectManager].\n"));
+	//Close();
 }
 
 bool CClientReConnectManager::Init(ACE_Reactor* pReactor)
@@ -189,14 +190,14 @@ bool CClientReConnectManager::ConnectUDP(int nServerID, const char* pIP, int nPo
 	if(f != m_mapReactorUDPConnectInfo.end())
 	{
 		//如果这个链接已经存在，则不创建新的链接
-		OUR_DEBUG((LM_ERROR, "[CClientProConnectManager::ConnectUDP]nServerID =(%d) is exist.\n", nServerID));
+		OUR_DEBUG((LM_ERROR, "[CClientReConnectManager::ConnectUDP]nServerID =(%d) is exist.\n", nServerID));
 		return false;
 	}
 
 	CReactorUDPClient* pReactorUDPClient = new CReactorUDPClient();
 	if(NULL == pReactorUDPClient)
 	{
-		OUR_DEBUG((LM_ERROR, "[CClientProConnectManager::ConnectUDP]nServerID =(%d) pProactorUDPClient is NULL.\n", nServerID));
+		OUR_DEBUG((LM_ERROR, "[CClientReConnectManager::ConnectUDP]nServerID =(%d) pProactorUDPClient is NULL.\n", nServerID));
 		return false;
 	}
 
@@ -204,14 +205,14 @@ bool CClientReConnectManager::ConnectUDP(int nServerID, const char* pIP, int nPo
 	int nErr = AddrLocal.set(nPort, pIP);
 	if(nErr != 0)
 	{
-		OUR_DEBUG((LM_INFO, "[CClientProConnectManager::ConnectUDP](%d)UDP set_address error[%d].\n", nServerID, errno));
+		OUR_DEBUG((LM_INFO, "[CClientReConnectManager::ConnectUDP](%d)UDP set_address error[%d].\n", nServerID, errno));
 		SAFE_DELETE(pReactorUDPClient);
 		return false;
 	}
 
 	if(0 != pReactorUDPClient->OpenAddress(AddrLocal, App_ReactorManager::instance()->GetAce_Reactor(REACTOR_UDPDEFINE), pClientUDPMessage))
 	{
-		OUR_DEBUG((LM_INFO, "[CClientProConnectManager::ConnectUDP](%d)UDP OpenAddress error.\n", nServerID));
+		OUR_DEBUG((LM_INFO, "[CClientReConnectManager::ConnectUDP](%d)UDP OpenAddress error.\n", nServerID));
 		SAFE_DELETE(pReactorUDPClient);
 		return false;
 	}
@@ -224,7 +225,7 @@ bool CClientReConnectManager::SetHandler(int nServerID, CConnectClient* pConnect
 {
 	if(NULL == pConnectClient)
 	{
-		OUR_DEBUG((LM_ERROR, "[CProConnectManager::SetHandler]pProConnectClient is NULL.\n"));
+		OUR_DEBUG((LM_ERROR, "[CClientReConnectManager::SetHandler]pProConnectClient is NULL.\n"));
 		return false;
 	}
 
@@ -233,12 +234,10 @@ bool CClientReConnectManager::SetHandler(int nServerID, CConnectClient* pConnect
 	if(f == m_mapConnectInfo.end())
 	{
 		//如果这个链接已经存在，则不再添加到已经存在的客户端map管理中
-		OUR_DEBUG((LM_ERROR, "[CProConnectManager::SetHandler]nServerID =(%d) is exist.\n", nServerID));
+		OUR_DEBUG((LM_ERROR, "[CClientReConnectManager::SetHandler]nServerID =(%d) is exist.\n", nServerID));
 		return false;
 	}
 
-	CReactorClientInfo* pClientInfo = (CReactorClientInfo* )f->second;
-	//pClientInfo->SetConnectClient(pConnectClient);
 	return true;
 }
 
@@ -250,15 +249,21 @@ bool CClientReConnectManager::Close(int nServerID)
 	if(f == m_mapConnectInfo.end())
 	{
 		//如果这个链接已经存在，则不创建新的链接
-		OUR_DEBUG((LM_ERROR, "[CProConnectManager::Close]nServerID =(%d) is exist.\n", nServerID));
+		OUR_DEBUG((LM_ERROR, "[CClientReConnectManager::Close]nServerID =(%d) is exist.\n", nServerID));
 		return false;
 	}
 
 	CReactorClientInfo* pClientInfo = (CReactorClientInfo* )f->second;
 	if(NULL == pClientInfo)
 	{
-		OUR_DEBUG((LM_ERROR, "[CProConnectManager::Close]nServerID =(%d) pClientInfo is NULL.\n", nServerID));
+		OUR_DEBUG((LM_ERROR, "[CClientReConnectManager::Close]nServerID =(%d) pClientInfo is NULL.\n", nServerID));
 		return false;
+	}
+
+	//关闭链接对象
+	if(NULL != pClientInfo->GetConnectClient())
+	{
+		pClientInfo->GetConnectClient()->ClinetClose();
 	}
 
 	pClientInfo->SetConnectClient(NULL);
@@ -276,14 +281,14 @@ bool CClientReConnectManager::CloseUDP(int nServerID)
 	if(f == m_mapReactorUDPConnectInfo.end())
 	{
 		//如果这个链接已经存在，则不创建新的链接
-		OUR_DEBUG((LM_ERROR, "[CProConnectManager::Close]nServerID =(%d) is exist.\n", nServerID));
+		OUR_DEBUG((LM_ERROR, "[CClientReConnectManager::CloseUDP]nServerID =(%d) is exist.\n", nServerID));
 		return false;
 	}
 
 	CReactorUDPClient* pClientInfo = (CReactorUDPClient* )f->second;
 	if(NULL == pClientInfo)
 	{
-		OUR_DEBUG((LM_ERROR, "[CProConnectManager::Close]nServerID =(%d) pClientInfo is NULL.\n", nServerID));
+		OUR_DEBUG((LM_ERROR, "[CClientReConnectManager::CloseUDP]nServerID =(%d) pClientInfo is NULL.\n", nServerID));
 		return false;
 	}
 
@@ -300,14 +305,14 @@ bool CClientReConnectManager::ConnectErrorClose(int nServerID)
 	if(f == m_mapConnectInfo.end())
 	{
 		//如果这个链接已经存在，则不创建新的链接
-		OUR_DEBUG((LM_ERROR, "[CProConnectManager::Close]nServerID =(%d) is exist.\n", nServerID));
+		OUR_DEBUG((LM_ERROR, "[CClientReConnectManager::ConnectErrorClose]nServerID =(%d) is exist.\n", nServerID));
 		return false;
 	}
 
 	CReactorClientInfo* pClientInfo = (CReactorClientInfo* )f->second;
 	if(NULL == pClientInfo)
 	{
-		OUR_DEBUG((LM_ERROR, "[CProConnectManager::Close]nServerID =(%d) pClientInfo is NULL.\n", nServerID));
+		OUR_DEBUG((LM_ERROR, "[CClientReConnectManager::ConnectErrorClose]nServerID =(%d) pClientInfo is NULL.\n", nServerID));
 		return false;
 	}
 
@@ -344,7 +349,7 @@ bool CClientReConnectManager::SendData(int nServerID, const char* pData, int nSi
 	if(f == m_mapConnectInfo.end())
 	{
 		//如果这个链接已经存在，则不创建新的链接
-		OUR_DEBUG((LM_ERROR, "[CProConnectManager::Close]nServerID =(%d) is not exist.\n", nServerID));
+		OUR_DEBUG((LM_ERROR, "[CProConnectManager::SendData]nServerID =(%d) is not exist.\n", nServerID));
 		SAFE_DELETE_ARRAY(pData);
 		return false;
 	}
@@ -354,7 +359,7 @@ bool CClientReConnectManager::SendData(int nServerID, const char* pData, int nSi
 	ACE_Message_Block* pmblk = App_MessageBlockManager::instance()->Create(nSize);
 	if(NULL == pmblk)
 	{
-		OUR_DEBUG((LM_ERROR, "[CClientReConnectManager::Close]nServerID =(%d) pmblk is NULL.\n", nServerID));
+		OUR_DEBUG((LM_ERROR, "[CClientReConnectManager::SendData]nServerID =(%d) pmblk is NULL.\n", nServerID));
 		SAFE_DELETE_ARRAY(pData);
 		return false;
 	}
@@ -418,18 +423,14 @@ void CClientReConnectManager::Close()
 	CancelConnectTask();
 
 	//关闭所有已存在的链接
-	mapReactorConnectInfo::iterator b = m_mapConnectInfo.begin();
-	mapReactorConnectInfo::iterator e = m_mapConnectInfo.end();
-	for(b; b!= e; b++)
+	for(mapReactorConnectInfo::iterator b = m_mapConnectInfo.begin(); b!= m_mapConnectInfo.end(); b++)
 	{
 		CReactorClientInfo* pClientInfo = (CReactorClientInfo* )b->second;
 		pClientInfo->Close();
 		SAFE_DELETE(pClientInfo);
 	}
 
-	mapReactorUDPConnectInfo::iterator ub = m_mapReactorUDPConnectInfo.begin();
-	mapReactorUDPConnectInfo::iterator ue = m_mapReactorUDPConnectInfo.end();
-	for(ub; ub!= ue; ub++)
+	for(mapReactorUDPConnectInfo::iterator ub = m_mapReactorUDPConnectInfo.begin(); ub!= m_mapReactorUDPConnectInfo.end(); ub++)
 	{
 		CReactorUDPClient* pClientInfo = (CReactorUDPClient* )ub->second;
 		pClientInfo->Close();
@@ -443,10 +444,12 @@ void CClientReConnectManager::Close()
 int CClientReConnectManager::handle_timeout(const ACE_Time_Value &tv, const void *arg)
 {
 	ACE_Guard<ACE_Recursive_Thread_Mutex> guard(m_ThreadWritrLock);
-	mapReactorConnectInfo::iterator b = m_mapConnectInfo.begin();
-	mapReactorConnectInfo::iterator e = m_mapConnectInfo.end();
+	if(arg != NULL)
+	{
+		OUR_DEBUG((LM_ERROR, "[CClientReConnectManager::handle_timeout] arg is not NULL, tv = %d.\n", tv.sec()));
+	}
 
-	for(b; b!= e; b++)
+	for(mapReactorConnectInfo::iterator b = m_mapConnectInfo.begin(); b!= m_mapConnectInfo.end(); b++)
 	{
 		CReactorClientInfo* pClientInfo = (CReactorClientInfo* )b->second;
 		if(NULL == pClientInfo->GetConnectClient())
@@ -461,12 +464,9 @@ int CClientReConnectManager::handle_timeout(const ACE_Time_Value &tv, const void
 void CClientReConnectManager::GetConnectInfo(vecClientConnectInfo& VecClientConnectInfo)
 {
 	ACE_Guard<ACE_Recursive_Thread_Mutex> guard(m_ThreadWritrLock);
-	mapReactorConnectInfo::iterator b = m_mapConnectInfo.begin();
-	mapReactorConnectInfo::iterator e = m_mapConnectInfo.end();
-
 	VecClientConnectInfo.clear();
 
-	for(b; b!= e; b++)
+	for(mapReactorConnectInfo::iterator b = m_mapConnectInfo.begin(); b!= m_mapConnectInfo.end(); b++)
 	{
 		CReactorClientInfo* pClientInfo = (CReactorClientInfo* )b->second;
 		if(NULL != pClientInfo)
@@ -479,12 +479,9 @@ void CClientReConnectManager::GetConnectInfo(vecClientConnectInfo& VecClientConn
 
 void CClientReConnectManager::GetUDPConnectInfo(vecClientConnectInfo& VecClientConnectInfo)
 {
-	mapReactorUDPConnectInfo::iterator b = m_mapReactorUDPConnectInfo.begin();
-	mapReactorUDPConnectInfo::iterator e = m_mapReactorUDPConnectInfo.end();
-
 	VecClientConnectInfo.clear();
 
-	for(b; b!= e; b++)
+	for(mapReactorUDPConnectInfo::iterator b = m_mapReactorUDPConnectInfo.begin(); b!= m_mapReactorUDPConnectInfo.end(); b++)
 	{
 		CReactorUDPClient* pClientInfo = (CReactorUDPClient* )b->second;
 		if(NULL != pClientInfo)

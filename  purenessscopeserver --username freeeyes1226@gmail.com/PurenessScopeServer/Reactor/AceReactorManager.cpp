@@ -22,7 +22,9 @@ uint32 CAceReactor::GetReactorID()
 
 CAceReactor::~CAceReactor()
 {
+	OUR_DEBUG((LM_INFO, "[CAceReactor::~CAceReactor].\n"));
 	Close();
+	OUR_DEBUG((LM_INFO, "[CAceReactor::~CAceReactor] End.\n"));
 }
 
 void CAceReactor::Close()
@@ -143,7 +145,12 @@ bool CAceReactor::Init(int nReactorType, int nThreadCount)
 
 int CAceReactor::open(void* args)
 {
-	OUR_DEBUG((LM_ERROR, "CAceReactor::Open Begin nReactorID= [%d].\n", m_u4ReactorID));
+	if(args != NULL)
+	{
+		OUR_DEBUG((LM_ERROR, "[CAceReactor::open] args is not NULL.\n"));
+	}
+	
+	OUR_DEBUG((LM_ERROR, "[CAceReactor::Open] Begin nReactorID= [%d].\n", m_u4ReactorID));
 	if(activate(THR_NEW_LWP | THR_BOUND | THR_JOINABLE | THR_INHERIT_SCHED, m_nThreadCount)  == -1)
 	{
 		OUR_DEBUG((LM_ERROR, "[CAceReactor::Open]activate error ReactorType = [%d] nThreadCount = [%d] Start!\n", m_nReactorType, m_nThreadCount));
@@ -170,7 +177,7 @@ int CAceReactor::svc()
 		//OUR_DEBUG((LM_ERROR, "CAceReactor::Svc] (%P|%t) Begin nReactorID= [%d] begin.... \n", m_u4ReactorID));
 		m_pReactor->owner(ACE_OS::thr_self());
 		m_pReactor->run_reactor_event_loop();
-		OUR_DEBUG((LM_ERROR, "CAceReactor::Svc] (%P|%t) Begin nReactorID= [%d] end .... \n", m_u4ReactorID));
+		OUR_DEBUG((LM_ERROR, "CAceReactor::Svc]Begin nReactorID= [%d] end .... \n", m_u4ReactorID));
 		return 0;
 	}
 }
@@ -212,7 +219,9 @@ bool CAceReactor::Stop()
 
 	if(m_blRun == true)
 	{
+		OUR_DEBUG((LM_ERROR, "[CAceReactor::Stop] nReactorID= [%d] Begin.\n", m_u4ReactorID));
 		m_pReactor->end_reactor_event_loop();
+		OUR_DEBUG((LM_ERROR, "[CAceReactor::Stop] nReactorID= [%d] End.\n", m_u4ReactorID));
 		m_blRun = false;
 	}
 
@@ -246,21 +255,20 @@ CAceReactorManager::CAceReactorManager(void)
 
 CAceReactorManager::~CAceReactorManager(void)
 {
+	OUR_DEBUG((LM_INFO, "[CAceReactorManager::~CAceReactorManager].\n"));
 	Close();
+	OUR_DEBUG((LM_INFO, "[CAceReactorManager::~CAceReactorManager]End.\n"));
 }
 
 void CAceReactorManager::Close()
 {
-	mapAceReactor::iterator b = m_mapAceReactor.begin();
-	mapAceReactor::iterator e = m_mapAceReactor.end();
-
-	for(b; b!= e; b++)
+	for(mapAceReactor::iterator b = m_mapAceReactor.begin(); b!= m_mapAceReactor.end(); b++)
 	{
 		CAceReactor* pAceReactor = (CAceReactor* )b->second;
 		if(NULL != pAceReactor)
 		{
-			delete pAceReactor;
-			pAceReactor = NULL;
+			pAceReactor->Close();
+			SAFE_DELETE(pAceReactor);
 		}
 	}
 }
@@ -313,11 +321,8 @@ bool CAceReactorManager::AddNewReactor(int nReactorID, int nReactorType, int nTh
 
 bool CAceReactorManager::StartReactor()
 {
-	mapAceReactor::iterator b = m_mapAceReactor.begin();
-	mapAceReactor::iterator e = m_mapAceReactor.end();
-
 	//先启动非总的Rector
-	for(b; b!= e; b++)
+	for(mapAceReactor::iterator b = m_mapAceReactor.begin(); b!= m_mapAceReactor.end(); b++)
 	{
 		int nReactorID           = (int)b->first;
 		CAceReactor* pAceReactor = (CAceReactor* )b->second;
@@ -351,14 +356,8 @@ bool CAceReactorManager::StartReactorDefault()
 
 bool CAceReactorManager::StopReactor()
 {
-	mapAceReactor::iterator b = m_mapAceReactor.begin();
-	mapAceReactor::iterator e = m_mapAceReactor.end();
-
-	
-
-	for(b; b!= e; b++)
+	for(mapAceReactor::iterator b = m_mapAceReactor.begin(); b!= m_mapAceReactor.end(); b++)
 	{
-		int nReactorID           = (int)b->first;
 		CAceReactor* pAceReactor = (CAceReactor* )b->second;
 		if(NULL != pAceReactor)
 		{

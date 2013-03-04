@@ -6,12 +6,12 @@
 #include "BaseCommand.h"
 #include "IObject.h"
 
-static char *g_szDesc      = "TCPPost测试";       //模块的描述文字
-static char *g_szName      = "TCPPost测试";       //模块的名字
-static char *g_szModuleKey = "BaseTCPPost";       //模块的Key
+static const char *g_szDesc      = "TCPPost测试";       //模块的描述文字
+static const char *g_szName      = "TCPPost测试";       //模块的名字
+static const char *g_szModuleKey = "BaseTCPPost";       //模块的Key
 
 #ifdef WIN32
-#if defined DLL_EXPORT
+#ifdef TESTTCPPOST_EXPORTS
 #define DECLDIR __declspec(dllexport)
 #else
 #define DECLDIR __declspec(dllimport)
@@ -27,6 +27,7 @@ extern "C"
 	DECLDIR const char* GetDesc();
 	DECLDIR const char* GetName();
 	DECLDIR const char* GetModuleKey();
+	DECLDIR int DoModuleMessage(uint16 u2CommandID, IBuffPacket* pBuffPacket, IBuffPacket* pReturnBuffPacket);
 }
 
 static CBaseCommand g_BaseCommand;
@@ -96,5 +97,11 @@ const char* GetName()
 const char* GetModuleKey()
 {
 	return g_szModuleKey;
+}
+
+//用于模块间的调用接口
+int DoModuleMessage(uint16 u2CommandID, IBuffPacket* pBuffPacket, IBuffPacket* pReturnBuffPacket)
+{
+	return 0;
 }
 

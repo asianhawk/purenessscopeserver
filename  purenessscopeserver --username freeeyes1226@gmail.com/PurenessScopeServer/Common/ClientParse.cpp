@@ -6,6 +6,7 @@ CClientParse::CClientParse(void)
 
 CClientParse::~CClientParse(void)
 {
+	OUR_DEBUG((LM_INFO, "[CClientParse::~CClientParse].\n"));
 }
 
 void CClientParse::Init()
@@ -110,8 +111,6 @@ bool CClientParse::MakePacket(const char* pData, uint32 u4Len, ACE_Message_Block
 	ACE_OS::memcpy(pMbData->wr_ptr(), (const void*)&u4Len, sizeof(uint32));
 	ACE_OS::memcpy(pMbData->wr_ptr() + sizeof(uint32), (const void*)pData, u4Len);
 	pMbData->wr_ptr(u4Len + sizeof(uint32));
-
-	char* pBuffData = pMbData->rd_ptr();
 
 	return true;
 }

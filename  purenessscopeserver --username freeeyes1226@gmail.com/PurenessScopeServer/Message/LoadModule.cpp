@@ -13,11 +13,21 @@ CLoadModule::CLoadModule(void)
 
 CLoadModule::~CLoadModule(void)
 {
-	Close();
+	OUR_DEBUG((LM_INFO, "[CLoadModule::~CLoadModule].\n"));
+	//Close();
 }
 
 void CLoadModule::Close()
 {
+	//存环关闭当前活跃模块
+	for(int i = 0; i < m_mapModuleInfo.GetSize(); i++)
+	{
+		//卸载并删除当初new的module对象
+		UnLoadModule(m_mapModuleInfo.GetMapDataKey(i).c_str());
+		_ModuleInfo* pModuleInfo = (_ModuleInfo* )m_mapModuleInfo.GetMapData(i);
+		SAFE_DELETE(pModuleInfo);
+	}
+
 	m_mapModuleInfo.Clear();
 }
 
@@ -28,6 +38,8 @@ bool CLoadModule::LoadModule(const char* szModulePath, const char* szResourceNam
 
 	//将字符串数组解析成单一的模块名称
 	ParseModule(szResourceName, vecModuleName);
+
+	sprintf_safe(m_szModulePath, MAX_BUFF_200, "%s", szModulePath);
 
 	for(uint16 i = 0; i < (uint16)vecModuleName.size(); i++)
 	{
@@ -58,7 +70,7 @@ bool CLoadModule::LoadModule(const char* szModulePath, const char* szResourceNam
 		}
 
         //将注册成功的模块，加入到map中
-		if(false == m_mapModuleInfo.AddMapData(strModuleName, pModuleInfo))
+		if(false == m_mapModuleInfo.AddMapData(pModuleInfo->GetName(), pModuleInfo))
 		{
 			OUR_DEBUG((LM_ERROR, "[CLoadModule::LoadMoudle] m_mapModuleInfo.AddMapData error!\n"));
 			SAFE_DELETE(pModuleInfo);
@@ -67,8 +79,6 @@ bool CLoadModule::LoadModule(const char* szModulePath, const char* szResourceNam
 
 		OUR_DEBUG((LM_ERROR, "[CLoadModule::LoadMoudle] Begin Load ModuleName[%s] OK!\n", strModuleName.c_str()));
 	}
-
-	sprintf_safe(m_szModulePath, MAX_BUFF_200, "%s", szModulePath);
 
 	return true;
 }
@@ -86,13 +96,16 @@ bool CLoadModule::UnLoadModule(const char* szResourceName)
 		//清除和此关联的所有订阅
 		pModuleInfo->UnLoadModuleData();
 
-		//这里延迟一下，因为有可能正在处理当前信息，所以必须在这里延迟一下，防止报错
-		ACE_Time_Value tvSleep(MAX_LOADMODEL_CLOSE, 0);
-		ACE_OS::sleep(tvSleep);
-
+		//这里延迟一下，因为有可能正在处理当前信息，所以必须在这里延迟一下，防止报错（改变了处理模式，这种方式是很蠢笨的，所以这段代码废弃之）
+		//ACE_Time_Value tvSleep(MAX_LOADMODEL_CLOSE, 0);
+		//ACE_OS::sleep(tvSleep);
+		
 		//清除模块相关索引和数据
-		ACE_OS::dlclose(pModuleInfo->hModule);
+		int nRet = ACE_OS::dlclose(pModuleInfo->hModule);
 		m_mapModuleInfo.DelMapData(strModuleName);
+		
+		OUR_DEBUG((LM_ERROR, "[CLoadModule::UnLoadModule] Close Module=%s, nRet=%d!\n", strModuleName.c_str(), nRet));
+
 		return true;
 	}
 }
@@ -105,6 +118,12 @@ int CLoadModule::GetCurrModuleCount()
 _ModuleInfo* CLoadModule::GetModuleIndex(int nIndex)
 {
 	return m_mapModuleInfo.GetMapData(nIndex);
+}
+
+_ModuleInfo* CLoadModule::GetModuleInfo(const char* pModuleName)
+{
+	string strModuleName = pModuleName;
+	return m_mapModuleInfo.SearchMapData(strModuleName);
 }
 
 bool CLoadModule::ParseModule(const char* szResourceName, vector<string>& vecModuleName)
@@ -148,6 +167,8 @@ bool CLoadModule::LoadModuleInfo(string strModuleName, _ModuleInfo* pModuleInfo)
 		OUR_DEBUG((LM_ERROR, "[CLoadModule::LoadModuleInfo] strModuleName = %s, pModuleInfo is NULL!\n", strModuleName.c_str()));
 		return false;
 	}
+
+	pModuleInfo->strModulePath = m_szModulePath;
 
 	sprintf_safe(szModuleFile, MAX_BUFF_200, "%s%s", m_szModulePath, strModuleName.c_str());
 
@@ -201,6 +222,14 @@ bool CLoadModule::LoadModuleInfo(string strModuleName, _ModuleInfo* pModuleInfo)
 		return false;
 	}
 
+	pModuleInfo->DoModuleMessage = (int(*)(uint16, IBuffPacket*, IBuffPacket*))ACE_OS::dlsym(pModuleInfo->hModule, "DoModuleMessage");
+	if(NULL == pModuleInfo->DoModuleMessage || !pModuleInfo->DoModuleMessage)
+	{
+		OUR_DEBUG((LM_ERROR, "[CLoadModule::LoadModuleInfo] strModuleName = %s, Function DoModuleMessage is error(%d)!\n", strModuleName.c_str(), errno));
+		m_tmModule.release();
+		return false;
+	}
+
 	//加载模块代码
 	int nRet = pModuleInfo->LoadModuleData(App_ServerObject::instance());
 	if(nRet != 0)
@@ -214,3 +243,15 @@ bool CLoadModule::LoadModuleInfo(string strModuleName, _ModuleInfo* pModuleInfo)
 	m_tmModule.release();
 	return true;
 }
+
+int CLoadModule::SendModuleMessage(const char* pModuleName, uint16 u2CommandID, IBuffPacket* pBuffPacket, IBuffPacket* pReturnBuffPacket)
+{
+	_ModuleInfo* pModuleInfo = m_mapModuleInfo.SearchMapData((string)pModuleName);
+	if(NULL != pModuleInfo)
+	{
+		pModuleInfo->DoModuleMessage(u2CommandID, pBuffPacket, pReturnBuffPacket);
+	}
+
+	return 0;
+}
+

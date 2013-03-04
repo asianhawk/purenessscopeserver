@@ -28,8 +28,6 @@ public:
 	ACE_Message_Block* GetMessageBody();
 
 	_MessageBase* GetMessageBase();
-	IBuffPacket*  GetRecvPacket();
-	IBuffPacket*  GetSendPacket();
 
 	bool GetPacketHead(_PacketInfo& PacketInfo);
 	bool GetPacketBody(_PacketInfo& PacketInfo);
@@ -39,7 +37,6 @@ public:
 	const char* GetError();
 
 private:
-	IBuffPacket*  m_pRecvPacket;
 	char          m_szError[MAX_BUFF_500];
 	_MessageBase* m_pMessageBase;
 

@@ -37,6 +37,9 @@ public:
 	bool SetPacketHead(char* pData, uint32 u4Len);
 	bool SetPacketData(char* pData, uint32 u4Len);
 
+	uint32 GetPacketHeadSrcLen();                     //得到数据包原始包头长度
+	uint32 GetPacketBodySrcLen();                     //得到数据包原始包体长度
+
 	//拼接数据返回包
 	bool MakePacket(const char* pData, uint32 u4Len, ACE_Message_Block* pMbData);
 	uint32 MakePacketLength(uint32 u4DataLen);
@@ -46,6 +49,8 @@ public:
 private:
 	uint32 m_u4PacketHead;
 	uint32 m_u4PacketData;
+	uint32 m_u4HeadSrcSize;
+	uint32 m_u4BodySrcSize;
 	uint16 m_u2PacketCommandID;
 	bool   m_blIsHead;
 

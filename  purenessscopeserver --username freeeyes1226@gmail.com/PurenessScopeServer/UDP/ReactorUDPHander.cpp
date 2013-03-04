@@ -47,6 +47,12 @@ ACE_HANDLE CReactorUDPHander::get_handle(void) const
 
 int CReactorUDPHander::handle_input(ACE_HANDLE fd)
 {
+	if(fd == ACE_INVALID_HANDLE)
+	{
+		ACE_DEBUG((LM_ERROR, "[CReactorUDPHander::handle_input]fd is ACE_INVALID_HANDLE.\n"));
+		return -1;
+	}	
+	
 	char szBuff[MAX_UDP_PACKET_LEN] = {'\0'};
 
 	int nDataLen = m_skRemote.recv(szBuff, MAX_UDP_PACKET_LEN, m_addrRemote);
@@ -62,12 +68,19 @@ int CReactorUDPHander::handle_input(ACE_HANDLE fd)
 
 int CReactorUDPHander::handle_close(ACE_HANDLE handle, ACE_Reactor_Mask close_mask)
 {
+	if(handle == ACE_INVALID_HANDLE)
+	{
+		ACE_DEBUG((LM_ERROR, "[CReactorUDPHander::handle_close]close_mask = %d.\n", (uint32)close_mask));
+	}	
+	
 	Close();
 	return 0;
 }
 
-bool CReactorUDPHander::SendMessage(const char* pMessage, uint32 u4Len, const char* szIP, int nPort, bool blHead)
+bool CReactorUDPHander::SendMessage(const char* pMessage, uint32 u4Len, const char* szIP, int nPort, bool blHead, uint16 u2CommandID)
 {
+	ACE_hrtime_t m_tvBegin = ACE_OS::gethrtime();
+
 	ACE_INET_Addr AddrRemote;
 	int nErr = AddrRemote.set(nPort, szIP);
 	if(nErr != 0)
@@ -94,30 +107,47 @@ bool CReactorUDPHander::SendMessage(const char* pMessage, uint32 u4Len, const ch
 		PacketParse.MakePacket(pMessage, u4Len, pMbData);
 
 		int nSize = (int)m_skRemote.send(pMbData->rd_ptr(), pMbData->length(), AddrRemote);
-		if(nSize == u4Len)
+		if((uint32)nSize == u4Len)
 		{
 			m_atvOutput = ACE_OS::gettimeofday();
 			m_u4SendSize += u4Len;
 			m_u4SendPacketCount++;
 			SAFE_DELETE_ARRAY(pMessage);
+
+			//统计发送信息
+			uint32 u4Cost = (uint32)(ACE_OS::gethrtime() - m_tvBegin);
+			AppCommandAccount::instance()->SaveCommandData(u2CommandID, u4Cost, PACKET_UDP, (uint32)pMbData->length(), u4Len, COMMAND_TYPE_OUT);
+
+			//释放发送体
+			pMbData->release();
+
 			return true;
 		}
 		else
 		{
 			ACE_DEBUG((LM_ERROR, "[CProactorUDPHandler::SendMessage]send error(%d).\n", errno));
 			SAFE_DELETE_ARRAY(pMessage);
+
+			//释放发送体
+			pMbData->release();
+
 			return false;
 		}
 	}
 	else
 	{
 		int nSize = (int)m_skRemote.send(pMessage, u4Len, AddrRemote);
-		if(nSize == u4Len)
+		if((uint32)nSize == u4Len)
 		{
 			m_atvOutput = ACE_OS::gettimeofday();
 			m_u4SendSize += u4Len;
 			m_u4SendPacketCount++;
 			SAFE_DELETE_ARRAY(pMessage);
+
+			//统计发送信息
+			uint32 u4Cost = (uint32)(ACE_OS::gethrtime() - m_tvBegin);
+			AppCommandAccount::instance()->SaveCommandData(u2CommandID, u4Cost, PACKET_UDP, u4Len, u4Len, COMMAND_TYPE_OUT);
+
 			return true;
 		}
 		else

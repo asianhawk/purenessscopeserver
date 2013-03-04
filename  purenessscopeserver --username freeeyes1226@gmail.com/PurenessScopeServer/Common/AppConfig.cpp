@@ -9,6 +9,7 @@ CAppConfig::CAppConfig(void)
 
 CAppConfig::~CAppConfig(void)
 {
+	OUR_DEBUG((LM_INFO, "[CAppConfig::~CAppConfig].\n"));
 	Close();
 }
 

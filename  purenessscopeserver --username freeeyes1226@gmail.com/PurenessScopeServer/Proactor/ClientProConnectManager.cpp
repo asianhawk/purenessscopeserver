@@ -40,12 +40,14 @@ bool CProactorClientInfo::Run()
 		return false;
 	}
 
+	/*
 	//链接远端服务器
 	if(m_pProAsynchConnect->GetConnectState() == true)
 	{
 		OUR_DEBUG((LM_ERROR, "[CProactorClientInfo::Run]m_pProAsynchConnect is run.\n"));
 		return false;
 	}
+	*/
 
 	m_pProAsynchConnect->SetConnectState(true);
 	if(m_pProAsynchConnect->connect(m_AddrServer) == -1)
@@ -288,6 +290,12 @@ bool CClientProConnectManager::Close(int nServerID)
 		return false;
 	}
 
+	//关闭链接对象
+	if(NULL != pClientInfo->GetProConnectClient())
+	{
+		pClientInfo->GetProConnectClient()->ClinetClose();
+	}
+	
 	pClientInfo->SetProConnectClient(NULL);
 	SAFE_DELETE(pClientInfo);
 	//从map里面删除当前存在的对象

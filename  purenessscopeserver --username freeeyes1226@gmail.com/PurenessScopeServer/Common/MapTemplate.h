@@ -80,15 +80,12 @@ public:
 	//清除map内的所有数据
 	void Clear()
 	{
-		typename mapData::iterator b = m_mapData.begin();
-		typename mapData::iterator e = m_mapData.end();
-
-		for(b; b != e; b++)
+		for(typename mapData::iterator b = m_mapData.begin(); b != m_mapData.end(); b++)
 		{
 			T* pData = (T*)b->second;
 			if(pData != NULL)
 			{
-				delete pData;
+				//delete pData;
 			}
 		}
 

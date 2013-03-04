@@ -15,14 +15,14 @@ private:
 	//记录每个队列的数据容器
 	struct _SMBlock
 	{
-		T*     m_pT;           //数据对象
-		int    m_nID;          //数据当前编号
-		bool   m_blUse;        //是否在使用true是正在使用，false是没有使用
-		time_t m_ttUpdateTime; //DS服务器更新完成后回写的信息时间。
+		unsigned int	m_offT;         //数据对象偏移，这里不能用T*，因为共享内存中不应该存入指针值，应该存入偏移量
+		int				m_nID;          //数据当前编号
+		bool			m_blUse;        //是否在使用true是正在使用，false是没有使用
+		time_t			m_ttUpdateTime; //DS服务器更新完成后回写的信息时间。
 
 		_SMBlock()
 		{
-			m_pT    = NULL;
+			m_offT  = 0;
 			m_nID   = 0;
 			m_blUse = false;
 		}
@@ -84,9 +84,10 @@ public:
 				}
 
 				pSMBlock->m_nID = i;
-				pSMBlock->m_pT  = reinterpret_cast<T*>(m_pSMAccessObject->GetData(i*sizeof(T)));
-				new (pSMBlock->m_pT)T();
-				if(NULL == pSMBlock->m_pT)
+				pSMBlock->m_offT = i * sizeof(T);
+				T* pT  = reinterpret_cast<T*>(m_pSMAccessObject->GetData(pSMBlock->m_offT));
+				new (pT)T();
+				if(NULL == pT)
 				{
 					return false;
 				}
@@ -115,14 +116,15 @@ public:
 					return false;
 				}
 
-				pSMBlock->m_pT  = reinterpret_cast<T*>(m_pSMAccessObject->GetData(i*sizeof(T)));
+				pSMBlock->m_offT = i * sizeof(T);
+				T* pT  = reinterpret_cast<T*>(m_pSMAccessObject->GetData(pSMBlock->m_offT));
 				m_mapSMBlock.insert(typename mapSMBlock::value_type(pSMBlock->m_nID, pSMBlock));
 
 				//分类
 				if(pSMBlock->m_blUse == true)
 				{
 					//放入正在使用的列表
-					m_mapUsedSMBlock.insert(typename mapUsedSMBlock::value_type(pSMBlock->m_pT, pSMBlock));
+					m_mapUsedSMBlock.insert(typename mapUsedSMBlock::value_type(pT, pSMBlock));
 				}
 				else
 				{
@@ -177,9 +179,10 @@ public:
 				m_mapFreeSMBlock.erase(b);
 				pSMBlock->m_blUse        = true;
 				pSMBlock->m_ttUpdateTime = time(NULL);
-				m_mapUsedSMBlock.insert(typename mapUsedSMBlock::value_type(pSMBlock->m_pT, pSMBlock));
+				T* pT  = reinterpret_cast<T*>(m_pSMAccessObject->GetData(pSMBlock->m_offT));
+				m_mapUsedSMBlock.insert(typename mapUsedSMBlock::value_type(pT, pSMBlock));
 
-				return pSMBlock->m_pT;
+				return pT;
 			}
 		}
 		else
@@ -234,7 +237,8 @@ public:
 				_SMBlock* pSMBlock = (_SMBlock* )b->second;
 				if(NULL != pSMBlock)
 				{
-					return pSMBlock->m_pT;
+					T* pT  = reinterpret_cast<T*>(m_pSMAccessObject->GetData(pSMBlock->m_offT));
+					return pT;
 				}
 				else
 				{

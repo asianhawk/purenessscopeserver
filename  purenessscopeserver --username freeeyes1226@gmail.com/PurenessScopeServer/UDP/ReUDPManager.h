@@ -7,11 +7,11 @@
 
 using namespace std;
 
-class CReUDPMananer : public IUDPConnectManager
+class CReUDPManager : public IUDPConnectManager
 {
 public:
-	CReUDPMananer() {};
-	~CReUDPMananer() {};
+	CReUDPManager() {};
+	~CReUDPManager() {};
 
 	CReactorUDPHander* Create()
 	{
@@ -51,7 +51,7 @@ public:
 		}
 	}
 
-	bool SendMessage(int nConnectID, const char* pMessage, uint32 u4Len, const char* szIP, int nPort, bool blHead = true)
+	bool SendMessage(int nConnectID, const char* pMessage, uint32 u4Len, const char* szIP, int nPort, bool blHead = true, uint16 u2CommandID = 0)
 	{
 		ACE_Guard<ACE_Recursive_Thread_Mutex> WGrard(m_ThreadWriteLock);
 		if(nConnectID >= (int)m_vecReactorUDPHandler.size())
@@ -63,7 +63,7 @@ public:
 		CReactorUDPHander* pReactorUDPHandler = (CReactorUDPHander* )m_vecReactorUDPHandler[nConnectID];
 		if(NULL != pReactorUDPHandler)
 		{
-			return pReactorUDPHandler->SendMessage(pMessage, u4Len, szIP, nPort, blHead);
+			return pReactorUDPHandler->SendMessage(pMessage, u4Len, szIP, nPort, blHead, u2CommandID);
 		}
 		else
 		{
@@ -78,6 +78,6 @@ private:
 };
 
 
-typedef ACE_Singleton<CReUDPMananer, ACE_Null_Mutex> App_ReUDPManager;
+typedef ACE_Singleton<CReUDPManager, ACE_Null_Mutex> App_ReUDPManager;
 
 #endif

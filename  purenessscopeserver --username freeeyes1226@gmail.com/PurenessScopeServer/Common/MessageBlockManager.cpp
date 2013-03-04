@@ -27,7 +27,7 @@ void CMessageBlockManager::Close()
 	delete m_pbuff_allocator;
 }
 
-ACE_Message_Block* CMessageBlockManager::Create(int u4Size)
+ACE_Message_Block* CMessageBlockManager::Create(uint32 u4Size)
 {
 	ACE_Guard<ACE_Recursive_Thread_Mutex> WGuard(m_ThreadWriteLock);
 	ACE_Message_Block* pmb = NULL;

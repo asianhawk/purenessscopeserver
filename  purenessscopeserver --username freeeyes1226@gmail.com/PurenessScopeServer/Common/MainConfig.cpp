@@ -10,7 +10,7 @@ CMainConfig::CMainConfig(void)
 	m_u4MsgMaxQueue         = 0;
 	m_nEncryptFlag          = 0;
 	m_nEncryptOutFlag       = 0;
-	m_u4ReactorCount        = 0;
+	m_u4ReactorCount        = 3;
 	m_u4SendThresHold       = 0;
 	m_u4RecvBuffSize        = 0;
 	m_u2ThreadTimuOut       = 0;
@@ -20,6 +20,7 @@ CMainConfig::CMainConfig(void)
 	m_u2HandleCount         = 0;
 	m_u2MaxHanderCount      = 0;
 	m_u2MaxConnectTime      = 0;
+	m_u1CommandAccount      = 0;
 
 	m_u1ConsoleSupport      = 0;
 	m_nConsolePort          = 0;
@@ -29,6 +30,9 @@ CMainConfig::CMainConfig(void)
 	m_u4ValidPacketCount    = 0;
 	m_u4ValidRecvSize       = 0;
 	m_u2ForbiddenTime       = 0;
+	m_u2RecvQueueTimeout    = MAX_QUEUE_TIMEOUT;
+	m_u2SendQueueTimeout    = MAX_QUEUE_TIMEOUT;
+	m_u2SendQueueCount      = SENDQUEUECOUNT;
 
 	m_szServerName[0]       = '\0';
 	m_szModulePath[0]       = '\0';
@@ -38,8 +42,10 @@ CMainConfig::CMainConfig(void)
 
 CMainConfig::~CMainConfig(void)
 {
+	OUR_DEBUG((LM_INFO, "[CMainConfig::~CMainConfig].\n"));
 	m_vecServerInfo.clear();
 	m_vecUDPServerInfo.clear();
+	OUR_DEBUG((LM_INFO, "[CMainConfig::~CMainConfig]End.\n"));
 }
 
 const char* CMainConfig::GetError()
@@ -58,9 +64,9 @@ bool CMainConfig::Init(const char* szConfigPath)
 
 	ACE_TString strValue;
 
-	//获得反应器个数
-	m_AppConfig.GetValue("ReactorCount", strValue, "\\REACTOR");
-	m_u4ReactorCount = ACE_OS::atoi((char*)strValue.c_str());
+	//获得反应器个数(目前这个读取废弃)
+	//m_AppConfig.GetValue("ReactorCount", strValue, "\\REACTOR");
+	//m_u4ReactorCount = ACE_OS::atoi((char*)strValue.c_str());
 
 	m_AppConfig.GetValue("ServerID", strValue, "\\SERVER");
 	m_nServerID = ACE_OS::atoi((char*)strValue.c_str());
@@ -135,7 +141,7 @@ bool CMainConfig::Init(const char* szConfigPath)
 	//开始获得发送和接受阀值
 	m_AppConfig.GetValue("SendThresHold", strValue, "\\SERVER");
 	m_u4SendThresHold = (int)ACE_OS::atoi((char*)strValue.c_str());
-	m_AppConfig.GetValue("SendCheckTime", strValue, "\\SERVER");
+	m_AppConfig.GetValue("RecvBuffSize", strValue, "\\SERVER");
 	m_u4RecvBuffSize = (int)ACE_OS::atoi((char*)strValue.c_str());
 	m_AppConfig.GetValue("SendQueueMax", strValue, "\\SERVER");
 	m_u2SendQueueMax = (uint16)ACE_OS::atoi((char*)strValue.c_str());
@@ -153,7 +159,14 @@ bool CMainConfig::Init(const char* szConfigPath)
 	m_u2MaxHanderCount = (uint16)ACE_OS::atoi((char*)strValue.c_str());
 	m_AppConfig.GetValue("MaxConnectTime", strValue, "\\SERVER");
 	m_u2MaxConnectTime = (uint16)ACE_OS::atoi((char*)strValue.c_str());
-
+	m_AppConfig.GetValue("RecvQueueTimeout", strValue, "\\SERVER");
+	m_u2RecvQueueTimeout = (uint16)ACE_OS::atoi((char*)strValue.c_str());
+	m_AppConfig.GetValue("SendQueueTimeout", strValue, "\\SERVER");
+	m_u2SendQueueTimeout = (uint16)ACE_OS::atoi((char*)strValue.c_str());
+	m_AppConfig.GetValue("SendQueueCount", strValue, "\\SERVER");
+	m_u2SendQueueCount = (uint16)ACE_OS::atoi((char*)strValue.c_str());
+	m_AppConfig.GetValue("CommandAccount", strValue, "\\SERVER");
+	m_u1CommandAccount = (uint8)ACE_OS::atoi((char*)strValue.c_str());
 
 	//开始获得Console服务器相关配置信息
 	m_AppConfig.GetValue("ConsoleSupport", strValue, "\\SERVER");
@@ -220,6 +233,10 @@ void CMainConfig::Display()
 	OUR_DEBUG((LM_INFO, "[CMainConfig::Display]m_u2SendAliveTime = %d.\n", m_u2SendAliveTime));
 	OUR_DEBUG((LM_INFO, "[CMainConfig::Display]m_u2HandleCount = %d.\n", m_u2HandleCount));
 	OUR_DEBUG((LM_INFO, "[CMainConfig::Display]m_u2MaxHanderCount = %d.\n", m_u2MaxHanderCount));
+	OUR_DEBUG((LM_INFO, "[CMainConfig::Display]m_u2RecvQueueTimeout = %d.\n", m_u2RecvQueueTimeout));
+	OUR_DEBUG((LM_INFO, "[CMainConfig::Display]m_u2SendQueueTimeout = %d.\n", m_u2SendQueueTimeout));
+	OUR_DEBUG((LM_INFO, "[CMainConfig::Display]m_u2SendQueueCount = %d.\n", m_u2SendQueueCount));
+	OUR_DEBUG((LM_INFO, "[CMainConfig::Display]m_u1CommandAccount = %d.\n", m_u1CommandAccount));
 	
 	for(int i = 0; i < (int)m_vecUDPServerInfo.size(); i++)
 	{
@@ -393,6 +410,21 @@ const char* CMainConfig::GetConsoleIP()
 	return m_szConsoleIP;
 }
 
+uint16 CMainConfig::GetRecvQueueTimeout()
+{
+	return m_u2RecvQueueTimeout;
+}
+
+uint16 CMainConfig::GetSendQueueTimeout()
+{
+	return m_u2SendQueueTimeout;
+}
+
+uint16 CMainConfig::GetSendQueueCount()
+{
+	return m_u2SendQueueCount;
+}
+
 bool CMainConfig::CompareConsoleClinetIP(const char* pConsoleClientIP)
 {
 	for(int i = 0; i < (int)m_vecConsoleClientIP.size(); i++)
@@ -429,6 +461,11 @@ uint32 CMainConfig::GetValidRecvSize()
 uint16 CMainConfig::GetForbiddenTime()
 {
 	return m_u2ForbiddenTime;
+}
+
+uint8 CMainConfig::GetCommandAccount()
+{
+	return m_u1CommandAccount;
 }
 
 

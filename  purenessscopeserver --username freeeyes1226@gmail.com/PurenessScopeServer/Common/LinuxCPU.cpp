@@ -15,11 +15,11 @@ int GetProcessCPU_Idel_Linux()
 	FILE* fd;
 	char szbuffer[50];
 
-	fd=fopen("aasnowy.txt","r");
+	fd = ACE_OS::fopen("aasnowy.txt","r");
 	fgets(szbuffer,sizeof(szbuffer),fd);
 	//切分出CPU数据
 	bool blFlag = false;
-	int nLen = ACE_OS::strlen(szbuffer);
+	int nLen = (int)ACE_OS::strlen(szbuffer);
 	int i = 0;
 	for(i = 0; i < nLen; i++)
 	{
@@ -38,7 +38,7 @@ int GetProcessCPU_Idel_Linux()
 	}
 
 	float fcpu;
-	fcpu = atof(szTmp);
+	fcpu = (float)atof(szTmp);
 	fclose(fd);
 	system("rm -rf aasnowy.txt");
 
@@ -59,12 +59,12 @@ int GetProcessMemorySize_Linux()
 
 	FILE* fd;
 	char szbuffer[50];
-	fd=fopen("aasnowy.txt","r");
+	fd = ACE_OS::fopen("aasnowy.txt","r");
 	fgets(szbuffer,sizeof(szbuffer),fd);
 
 	//切分出内存数据
 	bool blFlag = false;
-	int nLen = ACE_OS::strlen(szbuffer);
+	int nLen = (int)ACE_OS::strlen(szbuffer);
 	int i = 0;
 	for(i = 0; i < nLen; i++)
 	{

@@ -8,7 +8,7 @@ using namespace std;
 
 struct _ThreadInfo
 {
-	uint32              m_u4ThreadID;
+	ACE_thread_t        m_u4ThreadID;         //线程ID 
 	uint32              m_u4ThreadIndex;      //系统线程ID
 	ACE_RW_Thread_Mutex m_rwMutex;
 	ACE_Time_Value      m_tvUpdateTime;       //线程最后处理数据的时间

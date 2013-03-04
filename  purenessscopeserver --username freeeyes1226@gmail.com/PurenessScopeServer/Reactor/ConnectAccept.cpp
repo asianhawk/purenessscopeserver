@@ -53,7 +53,9 @@ CConnectAcceptorManager::CConnectAcceptorManager(void)
 
 CConnectAcceptorManager::~CConnectAcceptorManager(void)
 {
+	OUR_DEBUG((LM_INFO, "[CConnectAcceptorManager::~CConnectAcceptorManager].\n"));
 	Close();
+	OUR_DEBUG((LM_INFO, "[CConnectAcceptorManager::~CConnectAcceptorManager]End.\n"));
 }
 
 bool CConnectAcceptorManager::InitConnectAcceptor(int nCount)

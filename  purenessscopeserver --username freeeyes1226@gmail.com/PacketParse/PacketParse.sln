@@ -1,6 +1,6 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 9.00
-# Visual Studio 2005
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PacketParse", "PacketParse.vcproj", "{9E05DBA1-FD5A-40D4-A56A-8A8332A8A4A5}"
 EndProject
 Global

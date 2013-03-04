@@ -74,7 +74,7 @@ bool CAceProactor::Init(int nProactorType, int nThreadCount)
 					throw "[CAceProactor::Init]New ACE_POSIX_Proactor Error.";
 				}
 
-				m_pProactor = new ACE_Proactor(pWin32Proactor, 1);
+				m_pProactor = new ACE_Proactor(pPosixProactor, 1);
 				if(NULL == m_pProactor)
 				{
 					throw "[CAceProactor::Init]New m_pProactor Error[ACE_POSIX_Proactor].";
@@ -312,7 +312,7 @@ bool CAceProactorManager::StopProactor()
 		if(NULL != pAceProactor)
 		{
 			pAceProactor->Stop();
-			pAceProactor->wait();
+			//pAceProactor->wait();
 		}
 	}
 

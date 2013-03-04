@@ -6,7 +6,9 @@ CPacketParsePool::CPacketParsePool()
 
 CPacketParsePool::~CPacketParsePool()
 {
+	OUR_DEBUG((LM_INFO, "[CPacketParsePool::~CPacketParsePool].\n"));
 	Close();
+	OUR_DEBUG((LM_INFO, "[CPacketParsePool::~CPacketParsePool] End.\n"));
 }
 
 void CPacketParsePool::Init(uint32 u4PacketCount)
@@ -31,21 +33,16 @@ void CPacketParsePool::Init(uint32 u4PacketCount)
 void CPacketParsePool::Close()
 {
 	//清理所有已存在的指针
-	mapPacketParse::iterator itorFreeB = m_mapPacketFree.begin();
-	mapPacketParse::iterator itorFreeE = m_mapPacketFree.end();
-
-	for(itorFreeB; itorFreeB != itorFreeE; itorFreeB++)
+	for(mapPacketParse::iterator itorFreeB = m_mapPacketFree.begin(); itorFreeB != m_mapPacketFree.end(); itorFreeB++)
 	{
 		CPacketParse* pPacket = (CPacketParse* )itorFreeB->second;
 		SAFE_DELETE(pPacket);
 	}
 
-	mapPacketParse::iterator itorUsedB = m_mapPacketUsed.begin();
-	mapPacketParse::iterator itorUsedE = m_mapPacketUsed.end();
-
-	for(itorUsedB; itorUsedB != itorUsedE; itorUsedB++)
+	for(mapPacketParse::iterator itorUsedB = m_mapPacketUsed.begin(); itorUsedB != m_mapPacketUsed.end(); itorUsedB++)
 	{
 		CPacketParse* pPacket = (CPacketParse* )itorUsedB->second;
+		OUR_DEBUG((LM_ERROR, "[CPacketParsePool::Close]CPacketParse has used!!memory address[0x%08x].\n", pPacket));
 		SAFE_DELETE(pPacket);
 	}
 

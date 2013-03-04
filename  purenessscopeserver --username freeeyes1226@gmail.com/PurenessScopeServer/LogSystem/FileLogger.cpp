@@ -7,7 +7,16 @@ CFileLogger::CFileLogger()
 
 CFileLogger::~CFileLogger()
 {
+	OUR_DEBUG((LM_INFO, "[CFileLogger::~CFileLogger].\n"));
+	for(mapLogFile::iterator b = m_mapLogFile.begin(); b!= m_mapLogFile.end(); b++)
+	{
+		CLogFile* pLogFile = (CLogFile* )b->second;
+		SAFE_DELETE(pLogFile);
+	}
 
+	m_mapLogFile.clear();
+	m_vecLogType.clear();
+	OUR_DEBUG((LM_INFO, "[CFileLogger::~CFileLogger]End.\n"));
 }
 
 int CFileLogger::DoLog(int nLogType, ACE_TString* pLogText)
@@ -110,17 +119,12 @@ bool CFileLogger::Init()
 
 	}
 
-	conf.GetValue("Root",tmp,"\\ROOT");
-	m_strRoot = tmp;
 	return true;
 }
 
 bool CFileLogger::Close()
 {
-	mapLogFile::iterator b = m_mapLogFile.begin();
-	mapLogFile::iterator e = m_mapLogFile.end();
-
-	for(b; b != e; b++)
+	for(mapLogFile::iterator b = m_mapLogFile.begin(); b != m_mapLogFile.end(); b++)
 	{
 		CLogFile* pLogFile = (CLogFile* )b->second;
 		delete pLogFile;

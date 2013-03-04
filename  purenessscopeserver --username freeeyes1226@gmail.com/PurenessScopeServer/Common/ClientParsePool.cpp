@@ -6,7 +6,9 @@ CClientParsePool::CClientParsePool(void)
 
 CClientParsePool::~CClientParsePool(void)
 {
+	OUR_DEBUG((LM_INFO, "[CClientParsePool::~CClientParsePool].\n"));
 	Close();
+	OUR_DEBUG((LM_INFO, "[CClientParsePool::~CClientParsePool]End.\n"));
 }
 
 void CClientParsePool::Init(uint32 u4PacketCount)
@@ -31,19 +33,13 @@ void CClientParsePool::Init(uint32 u4PacketCount)
 void CClientParsePool::Close()
 {
 	//清理所有已存在的指针
-	mapClientParse::iterator itorFreeB = m_mapPacketFree.begin();
-	mapClientParse::iterator itorFreeE = m_mapPacketFree.end();
-
-	for(itorFreeB; itorFreeB != itorFreeE; itorFreeB++)
+	for(mapClientParse::iterator itorFreeB = m_mapPacketFree.begin(); itorFreeB !=  m_mapPacketFree.end(); itorFreeB++)
 	{
 		CClientParse* pPacket = (CClientParse* )itorFreeB->second;
 		SAFE_DELETE(pPacket);
 	}
 
-	mapClientParse::iterator itorUsedB = m_mapPacketUsed.begin();
-	mapClientParse::iterator itorUsedE = m_mapPacketUsed.end();
-
-	for(itorUsedB; itorUsedB != itorUsedE; itorUsedB++)
+	for(mapClientParse::iterator itorUsedB = m_mapPacketUsed.begin(); itorUsedB != m_mapPacketUsed.end(); itorUsedB++)
 	{
 		CClientParse* pPacket = (CClientParse* )itorUsedB->second;
 		SAFE_DELETE(pPacket);

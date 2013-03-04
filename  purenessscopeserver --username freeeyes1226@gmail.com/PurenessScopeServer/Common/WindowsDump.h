@@ -1,6 +1,8 @@
 #ifndef _WINDOWSDUMP_H
 #define _WINDOWSDUMP_H
 
+#ifdef WIN32
+
 #include <Windows.h>
 #include <dbghelp.h>
 
@@ -34,5 +36,7 @@ LONG ApplicationCrashHandler(EXCEPTION_POINTERS *pException)
 
 	return EXCEPTION_EXECUTE_HANDLER;  
 }  
+
+#endif
 
 #endif

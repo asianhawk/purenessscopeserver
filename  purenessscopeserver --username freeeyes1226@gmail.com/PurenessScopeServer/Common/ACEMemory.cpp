@@ -17,6 +17,7 @@ CACEMemory::~CACEMemory(void)
 {
 	OUR_DEBUG((LM_ERROR, "[CACEMemory::~CACEMemory].\n"));
 	delete m_pPacketDataAlloctor;
+	OUR_DEBUG((LM_ERROR, "[CACEMemory::~CACEMemory]End.\n"));
 }
 
 void* CACEMemory::malloc(size_t stSize)

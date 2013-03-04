@@ -49,7 +49,17 @@ class CIPAccount
 {
 public:
 	CIPAccount() { m_nMaxConnectCount = 100; }; //默认每秒最高100次 
-	~CIPAccount() {};
+	~CIPAccount() 
+	{
+		OUR_DEBUG((LM_INFO, "[CIPAccount::~CIPAccount].\n"));
+		Close(); 
+		OUR_DEBUG((LM_INFO, "[CIPAccount::~CIPAccount]End.\n"));
+	};
+
+	void Close()
+	{
+		m_mapIPAccount.Clear();
+	}
 
 	void Init(int nMaxConnectCount)
 	{
