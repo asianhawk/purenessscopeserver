@@ -17,6 +17,12 @@
 struct _ForbiddenIP
 {
 	char           m_szClientIP[MAX_IP_SIZE];   //被禁止的IP
+	uint32 pattern;//匹配模式
+	union//IPV4地址
+	{
+		uint32  ip;
+		uint8 b[4];
+	};
 	uint8          m_u1Type;                    //禁止的类型，0为永久禁止，1为时段禁止。
 	ACE_Time_Value m_tvBegin;                   //时段禁止开始时间
 	uint32         m_u4Second;                  //禁止的秒数
@@ -40,7 +46,7 @@ public:
 	~CForbiddenIP();
 
 	bool Init(const char* szConfigPath);                                                    //初始化加载永久封停IP文件
-	bool CheckIP(const char* pIP, uint8 u1ConnectType = CONNECT_TCP);                       //检测IP是否可以链接 
+	bool CheckIP(uint32 clientip, uint8 u1ConnectType = CONNECT_TCP);                       //检测IP是否可以链接 
 	bool AddForeverIP(const char* pIP, uint8 u1ConnectType = CONNECT_TCP);                  //添加永久封停的IP 
 	bool AddTempIP(const char* pIP, uint32 u4Second, uint8 u1ConnectType = CONNECT_TCP);    //添加临时封停的IP
 	bool DelForeverIP(const char* pIP, uint8 u1ConnectType = CONNECT_TCP);                  //删除永久封停IP
@@ -49,9 +55,10 @@ public:
 	VecForbiddenIP* ShowTemoIP() const;                                                     //显示临时封停IP
 
 private:
-	bool SaveConfig();                                      //存储配置文件
-	bool ParseTXT(const char* pText, char* pIP, char* pConnectType);
+	bool ParseIp(const char* pszIp, _ForbiddenIP& ipadr);
+	void LoadListCommon(LPCTSTR pszFileName, VecForbiddenIP& iplist);
 
+	bool SaveConfig();                                      //存储配置文件
 private:
 	CAppConfig     m_AppConfig;
 	VecForbiddenIP m_VecForeverForbiddenIP;           //永久封停的IP列表
