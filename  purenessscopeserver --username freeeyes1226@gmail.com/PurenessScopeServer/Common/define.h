@@ -231,6 +231,16 @@ typedef float float32;
 typedef double float64;
 #endif
 
+#ifdef UNICODE
+typedef wofstream _tofstream;
+typedef wifstream _tifstream;
+typedef std::wstring _tstring;
+#else
+typedef ofstream _tofstream;
+typedef ifstream _tifstream;
+typedef std::string _tstring;
+#endif // UNICODE
+
 #ifndef VCHARS_STR
 typedef  struct _VCHARS_STR {
 	const char *text;

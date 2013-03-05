@@ -63,9 +63,22 @@ int main(int argc, char* argv[])
 
 #include "ProServerManager.h"
 #include "WindowsDump.h"
+#include <tchar.h>
 
 int main(int argc, char* argv[])
 {
+	//指定当前目录，防止访问文件失败
+	TCHAR szFileName[MAX_PATH] = {0};
+	GetModuleFileName(0, szFileName, MAX_PATH);
+	LPTSTR pszEnd = _tcsrchr(szFileName, TEXT('\\'));
+
+	if (pszEnd != 0)
+	{
+		pszEnd++;
+		*pszEnd = 0;
+	}
+	SetCurrentDirectory(szFileName);
+
 	ACE::init();
 	int nServerType = SERVER_ACTOR_PROACTOR;
 

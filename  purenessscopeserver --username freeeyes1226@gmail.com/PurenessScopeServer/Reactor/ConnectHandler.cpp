@@ -173,7 +173,7 @@ int CConnectHandler::open(void*)
 		return -1;
 	}
 	
-	if(App_ForbiddenIP::instance()->CheckIP(m_addrRemote.get_host_addr()) == false)
+	if(App_ForbiddenIP::instance()->CheckIP(m_addrRemote.get_ip_address()) == false)
 	{
 		//在禁止列表中，不允许访问
 		OUR_DEBUG((LM_ERROR, "[CConnectHandler::open]IP Forbidden(%s).\n", m_addrRemote.get_host_addr()));
