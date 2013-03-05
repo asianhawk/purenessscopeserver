@@ -33,7 +33,7 @@ int ProConnectAcceptor::validate_connection (const ACE_Asynch_Accept::Result& re
 						   		             const ACE_INET_Addr &remote,
 								             const ACE_INET_Addr& local)
 {
-	if(App_ForbiddenIP::instance()->CheckIP(remote.get_host_addr()) == false)
+	if(App_ForbiddenIP::instance()->CheckIP(remote.get_ip_address()) == false)
 	{
 		//在禁止列表中，不允许访问
 		return -1;
