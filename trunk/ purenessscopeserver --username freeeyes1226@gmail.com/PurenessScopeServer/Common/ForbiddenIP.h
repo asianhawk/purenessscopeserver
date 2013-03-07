@@ -16,27 +16,20 @@
 
 struct _ForbiddenIP
 {
-	char           m_szClientIP[MAX_IP_SIZE];   //被禁止的IP
-	uint32		   m_u4Pattern;					//IP与模式
-	union//IPV4地址
-	{
-		uint32 m_u4ClientIp;//IPV4 地址
-		uint8  m_u1ClientIpSection[4];//IPV4地址的4个部份
-	};
-	uint8          m_u1Type;                    //禁止的类型，0为永久禁止，1为时段禁止。
-	ACE_Time_Value m_tvBegin;                   //时段禁止开始时间
-	uint32         m_u4Second;                  //禁止的秒数
-	uint8          m_u1ConnectType;             //链接的类型，0为TCP，1为UDP  
+  char           m_szClientIP[MAX_IP_SIZE];   //被禁止的IP
+  uint8          m_u1Type;                    //禁止的类型，0为永久禁止，1为时段禁止。
+  ACE_Time_Value m_tvBegin;                   //时段禁止开始时间
+  uint32         m_u4Second;                  //禁止的秒数
+  uint8          m_u1ConnectType;             //链接的类型，0为TCP，1为UDP  
 
-	_ForbiddenIP()
-	{
-		m_szClientIP[0] = '\0';
-		m_u1Type        = 0;
-		m_u4Second      = 0;
-		m_u1ConnectType = CONNECT_TCP;   //默认为TCP包
-		m_u4Pattern = 0xFFFFFFFF;
-		m_u4ClientIp = 0;
-	}
+  _ForbiddenIP()
+  {
+    m_szClientIP[0] = '\0';
+    m_u1Type        = 0;
+    m_u4Second      = 0;
+    m_u1ConnectType = CONNECT_TCP;            //默认为TCP包
+    m_tvBegin       = ACE_OS::gettimeofday(); //默认开始时间为当前时间 
+  }
 };
 
 typedef vector<_ForbiddenIP> VecForbiddenIP;
@@ -44,27 +37,27 @@ typedef vector<_ForbiddenIP> VecForbiddenIP;
 class CForbiddenIP
 {
 public:
-	CForbiddenIP();
-	~CForbiddenIP();
+  CForbiddenIP();
+  ~CForbiddenIP();
 
-	bool Init(const char* szConfigPath);                                                    //初始化加载永久封停IP文件
-	bool CheckIP(uint32 u4ClientIp, uint8 u1ConnectType = CONNECT_TCP);                       //检测IP是否可以链接 
-	bool AddForeverIP(const char* pIP, uint8 u1ConnectType = CONNECT_TCP);                  //添加永久封停的IP 
-	bool AddTempIP(const char* pIP, uint32 u4Second, uint8 u1ConnectType = CONNECT_TCP);    //添加临时封停的IP
-	bool DelForeverIP(const char* pIP, uint8 u1ConnectType = CONNECT_TCP);                  //删除永久封停IP
-	bool DelTempIP(const char* pIP, uint8 u1ConnectType = CONNECT_TCP);                     //删除临时封停IP
-	VecForbiddenIP* ShowForeverIP() const;                                                  //显示永久封停IP
-	VecForbiddenIP* ShowTemoIP() const;                                                     //显示临时封停IP
+  bool Init(const char* szConfigPath);                                                    //初始化加载永久封停IP文件
+  bool CheckIP(const char* pIP, uint8 u1ConnectType = CONNECT_TCP);                       //检测IP是否可以链接 
+  bool AddForeverIP(const char* pIP, uint8 u1ConnectType = CONNECT_TCP);                  //添加永久封停的IP 
+  bool AddTempIP(const char* pIP, uint32 u4Second, uint8 u1ConnectType = CONNECT_TCP);    //添加临时封停的IP
+  bool DelForeverIP(const char* pIP, uint8 u1ConnectType = CONNECT_TCP);                  //删除永久封停IP
+  bool DelTempIP(const char* pIP, uint8 u1ConnectType = CONNECT_TCP);                     //删除临时封停IP
+  VecForbiddenIP* ShowForeverIP() const;                                                  //显示永久封停IP
+  VecForbiddenIP* ShowTemoIP() const;                                                     //显示临时封停IP
 
 private:
-	bool ParseIp(const char* pszIp, _ForbiddenIP& ipadr);
-	bool LoadListCommon(LPCTSTR pszFileName, VecForbiddenIP& iplist);
+  bool SaveConfig();                                                                      //存储配置文件
+  bool ParseTXT(const char* pText, char* pIP, char* pConnectType);                        //解析配置文件行信息
+  bool CompareIP(char* pTargetIP, char* pClientIP);                                       //比较是否在当前IP段
 
-	bool SaveConfig();                                      //存储配置文件
 private:
-	CAppConfig     m_AppConfig;
-	VecForbiddenIP m_VecForeverForbiddenIP;           //永久封停的IP列表
-	VecForbiddenIP m_VecTempForbiddenIP;              //临时封停的IP列表
+  CAppConfig     m_AppConfig;
+  VecForbiddenIP m_VecForeverForbiddenIP;           //永久封停的IP列表
+  VecForbiddenIP m_VecTempForbiddenIP;              //临时封停的IP列表
 };
 
 typedef ACE_Singleton<CForbiddenIP, ACE_Null_Mutex> App_ForbiddenIP;
