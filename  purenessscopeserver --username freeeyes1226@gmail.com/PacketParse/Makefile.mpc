@@ -1,0 +1,10 @@
+project(PacketParse):acelib{
+	sharedname=PacketParse
+
+	Source_Files{	
+	./*.cpp
+	}
+	
+	macros += __LINUX__
+	includes += ../PurenessScopeServer/Common ../PurenessScopeServer/PacketParse
+}

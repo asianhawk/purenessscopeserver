@@ -439,6 +439,53 @@ inline void sprintf_safe(char* szText, int nLen, const char* fmt ...)
 	va_end(ap);
 };
 
+//定义一个函数，可支持字符串替换，目前先不考虑支持中文
+inline bool Replace_String(char* pText, uint32 u4Len, const char* pOld, const char* pNew)
+{
+  char* pTempSrc = new char(u4Len);
+
+  ACE_OS::memcpy(pTempSrc, pText, u4Len);
+  pTempSrc[u4Len - 1] = '\0';
+
+  uint16 u2NewLen = (uint16)ACE_OS::strlen(pNew);
+
+  char* pPos = ACE_OS::strstr(pTempSrc, pOld); 
+
+  while(pPos)
+  {
+    //计算出需要覆盖的字符串长度
+    uint32 u4PosLen = (uint32)(pPos - pTempSrc);
+
+    //黏贴最前面的
+    ACE_OS::memcpy(pText, pTempSrc, u4PosLen);
+    pText[u4PosLen] = '\0';
+
+    if(u4PosLen + u2NewLen >= (uint32)u4Len)
+    {
+      //清理中间变量
+      delete[] pTempSrc;
+      return false;		
+    }
+    else
+    {
+      //黏贴新字符
+      ACE_OS::memcpy(&pText[u4PosLen], pNew, u2NewLen);
+      pText[u4PosLen + u2NewLen] = '\0';
+
+      //指针向后移动	
+      pTempSrc = 	pTempSrc + u4PosLen;
+
+      //寻找下一个透汗的字符串
+      pPos = ACE_OS::strstr(pTempSrc, pOld); 
+    }
+
+  }
+
+  //清理中间变量
+  delete[] pTempSrc;
+  return true;
+}
+
 //客户端IP信息
 struct _ClientIPInfo
 {
