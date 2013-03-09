@@ -12,8 +12,9 @@ CForbiddenIP::~CForbiddenIP()
 
 bool CForbiddenIP::Init(const char* szConfigPath)
 {
+  char* pData = NULL;
   OUR_DEBUG((LM_INFO, "[CForbiddenIP::Init]Filename = %s.\n", szConfigPath));
-  if(!m_AppConfig.ReadConfig(szConfigPath))
+  if(!m_ForbiddenData.Init(szConfigPath))
   {
     OUR_DEBUG((LM_INFO, "[CForbiddenIP::Init]Read Filename = %s error.\n", szConfigPath));
     return false;
@@ -23,33 +24,39 @@ bool CForbiddenIP::Init(const char* szConfigPath)
   m_VecTempForbiddenIP.clear();
 
   ACE_TString strValue;
-  char szName1[MAX_BUFF_20]       = {'\0'};
-  char szIP[MAX_BUFF_20]          = {'\0'};
-  char szConnectType[MAX_BUFF_20] = {'\0'};
 
   _ForbiddenIP ForbiddenIP;
 
-  //获得IP地址个数
-  m_AppConfig.GetValue("IPCount", strValue, "\\ForbiddenIP");
-  int nCount = ACE_OS::atoi((char*)strValue.c_str());
-
-  for(int i = 0; i < nCount; i++)
+  TiXmlElement* pNextTiXmlElementIP   = NULL;
+  TiXmlElement* pNextTiXmlElementType = NULL;
+  while(true)
   {
-    sprintf_safe(szName1, MAX_BUFF_20, "IP%d", i);
-    m_AppConfig.GetValue(szName1, strValue, "\\ForbiddenIP");
-
-    if(true == ParseTXT(strValue.c_str(), szIP, szConnectType))
+    pData = m_ForbiddenData.GetData("ForbiddenIP", "ip", pNextTiXmlElementIP);
+    if(pData != NULL)
     {
-      sprintf_safe(ForbiddenIP.m_szClientIP, MAX_BUFF_20, "%s", szIP);
-      if(ACE_OS::strcmp(szConnectType, "TCP") == 0)
+      sprintf_safe(ForbiddenIP.m_szClientIP, MAX_BUFF_20, "%s", pData);
+    }
+    else
+    {
+      break;
+    }
+
+    pData = m_ForbiddenData.GetData("ForbiddenIP", "type", pNextTiXmlElementType);
+    if(pData != NULL)
+    {
+      if(ACE_OS::strcmp(pData, "TCP") == 0)
       {
-        ForbiddenIP.m_u1ConnectType = CONNECT_TCP;
+        ForbiddenIP.m_u1Type = PACKET_TCP;
       }
       else
       {
-        ForbiddenIP.m_u1ConnectType = CONNECT_UDP;
+        ForbiddenIP.m_u1Type = PACKET_UDP;
       }
-    }		
+    }
+    else
+    {
+      break;
+    }
 
     m_VecForeverForbiddenIP.push_back(ForbiddenIP);
   }
@@ -152,7 +159,7 @@ bool CForbiddenIP::SaveConfig()
   }
 
   char szTemp[MAX_BUFF_500] = {'\0'};
-  sprintf_safe(szTemp, MAX_BUFF_500, "[ForbiddenIP]\r\nIPCount=%d\r\n", (int)m_VecForeverForbiddenIP.size());
+  sprintf_safe(szTemp, MAX_BUFF_500, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n<config>\r\n");
 
   size_t stSize = ACE_OS::fwrite(szTemp, sizeof(char), ACE_OS::strlen(szTemp), pFile);
   if(stSize !=  ACE_OS::strlen(szTemp))
@@ -166,11 +173,11 @@ bool CForbiddenIP::SaveConfig()
   {
     if(m_VecForeverForbiddenIP[i].m_u1ConnectType == CONNECT_TCP)
     {
-      sprintf_safe(szTemp, MAX_BUFF_500, "IP%d=%s,TCP\r\n", i, m_VecForeverForbiddenIP[i].m_szClientIP); 
+      sprintf_safe(szTemp, MAX_BUFF_500, "<ForbiddenIP ip=\"%s\" type=\"TCP\" desc=\"ForbiddenIP，type is 'TCP' or 'UDP'\" />\r\n", i, m_VecForeverForbiddenIP[i].m_szClientIP); 
     }
     else
     {
-      sprintf_safe(szTemp, MAX_BUFF_500, "IP%d=%s,UDP\r\n", i, m_VecForeverForbiddenIP[i].m_szClientIP); 
+      sprintf_safe(szTemp, MAX_BUFF_500, "<ForbiddenIP ip=\"%s\" type=\"UDP\" desc=\"ForbiddenIP，type is 'TCP' or 'UDP'\" />\r\n", i, m_VecForeverForbiddenIP[i].m_szClientIP); 
     }
 
     size_t stSize = ACE_OS::fwrite(szTemp, sizeof(char), ACE_OS::strlen(szTemp), pFile);
@@ -180,6 +187,16 @@ bool CForbiddenIP::SaveConfig()
       ACE_OS::fclose(pFile);
       return false;
     }
+  }
+
+  sprintf_safe(szTemp, MAX_BUFF_500, "</config>\r\n");
+
+  stSize = ACE_OS::fwrite(szTemp, sizeof(char), ACE_OS::strlen(szTemp), pFile);
+  if(stSize !=  ACE_OS::strlen(szTemp))
+  {
+    OUR_DEBUG((LM_ERROR, "[CForbiddenIP::SaveConfig]Write file fail.\n"));
+    ACE_OS::fclose(pFile);
+    return false;
   }
 
   ACE_OS::fflush(pFile);

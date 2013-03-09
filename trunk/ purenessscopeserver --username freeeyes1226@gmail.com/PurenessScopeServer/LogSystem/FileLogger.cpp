@@ -2,7 +2,8 @@
 
 CFileLogger::CFileLogger()
 {
-	m_nCount = 0;
+	m_nCount       = 0;
+  m_szLogRoot[0] = '\0';
 }
 
 CFileLogger::~CFileLogger()
@@ -52,54 +53,82 @@ int CFileLogger::GetLogType(int nIndex)
 
 bool CFileLogger::Init()
 {
-	CAppConfig conf;
-	int nFileClass = 0;
-	char szFile[MAX_BUFF_1024] = {'\0'};
-	char szName[MAX_BUFF_100]  = {'\0'};
-	ACE_TString strFileValue;
-	ACE_TString strFileClass;
-	ACE_TString strServerName;
+	CXmlOpeation objXmlOpeation;
+  uint16 u2LogID                  = 0;
+	uint8 u1FileClass               = 0;
+	char szFile[MAX_BUFF_1024]      = {'\0'};
+  char szFileName[MAX_BUFF_100]   = {'\0'};
+  char szServerName[MAX_BUFF_100] = {'\0'};
+  char* pData = NULL;
 
 	m_vecLogType.clear();
 
 	sprintf_safe(szFile, MAX_BUFF_1024, "%s%s", App_MainConfig::instance()->GetModulePath(), FILELOG_CONFIG);
-	if(false == conf.ReadConfig(szFile))
+	if(false == objXmlOpeation.Init(szFile))
 	{
 		OUR_DEBUG((LM_ERROR,"[CFileLogger::Init] Read Configfile[%s] failed\n", szFile));
 		return false; 
 	}
 
 	//得到服务器名称
-	conf.GetValue("ServferName",strServerName,"\\ServerInfo");
-	OUR_DEBUG((LM_ERROR, "[CFileLogger::readConfig]strServerName=%s\n", strServerName.c_str()));	
+	//conf.GetValue("ServferName",strServerName,"\\ServerInfo");
+	pData = objXmlOpeation.GetData("ServerLogHead", "Text");
+  if(pData != NULL)
+  {
+    sprintf_safe(szServerName, MAX_BUFF_100, "%s", pData);
+  }
+  OUR_DEBUG((LM_ERROR, "[CFileLogger::readConfig]strServerName=%s\n", szServerName));	
 
 	//得到绝对路径
-	ACE_TString tmp;
-	conf.GetValue("Root",tmp,"\\ROOT");
-	m_strRoot = tmp;
-	OUR_DEBUG((LM_ERROR, "[CFileLogger::readConfig]m_strRoot=%s\n", m_strRoot.c_str()));
-
-	//得到日志的个数
-	conf.GetValue("Count",tmp,"\\COUNT");
-	m_nCount = atoi(tmp.c_str());	
-	OUR_DEBUG((LM_ERROR, "[CFileLogger::readConfig]m_nCount=%d\n", m_nCount));
+	pData = objXmlOpeation.GetData("LogPath", "Path");
+  if(pData != NULL)
+  {
+	  sprintf_safe(m_szLogRoot, MAX_BUFF_100, "%s", pData);
+  }
+	OUR_DEBUG((LM_ERROR, "[CFileLogger::readConfig]m_strRoot=%s\n", m_szLogRoot));
 
 	//添加子类的个数
-	for(int i = 1000; i < 1000 + m_nCount; i++)
-	{
-		sprintf_safe(szName, MAX_BUFF_100, "%d", i);
-		conf.GetValue(szName,tmp,"\\LOGNAME");
-		strFileValue = tmp;
-		OUR_DEBUG((LM_ERROR, "[CFileLogger::readConfig]strFileValue=%s\n", strFileValue.c_str()));
+  TiXmlElement* pNextTiXmlElement    = NULL;
+  TiXmlElement* pNextTiXmlElementPos = NULL;
+  TiXmlElement* pNextTiXmlElementIdx = NULL;
 
-		sprintf_safe(szName, MAX_BUFF_100, "%d", i);                                                         
-		conf.GetValue(szName,tmp,"\\LOGTYPE");                                               
-		strFileClass = tmp;
-		nFileClass = atoi(strFileClass.c_str());                                                      
-		OUR_DEBUG((LM_ERROR, "[CFileLogger::readConfig]strFileClass=%d\n", nFileClass));
+	while(true)
+	{
+    pData = objXmlOpeation.GetData("LogInfo", "logid", pNextTiXmlElementIdx);  
+    if(pData != NULL)
+    {
+      u2LogID = (uint16)atoi(pData);                                                      
+      OUR_DEBUG((LM_ERROR, "[CFileLogger::readConfig]u2LogID=%d\n", u2LogID));
+    }
+    else
+    {
+      break;
+    }
+
+		pData = objXmlOpeation.GetData("LogInfo", "logname", pNextTiXmlElement);
+    if(pData != NULL)
+    {
+      sprintf_safe(szFileName, MAX_BUFF_100, "%s", pData);
+		  OUR_DEBUG((LM_ERROR, "[CFileLogger::readConfig]strFileValue=%s\n", szFileName));
+    }
+    else
+    {
+      break;
+    }
+
+		pData = objXmlOpeation.GetData("LogInfo", "logtype", pNextTiXmlElementPos);  
+    if(pData != NULL)
+    {
+		  u1FileClass = (uint8)atoi(pData);                                                      
+		  OUR_DEBUG((LM_ERROR, "[CFileLogger::readConfig]u1FileClass=%d\n", u1FileClass));
+    }
+    else
+    {
+      break;
+    }
 
 		//添加到管理日志文件对象map中
-		mapLogFile::iterator f = m_mapLogFile.find(i);
+		mapLogFile::iterator f = m_mapLogFile.find(u2LogID);
 
 		if(f != m_mapLogFile.end())
 		{
@@ -108,14 +137,14 @@ bool CFileLogger::Init()
 
 		CLogFile* pLogFile = new CLogFile();
 
-		pLogFile->SetLoggerName(strFileValue.c_str());
-		pLogFile->SetLoggerType(i);
-		pLogFile->SetLoggerClass(nFileClass);
-		pLogFile->SetServerName(strServerName.c_str());
+		pLogFile->SetLoggerName(szFileName);
+		pLogFile->SetLoggerType((int)u2LogID);
+		pLogFile->SetLoggerClass((int)u1FileClass);
+		pLogFile->SetServerName(szServerName);
 		pLogFile->Run();
 
 		m_mapLogFile.insert(mapLogFile::value_type(pLogFile->GetLoggerType(), pLogFile));
-		m_vecLogType.push_back(i);
+		m_vecLogType.push_back(u2LogID);
 
 	}
 

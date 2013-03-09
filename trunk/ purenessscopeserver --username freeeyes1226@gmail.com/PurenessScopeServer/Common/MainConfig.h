@@ -1,7 +1,8 @@
 #ifndef _MAINCONFIG_H
 #define _MAINCONFIG_H
 
-#include "AppConfig.h"
+#include "define.h"
+#include "XmlOpeation.h"
 
 #include "ace/Singleton.h"
 #include <vector>
@@ -90,7 +91,7 @@ public:
 	uint8 GetCommandAccount();
 
 private:
-	CAppConfig m_AppConfig;
+  CXmlOpeation m_MainConfig;
 	char       m_szError[MAX_BUFF_500];
 
 	int        m_nServerID;                        //·þÎñÆ÷ID
