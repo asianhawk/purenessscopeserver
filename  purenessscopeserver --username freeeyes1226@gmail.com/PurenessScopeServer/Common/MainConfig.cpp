@@ -55,152 +55,258 @@ const char* CMainConfig::GetError()
 
 bool CMainConfig::Init(const char* szConfigPath)
 {
+  char* pData = NULL;
 	OUR_DEBUG((LM_INFO, "[CMainConfig::Init]Filename = %s.\n", szConfigPath));
-	if(!m_AppConfig.ReadConfig(szConfigPath))
-	{
-		sprintf_safe(m_szError, MAX_BUFF_500, "%s", m_AppConfig.GetError());
-		return false;
-	}
+	if(false == m_MainConfig.Init(szConfigPath))
+  {
+    OUR_DEBUG((LM_INFO, "[CMainConfig::Init]File Read Error = %s.\n", szConfigPath));
+    return false;
+  }
 
-	ACE_TString strValue;
+	pData = m_MainConfig.GetData("ServerID", "id");
+  if(NULL != pData)
+  {
+	  m_nServerID = ACE_OS::atoi(pData);
+  }
 
-	//获得反应器个数(目前这个读取废弃)
-	//m_AppConfig.GetValue("ReactorCount", strValue, "\\REACTOR");
-	//m_u4ReactorCount = ACE_OS::atoi((char*)strValue.c_str());
-
-	m_AppConfig.GetValue("ServerID", strValue, "\\SERVER");
-	m_nServerID = ACE_OS::atoi((char*)strValue.c_str());
-
-	m_AppConfig.GetValue("ServerName", strValue, "\\SERVER");
-	sprintf_safe(m_szServerName, MAX_BUFF_20, "%s", strValue.c_str());
-
-	m_AppConfig.GetValue("ListenPortCount", strValue, "\\SERVER");
-	int nServerCount = ACE_OS::atoi((char*)strValue.c_str());
+	pData = m_MainConfig.GetData("ServerName", "name");
+  if(NULL != pData)
+  {
+	  sprintf_safe(m_szServerName, MAX_BUFF_20, "%s", pData);
+  }
 
 	//获得监听端口信息
-	char szName1[MAX_BUFF_20] = {'\0'};
-	char szName2[MAX_BUFF_20] = {'\0'};
 	_ServerInfo serverinfo;
 
 	m_vecServerInfo.clear();
-	for(int i = 0; i < nServerCount; i++)
+  TiXmlElement* pNextTiXmlElementIP = NULL;
+  TiXmlElement* pNextTiXmlElementPort = NULL;
+	while(true)
 	{
-		sprintf_safe(szName1, MAX_BUFF_20, "ServerIP%d", i);
-		sprintf_safe(szName2, MAX_BUFF_20, "ServerPort%d", i);
-		m_AppConfig.GetValue(szName1, strValue, "\\SERVER");
-		sprintf_safe(serverinfo.m_szServerIP, MAX_BUFF_20, "%s", strValue.c_str());
+		pData = m_MainConfig.GetData("TCPServerIP", "ip", pNextTiXmlElementIP);
+    if(pData != NULL)
+    {
+		  sprintf_safe(serverinfo.m_szServerIP, MAX_BUFF_20, "%s", pData);
+    }
+    else
+    {
+      break;
+    }
 
-		m_AppConfig.GetValue(szName2, strValue, "\\SERVER");
-		serverinfo.m_nPort = ACE_OS::atoi((char*)strValue.c_str());
+		pData = m_MainConfig.GetData("TCPServerIP", "port", pNextTiXmlElementPort);
+    if(pData != NULL)
+    {
+      serverinfo.m_nPort = ACE_OS::atoi(pData);
+    }
+    else
+    {
+      break;
+    }
+		
 
 		m_vecServerInfo.push_back(serverinfo);
 	}
 
 	//开始获得消息处理线程参数
-	m_AppConfig.GetValue("Msg_High_mark", strValue, "\\SERVER");
-	m_u4MsgHighMark = (uint32)ACE_OS::atoi((char*)strValue.c_str());
-	m_AppConfig.GetValue("Msg_Low_mark", strValue, "\\SERVER");
-	m_u4MsgLowMark = (uint32)ACE_OS::atoi((char*)strValue.c_str());
-	m_AppConfig.GetValue("Msg_Thread", strValue, "\\SERVER");
-	m_u4MsgThreadCount = (uint32)ACE_OS::atoi((char*)strValue.c_str());
-	m_AppConfig.GetValue("Msg_MaxQueue", strValue, "\\SERVER");
-	m_u4MsgMaxQueue = (uint32)ACE_OS::atoi((char*)strValue.c_str());
+	pData = m_MainConfig.GetData("Message", "Msg_High_mark");
+  if(pData != NULL)
+  {
+	  m_u4MsgHighMark = (uint32)ACE_OS::atoi(pData);
+  }
+  pData = m_MainConfig.GetData("Message", "Msg_Low_mark");
+  if(pData != NULL)
+  {
+	  m_u4MsgLowMark = (uint32)ACE_OS::atoi(pData);
+  }
+  pData = m_MainConfig.GetData("Message", "Msg_Thread");
+  if(pData != NULL)
+  {
+    m_u4MsgThreadCount = (uint32)ACE_OS::atoi(pData);
+  }
+
+	
+	pData = m_MainConfig.GetData("Message", "Msg_MaxQueue");
+  if(pData != NULL)
+  {
+	  m_u4MsgMaxQueue = (uint32)ACE_OS::atoi(pData);
+  }
 
 	//开始获得UDP服务器相关参数
-	m_AppConfig.GetValue("ListenPortCount", strValue, "\\UDPSERVER");
-	int nUDPServerCount = ACE_OS::atoi((char*)strValue.c_str());
-
 	m_vecUDPServerInfo.clear();
-	for(int i = 0; i < nUDPServerCount; i++)
+  pNextTiXmlElementIP   = NULL;
+  pNextTiXmlElementPort = NULL;
+	while(true)
 	{
-		sprintf_safe(szName1, MAX_BUFF_20, "ServerIP%d", i);
-		sprintf_safe(szName2, MAX_BUFF_20, "ServerPort%d", i);
-		m_AppConfig.GetValue(szName1, strValue, "\\UDPSERVER");
-		sprintf_safe(serverinfo.m_szServerIP, MAX_BUFF_20, "%s", strValue.c_str());
+		pData = m_MainConfig.GetData("UDPServerIP", "uip", pNextTiXmlElementIP);
+    if(pData != NULL)
+    {
+		  sprintf_safe(serverinfo.m_szServerIP, MAX_BUFF_20, "%s", pData);
+    }
+    else
+    {
+      break;
+    }
 
-		m_AppConfig.GetValue(szName2, strValue, "\\UDPSERVER");
-		serverinfo.m_nPort = ACE_OS::atoi((char*)strValue.c_str());
+		pData = m_MainConfig.GetData("UDPServerIP", "uport", pNextTiXmlElementPort);
+    if(pData != NULL)
+    {
+		  serverinfo.m_nPort = ACE_OS::atoi(pData);
+    }
+    else
+    {
+      break;
+    }
 
 		m_vecUDPServerInfo.push_back(serverinfo);
 	}
 
 	//开始获得加载模块参数
-	m_AppConfig.GetValue("ModulePath", strValue, "\\SERVER");
-	sprintf_safe(m_szModulePath, MAX_BUFF_200, "%s", strValue.c_str());
-	m_AppConfig.GetValue("ModuleString", strValue, "\\SERVER");
-	sprintf_safe(m_szResourceName, MAX_BUFF_200, "%s", strValue.c_str());
+	pData = m_MainConfig.GetData("Module", "ModulePath");
+  if(pData != NULL)
+  {
+	  sprintf_safe(m_szModulePath, MAX_BUFF_200, "%s", pData);
+  }
 
-	//开始获得加密模式参数
-	m_AppConfig.GetValue("EncryptFlag", strValue, "\\SERVER");
-	m_nEncryptFlag = (int)ACE_OS::atoi((char*)strValue.c_str());
-	m_AppConfig.GetValue("EncryptPass", strValue, "\\SERVER");
-	sprintf_safe(m_szEncryptPass, MAX_BUFF_9, "%s", strValue.c_str());
-	m_AppConfig.GetValue("EncryptOutFlag", strValue, "\\SERVER");
-	m_nEncryptOutFlag = (int)ACE_OS::atoi((char*)strValue.c_str());
+	pData = m_MainConfig.GetData("Module", "ModuleString");
+  if(pData != NULL)
+  {
+	  sprintf_safe(m_szResourceName, MAX_BUFF_200, "%s", pData);
+  }
 
 	//开始获得发送和接受阀值
-	m_AppConfig.GetValue("SendThresHold", strValue, "\\SERVER");
-	m_u4SendThresHold = (int)ACE_OS::atoi((char*)strValue.c_str());
-	m_AppConfig.GetValue("RecvBuffSize", strValue, "\\SERVER");
-	m_u4RecvBuffSize = (int)ACE_OS::atoi((char*)strValue.c_str());
-	m_AppConfig.GetValue("SendQueueMax", strValue, "\\SERVER");
-	m_u2SendQueueMax = (uint16)ACE_OS::atoi((char*)strValue.c_str());
-	m_AppConfig.GetValue("ThreadTimeout", strValue, "\\SERVER");
-	m_u2ThreadTimuOut = (uint16)ACE_OS::atoi((char*)strValue.c_str());
-	m_AppConfig.GetValue("ThreadTimeCheck", strValue, "\\SERVER");
-	m_u2ThreadTimeCheck = (uint16)ACE_OS::atoi((char*)strValue.c_str());
-	m_AppConfig.GetValue("DisposeTimeout", strValue, "\\SERVER");
-	m_u2PacketTimeOut = (uint16)ACE_OS::atoi((char*)strValue.c_str());
-	m_AppConfig.GetValue("SendAliveTime", strValue, "\\SERVER");
-	m_u2SendAliveTime = (uint16)ACE_OS::atoi((char*)strValue.c_str());
-	m_AppConfig.GetValue("HandlerCount", strValue, "\\SERVER");
-	m_u2HandleCount = (uint16)ACE_OS::atoi((char*)strValue.c_str());
-	m_AppConfig.GetValue("MaxHandlerCount", strValue, "\\SERVER");
-	m_u2MaxHanderCount = (uint16)ACE_OS::atoi((char*)strValue.c_str());
-	m_AppConfig.GetValue("MaxConnectTime", strValue, "\\SERVER");
-	m_u2MaxConnectTime = (uint16)ACE_OS::atoi((char*)strValue.c_str());
-	m_AppConfig.GetValue("RecvQueueTimeout", strValue, "\\SERVER");
-	m_u2RecvQueueTimeout = (uint16)ACE_OS::atoi((char*)strValue.c_str());
-	m_AppConfig.GetValue("SendQueueTimeout", strValue, "\\SERVER");
-	m_u2SendQueueTimeout = (uint16)ACE_OS::atoi((char*)strValue.c_str());
-	m_AppConfig.GetValue("SendQueueCount", strValue, "\\SERVER");
-	m_u2SendQueueCount = (uint16)ACE_OS::atoi((char*)strValue.c_str());
-	m_AppConfig.GetValue("CommandAccount", strValue, "\\SERVER");
-	m_u1CommandAccount = (uint8)ACE_OS::atoi((char*)strValue.c_str());
+  pData = m_MainConfig.GetData("SendInfo", "SendThresHold");
+  if(pData != NULL)
+  {
+	  m_u4SendThresHold = (int)ACE_OS::atoi(pData);
+  }
+	pData = m_MainConfig.GetData("RecvInfo", "RecvBuffSize");
+  if(pData != NULL)
+  {
+	  m_u4RecvBuffSize = (int)ACE_OS::atoi(pData);
+  }
+	pData = m_MainConfig.GetData("SendInfo", "SendQueueMax");
+  if(pData != NULL)
+  {
+	  m_u2SendQueueMax = (uint16)ACE_OS::atoi(pData);
+  }
+	pData = m_MainConfig.GetData("ThreadInfo", "ThreadTimeout");
+  if(pData != NULL)
+  {
+	  m_u2ThreadTimuOut = (uint16)ACE_OS::atoi(pData);
+  }
+	pData = m_MainConfig.GetData("ThreadInfo", "ThreadTimeCheck");
+  if(pData != NULL)
+  {
+	  m_u2ThreadTimeCheck = (uint16)ACE_OS::atoi(pData);
+  }
+	pData = m_MainConfig.GetData("ThreadInfo", "DisposeTimeout");
+  if(pData != NULL)
+  {
+	  m_u2PacketTimeOut = (uint16)ACE_OS::atoi(pData);
+  }
+  pData = m_MainConfig.GetData("SendInfo", "SendAliveTime");
+  if(pData != NULL)
+  {
+	  m_u2SendAliveTime = (uint16)ACE_OS::atoi(pData);
+  }
+	pData = m_MainConfig.GetData("ClientInfo", "HandlerCount");
+  if(pData != NULL)
+  {
+	  m_u2HandleCount = (uint16)ACE_OS::atoi(pData);
+  }
+	pData = m_MainConfig.GetData("ClientInfo", "MaxHandlerCount");
+  if(pData != NULL)
+  {
+	  m_u2MaxHanderCount = (uint16)ACE_OS::atoi(pData);
+  }
+	pData = m_MainConfig.GetData("ClientInfo", "MaxConnectTime");
+  if(pData != NULL)
+  {
+	  m_u2MaxConnectTime = (uint16)ACE_OS::atoi((char*)pData);
+  }
+	pData = m_MainConfig.GetData("RecvInfo", "RecvQueueTimeout");
+  if(pData != NULL)
+  {
+	  m_u2RecvQueueTimeout = (uint16)ACE_OS::atoi(pData);
+  }
+	pData = m_MainConfig.GetData("SendInfo", "SendQueueTimeout");
+  if(pData != NULL)
+  {
+	  m_u2SendQueueTimeout = (uint16)ACE_OS::atoi(pData);
+  }
+	pData = m_MainConfig.GetData("SendInfo", "SendQueueCount");
+  if(pData != NULL)
+  {
+	  m_u2SendQueueCount = (uint16)ACE_OS::atoi(pData);
+  }
+	pData = m_MainConfig.GetData("ClientInfo", "CommandAccount");
+  if(pData != NULL)
+  {
+	  m_u1CommandAccount = (uint8)ACE_OS::atoi(pData);
+  }
 
 	//开始获得Console服务器相关配置信息
-	m_AppConfig.GetValue("ConsoleSupport", strValue, "\\SERVER");
-	m_u1ConsoleSupport = (uint8)ACE_OS::atoi((char*)strValue.c_str());
-	m_AppConfig.GetValue("ConsoleIP", strValue, "\\SERVER");
-	sprintf_safe(m_szConsoleIP, MAX_BUFF_100, "%s", strValue.c_str());
-	m_AppConfig.GetValue("ConsolePort", strValue, "\\SERVER");
-	m_nConsolePort = (int)ACE_OS::atoi((char*)strValue.c_str());
+	pData = m_MainConfig.GetData("Console", "support");
+  if(pData != NULL)
+  {
+	  m_u1ConsoleSupport = (uint8)ACE_OS::atoi(pData);
+  }
+	pData = m_MainConfig.GetData("Console", "sip");
+  if(pData != NULL)
+  {
+	  sprintf_safe(m_szConsoleIP, MAX_BUFF_100, "%s", pData);
+  }
+	pData = m_MainConfig.GetData("Console", "sport");
+  if(pData != NULL)
+  {
+	  m_nConsolePort = (int)ACE_OS::atoi(pData);
+  }
 
-	m_AppConfig.GetValue("ConsoleIPCount", strValue, "\\SERVER");
-	int nConsoleClientIPCount = (int)ACE_OS::atoi((char*)strValue.c_str());
-
+  //获得Console可接受的客户端IP
 	m_vecConsoleClientIP.clear();
-	for(int i = 0; i < nConsoleClientIPCount; i++)
+  pNextTiXmlElementIP   = NULL;
+	while(true)
 	{
 		_ConsoleClientIP ConsoleClientIP;
-		sprintf_safe(szName1, MAX_BUFF_20, "ConsoleIP%d", i);
-		m_AppConfig.GetValue(szName1, strValue, "\\SERVER");
-		sprintf_safe(ConsoleClientIP.m_szServerIP, MAX_BUFF_20, "%s", strValue.c_str());
+    pData = m_MainConfig.GetData("ConsoleClient", "cip", pNextTiXmlElementIP);
+    if(NULL != pData)
+    {
+		  sprintf_safe(ConsoleClientIP.m_szServerIP, MAX_BUFF_20, "%s", pData);
+    }
+    else
+    {
+      break;
+    }
 
 		m_vecConsoleClientIP.push_back(ConsoleClientIP);
 	}
 
 	//开始获得ConnectValid对应的参数
-	m_AppConfig.GetValue("ConnectCount", strValue, "\\CONNECTVALID");
-	m_u2ValidConnectCount = (uint16)ACE_OS::atoi((char*)strValue.c_str());
-	m_AppConfig.GetValue("ConnectValid", strValue, "\\CONNECTVALID");
-	m_u1Valid = (uint8)ACE_OS::atoi((char*)strValue.c_str());
-	m_AppConfig.GetValue("ConnectPacketCount", strValue, "\\CONNECTVALID");
-	m_u4ValidPacketCount = (uint32)ACE_OS::atoi((char*)strValue.c_str());
-	m_AppConfig.GetValue("ConnectRecvSize", strValue, "\\CONNECTVALID");
-	m_u4ValidRecvSize = (uint32)ACE_OS::atoi((char*)strValue.c_str());
-	m_AppConfig.GetValue("ConnectRecvSize", strValue, "\\CONNECTVALID");
-	m_u2ForbiddenTime = (uint16)ACE_OS::atoi((char*)strValue.c_str());
+	pData = m_MainConfig.GetData("ConnectValid", "ConnectCount");
+  if(NULL != pData)
+  {
+	  m_u2ValidConnectCount = (uint16)ACE_OS::atoi(pData);
+  }
+	pData = m_MainConfig.GetData("ConnectValid", "ConnectValid");
+  if(NULL != pData)
+  {
+    m_u1Valid = (uint8)ACE_OS::atoi(pData);
+  }
+	pData = m_MainConfig.GetData("ConnectValid", "ConnectPacketCount");
+  if(NULL != pData)
+  {
+	  m_u4ValidPacketCount = (uint32)ACE_OS::atoi(pData);
+  }
+	pData = m_MainConfig.GetData("ConnectValid", "ConnectRecvSize");
+  if(NULL != pData)
+  {
+	  m_u4ValidRecvSize = (uint32)ACE_OS::atoi(pData);
+  }
+	pData = m_MainConfig.GetData("ConnectValid", "ForbiddenTime");
+  if(NULL != pData)
+  {
+	  m_u2ForbiddenTime = (uint16)ACE_OS::atoi(pData);
+  }
 	return true;
 }
 

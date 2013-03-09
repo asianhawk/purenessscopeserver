@@ -22,7 +22,7 @@ using namespace std;
 #define LOGTYPE_OPERATION "Operation"
 #define LOGTYPE_ERROR     "ServerError"
 
-#define FILELOG_CONFIG    "logger.conf"
+#define FILELOG_CONFIG    "logger.xml"
 
 //单元模式日志类
 class CLogFile {
@@ -180,11 +180,11 @@ public:
 	bool Close();
 
 private:
-	typedef map<int, CLogFile*> mapLogFile;
-	typedef vector<int>         vecLogType; 
+	typedef map<uint16, CLogFile*> mapLogFile;
+	typedef vector<uint16>         vecLogType; 
 	mapLogFile                  m_mapLogFile;
 	vecLogType                  m_vecLogType;
-	ACE_TString                 m_strRoot;	
+	char                        m_szLogRoot[MAX_BUFF_100];	
 	int                         m_nCount;
 };
 

@@ -5,11 +5,12 @@
 //后来觉得，其实这个东西对我，并不存在期待，也不存在放弃，而是一种本然。
 //是的，我想做出来，就这么简单。没有什么理由让我坚持，也不必有什么理由让我放弃。
 //于是，继续的前行，跟随本然吧。
+//全部xml化，这是一个好主意，感谢凹凸man。
 //add by freeeyes
-//2011-09-01
+//2013-03-09
 
-#include "AppConfig.h"
-
+#include "define.h"
+#include "XmlOpeation.h"
 #include "ace/Singleton.h"
 
 #define MAX_IP_SIZE 20
@@ -55,7 +56,7 @@ private:
   bool CompareIP(char* pTargetIP, char* pClientIP);                                       //比较是否在当前IP段
 
 private:
-  CAppConfig     m_AppConfig;
+  CXmlOpeation   m_ForbiddenData;
   VecForbiddenIP m_VecForeverForbiddenIP;           //永久封停的IP列表
   VecForbiddenIP m_VecTempForbiddenIP;              //临时封停的IP列表
 };

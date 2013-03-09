@@ -27,9 +27,8 @@ using namespace std;
 #define NULL 0
 #endif
 
-#define MAINCONFIG            "main.conf"
-#define SERVER_CONNECT_FILE   "ConnectServer.conf"
-#define FORBIDDENIP_FILE      "forbiddenIP.conf"
+#define MAINCONFIG            "main.xml"
+#define FORBIDDENIP_FILE      "forbiddenIP.xml"
 
 #define MAX_BUFF_9    9
 #define MAX_BUFF_20   20

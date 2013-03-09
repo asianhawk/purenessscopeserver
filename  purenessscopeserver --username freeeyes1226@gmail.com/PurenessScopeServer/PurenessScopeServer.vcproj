@@ -41,7 +41,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;$(ACE_ROOT)&quot;;./Common;./Encrypt;./IObject;./LogSystem;./Message;./PacketParse;./Proactor;./Reactor;./UDP;./Console"
+				AdditionalIncludeDirectories="&quot;$(ACE_ROOT)&quot;;./Common;./Encrypt;./IObject;./LogSystem;./Message;./PacketParse;./Proactor;./Reactor;./UDP;./Console;./TinyXML"
 				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -836,6 +836,10 @@
 					RelativePath=".\Common\WindowsDump.h"
 					>
 				</File>
+				<File
+					RelativePath=".\Common\XmlOpeation.h"
+					>
+				</File>
 			</Filter>
 			<Filter
 				Name="cppfile"
@@ -1038,6 +1042,10 @@
 					RelativePath=".\Common\WindowsCPU.cpp"
 					>
 				</File>
+				<File
+					RelativePath=".\Common\XmlOpeation.cpp"
+					>
+				</File>
 			</Filter>
 		</Filter>
 		<Filter
@@ -1163,6 +1171,34 @@
 					</FileConfiguration>
 				</File>
 			</Filter>
+		</Filter>
+		<Filter
+			Name="Tinyxml"
+			>
+			<File
+				RelativePath=".\TinyXML\tinystr.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\TinyXML\tinystr.h"
+				>
+			</File>
+			<File
+				RelativePath=".\TinyXML\tinyxml.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\TinyXML\tinyxml.h"
+				>
+			</File>
+			<File
+				RelativePath=".\TinyXML\tinyxmlerror.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\TinyXML\tinyxmlparser.cpp"
+				>
+			</File>
 		</Filter>
 		<File
 			RelativePath=".\ReadMe.txt"
