@@ -1175,30 +1175,38 @@
 		<Filter
 			Name="Tinyxml"
 			>
-			<File
-				RelativePath=".\TinyXML\tinystr.cpp"
+			<Filter
+				Name="cppfile"
 				>
-			</File>
-			<File
-				RelativePath=".\TinyXML\tinystr.h"
+				<File
+					RelativePath=".\TinyXML\tinystr.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\TinyXML\tinyxml.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\TinyXML\tinyxmlerror.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\TinyXML\tinyxmlparser.cpp"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="headfile"
 				>
-			</File>
-			<File
-				RelativePath=".\TinyXML\tinyxml.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\TinyXML\tinyxml.h"
-				>
-			</File>
-			<File
-				RelativePath=".\TinyXML\tinyxmlerror.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\TinyXML\tinyxmlparser.cpp"
-				>
-			</File>
+				<File
+					RelativePath=".\TinyXML\tinystr.h"
+					>
+				</File>
+				<File
+					RelativePath=".\TinyXML\tinyxml.h"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<File
 			RelativePath=".\ReadMe.txt"
