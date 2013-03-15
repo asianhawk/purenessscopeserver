@@ -8,6 +8,7 @@ CProConnectClient::CProConnectClient(void)
 	m_mbRecv            = NULL;
 	m_pClientParse      = NULL;
 	m_pClientMessage    = NULL;
+  m_u4MaxPacketSize   = MAX_MSG_PACKETLENGTH;
 
 	m_u4SendSize        = 0;
 	m_u4SendCount       = 0;
@@ -74,6 +75,9 @@ int CProConnectClient::GetServerID()
 
 void CProConnectClient::open(ACE_HANDLE h, ACE_Message_Block&)
 {
+  //从配置文件获取数据
+  m_u4MaxPacketSize  = App_MainConfig::instance()->GetRecvBuffSize();
+
 	m_nIOCount = 1;
 	this->handle(h);
 	if(this->m_Reader.open(*this, h, 0, App_ProactorManager::instance()->GetAce_Proactor(REACTOR_POSTDEFINE)) == -1||this->m_Writer.open(*this, h,  0, App_ProactorManager::instance()->GetAce_Proactor(REACTOR_POSTDEFINE)) == -1)
@@ -139,7 +143,7 @@ void CProConnectClient::handle_read_stream(const ACE_Asynch_Read_Stream::Result 
 		uint32 u4PacketBodyLen = m_pClientParse->GetPacketDataLen();
 
 		//如果超过了最大包长度，为非法数据
-		if(u4PacketBodyLen >= MAX_MSG_PACKETLENGTH || u4PacketBodyLen <= 0)
+		if(u4PacketBodyLen >= m_u4MaxPacketSize || u4PacketBodyLen <= 0)
 		{
 			OUR_DEBUG((LM_ERROR, "[CConnectHandler::handle_read_stream]u4PacketHeadLen(%d) more than MAX_MSG_PACKETLENGTH.", u4PacketBodyLen));
 

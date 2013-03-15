@@ -11,7 +11,7 @@
 #include "ace/Mutex.h" 
 #include "ace/Thread_Mutex.h"
 
-
+#include "MainConfig.h"
 #include "ClientParsePool.h"
 #include "ClientMessage.h"
 #include "AceProactorManager.h"
@@ -51,7 +51,8 @@ private:
 	CClientParse*               m_pClientParse;      //接收的数据包解析工具
 	IClientMessage*             m_pClientMessage;    //处理消息接收的类
 	int                         m_nIOCount;          //当前引用个数
-    int                         m_nServerID;         //当前ServerID
+  uint32                      m_u4MaxPacketSize;   //最大接收包长
+  int                         m_nServerID;         //当前ServerID
 	ACE_Recursive_Thread_Mutex  m_ThreadWritrLock;   //线程锁
 
 	ACE_Time_Value              m_atvBegin;          //链接建立时间
