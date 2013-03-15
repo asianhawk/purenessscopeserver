@@ -15,6 +15,7 @@
 #include "ace/Svc_Handler.h"
 #include "ace/Reactor_Notification_Strategy.h"
 
+#include "MainConfig.h"
 #include "MessageBlockManager.h"
 #include "ClientParsePool.h"
 #include "ClientMessage.h"
@@ -53,6 +54,7 @@ public:
 	ACE_Message_Block*         m_pCurrMessage;                 //当前的MB对象
 	int                        m_nServerID;                    //服务器ID
 	uint32                     m_u4CurrSize;                   //当前接收到的字节数
+  uint32                     m_u4MaxPacketSize;              //最大接收包长
 
 	ACE_Time_Value              m_atvBegin;          //链接建立时间
 	uint32                      m_u4SendSize;        //发送字节数

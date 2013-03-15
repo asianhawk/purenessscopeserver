@@ -13,6 +13,7 @@ CConnectClient::CConnectClient(void)
 	m_u4RecvSize        = 0;
 	m_u4RecvCount       = 0;
 	m_u4CostTime        = 0;
+  m_u4MaxPacketSize   = MAX_MSG_PACKETLENGTH;
 }
 
 CConnectClient::~CConnectClient(void)
@@ -54,6 +55,9 @@ void CConnectClient::ClinetClose()
 
 int CConnectClient::open(void* p)
 {
+  //从配置文件获取数据
+  m_u4MaxPacketSize  = App_MainConfig::instance()->GetRecvBuffSize();
+
 	if(p != NULL)
 	{
 		OUR_DEBUG((LM_ERROR, "[CConnectClient::open]p is not NULL.\n"));
@@ -228,7 +232,7 @@ int CConnectClient::handle_input(ACE_HANDLE fd)
 		m_u4CurrSize = 0;
 
 		//如果超过了最大包长度，为非法数据
-		if(u4PacketBodyLen >= MAX_MSG_PACKETLENGTH || u4PacketBodyLen <= 0)
+		if(u4PacketBodyLen >= m_u4MaxPacketSize || u4PacketBodyLen <= 0)
 		{
 			m_u4CurrSize = 0;
 			OUR_DEBUG((LM_ERROR, "[CConnectClient::handle_read_stream]u4PacketHeadLen(%d) more than MAX_MSG_PACKETLENGTH.", u4PacketBodyLen));
