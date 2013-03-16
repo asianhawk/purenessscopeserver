@@ -8,6 +8,11 @@ project(DK_RoomModule):acelib{
 	macros += __LINUX__
 	dllout = ../../PurenessScopeServer/Linux_Bin
   }
+  
+	Source_Files{	
+	./*.cpp
+	./ShareMemory/*.cpp
+	}  
   libpaths += ./lib
   libs += Lua
   includes += .
