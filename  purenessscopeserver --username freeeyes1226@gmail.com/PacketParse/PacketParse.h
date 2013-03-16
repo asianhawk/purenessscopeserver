@@ -2,17 +2,17 @@
 #include "define.h"
 
 #ifdef WIN32
-#if defined PACKETPARSE_EXPORTS
-#define PACKETPARSE_EXPORTS __declspec(dllexport)
+#if defined PACKETPARSE_BUILD_DLL
+#define PACKETPARSE_BUILD_DLL __declspec(dllexport)
 #else
-#define PACKETPARSE_EXPORTS __declspec(dllimport)
+#define PACKETPARSE_BUILD_DLL __declspec(dllimport)
 #endif
 #else
 #define DLLCLASS_EXPORTS
 #endif 
 
 #ifdef WIN32
-class PACKETPARSE_EXPORTS CPacketParse
+class PACKETPARSE_BUILD_DLL CPacketParse
 #else
 class CPacketParse
 #endif 
