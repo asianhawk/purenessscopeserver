@@ -11,7 +11,7 @@ static const char *g_szName      = "TCPPost测试";       //模块的名字
 static const char *g_szModuleKey = "BaseTCPPost";       //模块的Key
 
 #ifdef WIN32
-#ifdef TESTTCPPOST_EXPORTS
+#ifdef TEST_TCPPOST_BUILD_DLL
 #define DECLDIR __declspec(dllexport)
 #else
 #define DECLDIR __declspec(dllimport)

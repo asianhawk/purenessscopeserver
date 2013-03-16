@@ -11,7 +11,7 @@ static const char *g_szName      = "TCP测试";           //模块的名字
 static const char *g_szModuleKey = "BaseTCP";           //模块的Key
 
 #ifdef WIN32
-#ifdef DLL_EXPORT
+#ifdef TEST_TCP_BUILD_DLL
 #define DECLDIR __declspec(dllexport)
 #else
 #define DECLDIR __declspec(dllimport)
