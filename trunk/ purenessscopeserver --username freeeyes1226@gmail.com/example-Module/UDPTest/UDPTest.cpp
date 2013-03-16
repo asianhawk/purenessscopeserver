@@ -11,7 +11,7 @@ static char *g_szName      = "UDP测试";           //模块的名字
 static char *g_szModuleKey = "BaseUDP";           //模块的Key
 
 #ifdef WIN32
-#ifdef DLL_EXPORT
+#ifdef TEST_UDP_BUILD_DLL
 #define DECLDIR __declspec(dllexport)
 #else
 #define DECLDIR __declspec(dllimport)

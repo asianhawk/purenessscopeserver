@@ -1,4 +1,4 @@
-// Base.cpp : 一个UDP的测试类
+// Base.cpp : 一个TCP的测试类
 //用于PurenessScopeServer的测试和使用
 //add by freeeyes
 //2011-09-20
@@ -6,12 +6,12 @@
 #include "BaseCommand.h"
 #include "IObject.h"
 
-static char *g_szDesc      = "UDPPost测试";       //模块的描述文字
-static char *g_szName      = "UDPPost测试";       //模块的名字
-static char *g_szModuleKey = "BaseUDPPost";       //模块的Key
+static const char *g_szDesc      = "DKPoker-DataCenter";          //模块的描述文字
+static const char *g_szName      = "DKPoker-DataCenter";          //模块的名字
+static const char *g_szModuleKey = "DKPoker-DataCenter";          //模块的Key
 
 #ifdef WIN32
-#if defined TEST_UDPPOST_BUILD_DLL
+#ifdef DK_ROOMDATAMODULE_BUILD_DLL
 #define DECLDIR __declspec(dllexport)
 #else
 #define DECLDIR __declspec(dllimport)
@@ -49,19 +49,19 @@ int LoadModuleData(CServerObject* pServerObject)
 	IMessageManager* pMessageManager = g_pServerObject->GetMessageManager();
 	if(NULL != pMessageManager)
 	{
-		pMessageManager->AddClientCommand(COMMAND_BASE, &g_BaseCommand, g_szName);
-		pMessageManager->AddClientCommand(CLIENT_LINK_CONNECT, &g_BaseCommand, g_szName);
-		pMessageManager->AddClientCommand(CLIENT_LINK_CDISCONNET, &g_BaseCommand, g_szName);
+		pMessageManager->DelClientCommand(CLIENT_LINK_CDISCONNET, &g_BaseCommand);
+		pMessageManager->AddClientCommand(COMMAND_USERIN, &g_BaseCommand, g_szName);
+		pMessageManager->AddClientCommand(COMMAND_USEROUT, &g_BaseCommand, g_szName);
 	}
 	else
 	{
 		OUR_DEBUG((LM_INFO, "[Base LoadModuleData] pMessageManager = NULL.\n"));
-	}
-
-	//在这里调用中间服务器链接初始化信息
-	g_BaseCommand.InitServer();
+	}		
 
 	OUR_DEBUG((LM_INFO, "[Base LoadModuleData] End.\n"));
+
+	//运行Command初始化
+	g_BaseCommand.Init();
 
 	return 0;
 }
@@ -74,9 +74,9 @@ int UnLoadModuleData()
 		IMessageManager* pMessageManager = g_pServerObject->GetMessageManager();
 		if(NULL != pMessageManager)
 		{
-			pMessageManager->DelClientCommand(COMMAND_BASE, &g_BaseCommand);
-			pMessageManager->DelClientCommand(CLIENT_LINK_CONNECT, &g_BaseCommand);
 			pMessageManager->DelClientCommand(CLIENT_LINK_CDISCONNET, &g_BaseCommand);
+			pMessageManager->DelClientCommand(COMMAND_USERIN, &g_BaseCommand);
+			pMessageManager->DelClientCommand(COMMAND_USEROUT, &g_BaseCommand);
 			pMessageManager = NULL;
 		}
 	}

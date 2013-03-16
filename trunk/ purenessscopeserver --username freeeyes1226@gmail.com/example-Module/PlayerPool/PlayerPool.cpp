@@ -6,7 +6,7 @@ static char *g_szName      = (char* )"PlayerPool";       //模块的名字
 static char *g_szModuleKey = (char* )"PlayerPool";       //模块的Key
 
 #ifdef WIN32
-#if defined DLL_EXPORT
+#if defined PLAYERPOOL_BUILD_DLL
 #define DECLDIR __declspec(dllexport)
 #else
 #define DECLDIR __declspec(dllimport)
