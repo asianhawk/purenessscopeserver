@@ -12,6 +12,6 @@ project(PacketParse):acelib{
 	macros += __LINUX__
 	dllout = ../PurenessScopeServer/Linux_Bin
   }	
-	libout = ./PurenessScopeServer/Lib
+	libout = ../PurenessScopeServer/Lib
 	includes += ../PurenessScopeServer/Common ../PurenessScopeServer/PacketParse
 }
