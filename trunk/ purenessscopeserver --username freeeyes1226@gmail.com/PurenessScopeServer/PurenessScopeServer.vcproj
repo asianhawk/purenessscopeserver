@@ -62,7 +62,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="aced.lib PacketParse.lib DbgHelp.lib psapi.lib"
+				AdditionalDependencies="aced.lib PacketParsed.lib DbgHelp.lib psapi.lib"
 				OutputFile="$(OutDir)\$(ProjectName)_D.exe"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="$(ACE_ROOT)\lib;.\Lib"
