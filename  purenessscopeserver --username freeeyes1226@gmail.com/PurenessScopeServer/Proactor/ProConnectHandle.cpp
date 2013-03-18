@@ -1093,7 +1093,9 @@ bool CProConnectManager::KillTimer()
 
 int CProConnectManager::handle_timeout(const ACE_Time_Value &tv, const void *arg)
 {
-	m_ThreadWriteLock.acquire();
+  ACE_Guard<ACE_Recursive_Thread_Mutex> WGrard(m_ThreadWriteLock);
+
+  //为了防止多线程下的链接删除问题，先把所有的链接ID读出来，再做遍历操作，减少线程竞争的机会。
 	if(m_mapConnectManager.size() != 0)
 	{
 		for(mapConnectManager::iterator b = m_mapConnectManager.begin(); b != m_mapConnectManager.end();)
@@ -1117,7 +1119,6 @@ int CProConnectManager::handle_timeout(const ACE_Time_Value &tv, const void *arg
 			}
 		}
 	}
-	m_ThreadWriteLock.release();
 
 	//判定是否应该记录链接日志
 	ACE_Time_Value tvNow = ACE_OS::gettimeofday();

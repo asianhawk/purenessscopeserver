@@ -48,7 +48,12 @@ typedef vector<_IPAccount> vecIPAccount;
 class CIPAccount
 {
 public:
-	CIPAccount() { m_nMaxConnectCount = 100; }; //默认每秒最高100次 
+	CIPAccount() 
+  { 
+    m_nNeedCheck       = 0;
+    m_nMaxConnectCount = 100;  //默认每秒最高100次 
+  };
+
 	~CIPAccount() 
 	{
 		OUR_DEBUG((LM_INFO, "[CIPAccount::~CIPAccount].\n"));
@@ -61,39 +66,48 @@ public:
 		m_mapIPAccount.Clear();
 	}
 
-	void Init(int nMaxConnectCount)
+	void Init(int nNeedCheck, int nMaxConnectCount)
 	{
+    m_nNeedCheck       = nNeedCheck;
 		m_nMaxConnectCount = nMaxConnectCount;
 	};
 
 	bool AddIP(string strIP)
 	{
-		_IPAccount* pIPAccount = m_mapIPAccount.SearchMapData(strIP);
-		if(NULL == pIPAccount)
-		{
-			//没有找到，添加
-			pIPAccount = new _IPAccount();
-			if(NULL == pIPAccount)
-			{
-				return true;
-			}
-			else
-			{
-				pIPAccount->m_strIP     = strIP;
-				pIPAccount->Add();
-				m_mapIPAccount.AddMapData(strIP, pIPAccount);
-			}
-		}
-		else
-		{
-			pIPAccount->Add();
-			if(pIPAccount->m_nCount >= m_nMaxConnectCount)
-			{
-				return false;
-			}
-		}
+    //看看需要不需要判定，如果需要，则进行IP统计
+    if(m_nNeedCheck == 0)
+    {
+		  _IPAccount* pIPAccount = m_mapIPAccount.SearchMapData(strIP);
+		  if(NULL == pIPAccount)
+		  {
+			  //没有找到，添加
+			  pIPAccount = new _IPAccount();
+			  if(NULL == pIPAccount)
+			  {
+				  return true;
+			  }
+			  else
+			  {
+				  pIPAccount->m_strIP     = strIP;
+				  pIPAccount->Add();
+				  m_mapIPAccount.AddMapData(strIP, pIPAccount);
+			  }
+		  }
+		  else
+		  {
+			  pIPAccount->Add();
+			  if(pIPAccount->m_nCount >= m_nMaxConnectCount)
+			  {
+				  return false;
+			  }
+		  }
 
-		return true;
+      return true;
+    }
+    else
+    {
+      return true;
+    }
 	};
 
 	int GetCount()
@@ -115,7 +129,8 @@ public:
 
 private:
 	CMapTemplate<string, _IPAccount> m_mapIPAccount;
-	int m_nMaxConnectCount;
+	int            m_nMaxConnectCount;
+  int            m_nNeedCheck;        //是否需要验证，0为需要，1为不需要
 };
 
 typedef ACE_Singleton<CIPAccount, ACE_Recursive_Thread_Mutex> App_IPAccount;

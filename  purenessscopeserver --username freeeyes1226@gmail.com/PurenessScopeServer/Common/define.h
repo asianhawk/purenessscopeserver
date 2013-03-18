@@ -267,13 +267,12 @@ struct _TimeConnectInfo
 	uint8  m_u1Minutes;           //当前的分钟数
 	uint32 m_u4PacketCount;       //当前的包数量
 	uint32 m_u4RecvSize;          //当前接收数据量
-
 	uint8  m_u1NeedCheck;         //是否需要验证，0为需要，1为不需要
 	uint32 m_u4ValidPacketCount;  //单位时间可允许接收数据包的上限
 	uint32 m_u4ValidRecvSize;     //单位时间可允许的数据接收量
 
 	_TimeConnectInfo()
-	{
+	{ 
 		m_u1Minutes     = 0;
 		m_u4PacketCount = 0;
 		m_u4RecvSize    = 0;
