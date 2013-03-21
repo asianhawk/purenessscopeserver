@@ -223,7 +223,7 @@ bool CMessageService::PutMessage(CMessage* pMessage)
 bool CMessageService::ProcessMessage(CMessage* pMessage, uint32 u4ThreadID)
 {
 	CProfileTime DisposeTime;
-	uint32 u4Cost = (uint32)(pMessage->GetMessageBase()->m_ProfileTime.Stop());
+	//uint32 u4Cost = (uint32)(pMessage->GetMessageBase()->m_ProfileTime.Stop());
 
 	if(NULL == pMessage)
 	{
@@ -282,6 +282,8 @@ bool CMessageService::ProcessMessage(CMessage* pMessage, uint32 u4ThreadID)
 	}
 
 	//如果是windows服务器，默认用App_ProConnectManager，否则这里需要手动修改一下
+  //暂时无用，先注释掉
+  /*
 #ifdef WIN32
 	{
 		if(pMessage->GetMessageBase()->m_u2Cmd != CLIENT_LINK_CONNECT && pMessage->GetMessageBase()->m_u2Cmd != CLIENT_LINK_CDISCONNET && pMessage->GetMessageBase()->m_u2Cmd != CLIENT_LINK_SDISCONNET)
@@ -299,6 +301,7 @@ bool CMessageService::ProcessMessage(CMessage* pMessage, uint32 u4ThreadID)
 		}
 	}
 #endif
+  */
 
 	//开始测算数据包处理的时间
 	uint64 u8DisposeCost = DisposeTime.Stop();
