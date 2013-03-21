@@ -1065,13 +1065,13 @@ bool CConnectManager::AddConnect(uint32 u4ConnectID, CConnectHandler* pConnectHa
 bool CConnectManager::SendMessage(uint32 u4ConnectID, IBuffPacket* pBuffPacket, uint16 u2CommandID, bool blSendState, uint8 u1SendType, ACE_hrtime_t& tvSendBegin)
 {
 	//ACE_Guard<ACE_Recursive_Thread_Mutex> WGuard(m_ThreadWriteLock);
+  //因为是队列调用，所以这里不需要加锁了。
 	if(NULL == pBuffPacket)
 	{
 		sprintf_safe(m_szError, MAX_BUFF_500, "[CConnectManager::SendMessage] ConnectID[%d] pBuffPacket is NULL.", u4ConnectID);
 		return false;
 	}
 
-	m_ThreadWriteLock.acquire();
 	mapConnectManager::iterator f = m_mapConnectManager.find(u4ConnectID);
 
 	if(f != m_mapConnectManager.end())
@@ -1088,14 +1088,12 @@ bool CConnectManager::SendMessage(uint32 u4ConnectID, IBuffPacket* pBuffPacket, 
 			uint32 u4SendCost = (uint32)(ACE_OS::gethrtime() - tvSendBegin);
 			pConnectHandler->SetSendQueueTimeCost(u4SendCost);
 			AppCommandAccount::instance()->SaveCommandData(u2CommandID, (uint8)u4SendCost, PACKET_TCP, u4PacketSize, u4CommandSize, COMMAND_TYPE_OUT);
-			m_ThreadWriteLock.release();
 			return true;
 		}
 		else
 		{
 			sprintf_safe(m_szError, MAX_BUFF_500, "[CConnectManager::SendMessage] ConnectID[%d] is not find.", u4ConnectID);
 			App_BuffPacketManager::instance()->Delete(pBuffPacket);
-			m_ThreadWriteLock.release();
 			return true;
 		}
 	}
@@ -1157,6 +1155,7 @@ bool CConnectManager::PostMessage(uint32 u4ConnectID, IBuffPacket* pBuffPacket, 
 		if(nQueueCount >= (int)MAX_MSG_THREADQUEUE)
 		{
 			OUR_DEBUG((LM_ERROR,"[CConnectManager::PutMessage] Queue is Full nQueueCount = [%d].\n", nQueueCount));
+      App_BuffPacketManager::instance()->Delete(pBuffPacket);
 			m_SendMessagePool.Delete(pSendMessage);
 			mb->release();
 			return false;
@@ -1166,7 +1165,8 @@ bool CConnectManager::PostMessage(uint32 u4ConnectID, IBuffPacket* pBuffPacket, 
 		if(this->putq(mb, &xtime) == -1)
 		{
 			OUR_DEBUG((LM_ERROR,"[CConnectManager::PutMessage] Queue putq  error nQueueCount = [%d] errno = [%d].\n", nQueueCount, errno));
-			m_SendMessagePool.Delete(pSendMessage);
+			App_BuffPacketManager::instance()->Delete(pBuffPacket);
+      m_SendMessagePool.Delete(pSendMessage);
 			mb->release();
 			return false;
 		}
@@ -1174,6 +1174,7 @@ bool CConnectManager::PostMessage(uint32 u4ConnectID, IBuffPacket* pBuffPacket, 
 	else
 	{
 		OUR_DEBUG((LM_ERROR,"[CMessageService::PutMessage] mb new error.\n"));
+    App_BuffPacketManager::instance()->Delete(pBuffPacket);
 		return false;
 	}
 
@@ -1436,6 +1437,100 @@ _ClientIPInfo CConnectManager::GetClientIPInfo(uint32 u4ConnectID)
 		_ClientIPInfo ClientIPInfo;
 		return ClientIPInfo;
 	}
+}
+
+bool CConnectManager::PostMessageAll(IBuffPacket* pBuffPacket, uint8 u1SendType /*= SENDMESSAGE_NOMAL*/, uint16 u2CommandID /*= 0*/, bool blSendState /*= true*/)
+{
+  m_ThreadWriteLock.acquire();
+  vecConnectManager objvecConnectManager;
+  for(mapConnectManager::iterator b = m_mapConnectManager.begin(); b != m_mapConnectManager.end(); b++)
+  {
+    objvecConnectManager.push_back((uint32)b->first);
+  }
+  m_ThreadWriteLock.release();
+
+  uint32 u4ConnectID = 0;
+  for(uint32 i = 0; i < (uint32)objvecConnectManager.size(); i++)
+  {
+    IBuffPacket* pCurrBuffPacket = App_BuffPacketManager::instance()->Create();
+    if(NULL == pCurrBuffPacket)
+    {
+      OUR_DEBUG((LM_INFO, "[CConnectManager::PostMessage]pCurrBuffPacket is NULL.\n"));
+      App_BuffPacketManager::instance()->Delete(pBuffPacket);
+      return false;
+    }
+
+    pCurrBuffPacket->WriteStream(pBuffPacket->GetData(), pBuffPacket->GetPacketLen());
+
+    u4ConnectID = objvecConnectManager[i];
+    ACE_Message_Block* mb = NULL;
+
+    ACE_NEW_MALLOC_NORETURN(mb, 
+      static_cast<ACE_Message_Block*>(_msg_send_mb_allocator.malloc(sizeof(ACE_Message_Block))),
+      ACE_Message_Block(sizeof(_SendMessage*), // size
+      ACE_Message_Block::MB_DATA, // type
+      0,
+      0,
+      &_msg_send_mb_allocator, // allocator_strategy
+      0, // locking strategy
+      ACE_DEFAULT_MESSAGE_BLOCK_PRIORITY, // priority
+      ACE_Time_Value::zero,
+      ACE_Time_Value::max_time,
+      &_msg_send_mb_allocator,
+      &_msg_send_mb_allocator
+      ));
+
+    if(NULL != mb)
+    {
+      //放入发送队列
+      _SendMessage* pSendMessage = m_SendMessagePool.Create();
+
+      if(NULL == pSendMessage)
+      {
+        OUR_DEBUG((LM_ERROR,"[CConnectManager::PutMessage] new _SendMessage is error.\n"));
+        App_BuffPacketManager::instance()->Delete(pBuffPacket);
+        return false;
+      }
+
+      pSendMessage->m_u4ConnectID = u4ConnectID;
+      pSendMessage->m_pBuffPacket = pCurrBuffPacket;
+      pSendMessage->m_nEvents     = u1SendType;
+      pSendMessage->m_u2CommandID = u2CommandID;
+      pSendMessage->m_blSendState = blSendState;
+      pSendMessage->m_tvSend      = ACE_OS::gethrtime();
+
+      _SendMessage** ppSendMessage = (_SendMessage **)mb->base();
+      *ppSendMessage = pSendMessage;
+
+      //判断队列是否是已经最大
+      int nQueueCount = (int)msg_queue()->message_count();
+      if(nQueueCount >= (int)MAX_MSG_THREADQUEUE)
+      {
+        OUR_DEBUG((LM_ERROR,"[CConnectManager::PutMessage] Queue is Full nQueueCount = [%d].\n", nQueueCount));
+        App_BuffPacketManager::instance()->Delete(pBuffPacket);
+        m_SendMessagePool.Delete(pSendMessage);
+        mb->release();
+        return false;
+      }
+
+      ACE_Time_Value xtime = ACE_OS::gettimeofday() + ACE_Time_Value(0, MAX_MSG_PUTTIMEOUT);
+      if(this->putq(mb, &xtime) == -1)
+      {
+        OUR_DEBUG((LM_ERROR,"[CConnectManager::PutMessage] Queue putq  error nQueueCount = [%d] errno = [%d].\n", nQueueCount, errno));
+        App_BuffPacketManager::instance()->Delete(pBuffPacket);
+        m_SendMessagePool.Delete(pSendMessage);
+        mb->release();
+        return false;
+      }
+    }
+    else
+    {
+      OUR_DEBUG((LM_ERROR,"[CMessageService::PutMessage] mb new error.\n"));
+      return false;
+    }
+  }
+
+  return true;
 }
 
 //*********************************************************************************
@@ -1701,6 +1796,73 @@ bool CConnectManagerGroup::PostMessage( uint32 u4ConnectID, const char* pData, u
   }
 }
 
+bool CConnectManagerGroup::PostMessage( vector<uint32> vecConnectID, IBuffPacket* pBuffPacket, uint8 u1SendType /*= SENDMESSAGE_NOMAL*/, uint16 u2CommandID /*= 0*/, bool blSendState /*= true*/ )
+{
+  uint32 u4ConnectID = 0;
+  for(uint32 i = 0; i < (uint32)vecConnectID.size(); i++)
+  {
+    //判断命中到哪一个线程组里面去
+    uint16 u2ThreadIndex = u4ConnectID % m_u2ThreadQueueCount;
+
+    mapConnectManager::iterator f = m_mapConnectManager.find(u2ThreadIndex);
+    if(f == m_mapConnectManager.end())
+    {
+      OUR_DEBUG((LM_INFO, "[CConnectManagerGroup::PostMessage]Out of range Queue ID.\n"));
+      return false;
+    }
+
+    CConnectManager* pConnectManager = (CConnectManager* )f->second;
+    if(NULL == pConnectManager)
+    {
+      OUR_DEBUG((LM_INFO, "[CConnectManagerGroup::PostMessage]No find send Queue object.\n"));
+      return false;		
+    }
+
+    pConnectManager->PostMessage(u4ConnectID, pBuffPacket, u1SendType, u2CommandID, blSendState);
+  }
+
+  return true;
+}
+
+bool CConnectManagerGroup::PostMessage( vector<uint32> vecConnectID, const char* pData, uint32 nDataLen, uint8 u1SendType /*= SENDMESSAGE_NOMAL*/, uint16 u2CommandID /*= 0*/, bool blSendState /*= true*/ )
+{
+  uint32 u4ConnectID = 0;
+  for(uint32 i = 0; i < (uint32)vecConnectID.size(); i++)
+  {
+    //判断命中到哪一个线程组里面去
+    uint16 u2ThreadIndex = u4ConnectID % m_u2ThreadQueueCount;
+
+    mapConnectManager::iterator f = m_mapConnectManager.find(u2ThreadIndex);
+    if(f == m_mapConnectManager.end())
+    {
+      OUR_DEBUG((LM_INFO, "[CConnectManagerGroup::PostMessage]Out of range Queue ID.\n"));
+      return false;
+    }
+
+    CConnectManager* pConnectManager = (CConnectManager* )f->second;
+    if(NULL == pConnectManager)
+    {
+      OUR_DEBUG((LM_INFO, "[CConnectManagerGroup::PostMessage]No find send Queue object.\n"));
+      return false;		
+    }
+
+    //OUR_DEBUG((LM_INFO, "[CConnectManagerGroup::PostMessage]u4ConnectID=%d, u2ThreadIndex=%d.\n", u4ConnectID, u2ThreadIndex));
+    IBuffPacket* pBuffPacket = App_BuffPacketManager::instance()->Create();
+    if(NULL != pBuffPacket)
+    {
+      pBuffPacket->WriteStream(pData, nDataLen);
+      pConnectManager->PostMessage(u4ConnectID, pBuffPacket, u1SendType, u2CommandID, blSendState);
+    } 
+    else
+    {
+      OUR_DEBUG((LM_INFO, "[CConnectManagerGroup::PostMessage]pBuffPacket is NULL.\n"));
+      return false;
+    }
+  }
+
+  return true;
+}
+
 bool CConnectManagerGroup::CloseConnect(uint32 u4ConnectID)
 {
 	//判断命中到哪一个线程组里面去
@@ -1846,4 +2008,58 @@ void CConnectManagerGroup::SetRecvQueueTimeCost(uint32 u4ConnectID, uint32 u4Tim
 	}		
 	
 	pConnectManager->SetRecvQueueTimeCost(u4ConnectID, u4TimeCost);
+}
+
+bool CConnectManagerGroup::PostMessageAll( IBuffPacket* pBuffPacket, uint8 u1SendType /*= SENDMESSAGE_NOMAL*/, uint16 u2CommandID /*= 0*/, bool blSendState /*= true*/ )
+{
+  //全部群发
+  for(mapConnectManager::iterator b = m_mapConnectManager.begin(); b != m_mapConnectManager.end(); b++)
+  {
+    CConnectManager* pConnectManager = (CConnectManager* )b->second;
+    if(NULL == pConnectManager)
+    {
+      OUR_DEBUG((LM_INFO, "[CConnectManagerGroup::PostMessage]No find send Queue object.\n"));
+      return false;		
+    }
+
+    pConnectManager->PostMessageAll(pBuffPacket, u1SendType, u2CommandID, blSendState);
+  }
+
+  //用完了就删除
+  App_BuffPacketManager::instance()->Delete(pBuffPacket);
+
+  return true;
+}
+
+bool CConnectManagerGroup::PostMessageAll( const char* pData, uint32 nDataLen, uint8 u1SendType /*= SENDMESSAGE_NOMAL*/, uint16 u2CommandID /*= 0*/, bool blSendState /*= true*/ )
+{
+  IBuffPacket* pBuffPacket = App_BuffPacketManager::instance()->Create();
+  if(NULL == pBuffPacket)
+  {
+    OUR_DEBUG((LM_INFO, "[CConnectManagerGroup::PostMessageAll]pBuffPacket is NULL.\n"));
+    //SAFE_DELETE(pData);
+    return false;
+  }
+  else
+  {
+    pBuffPacket->WriteStream(pData, nDataLen);
+  }
+
+  //全部群发
+  for(mapConnectManager::iterator b = m_mapConnectManager.begin(); b != m_mapConnectManager.end(); b++)
+  {
+    CConnectManager* pConnectManager = (CConnectManager* )b->second;
+    if(NULL == pConnectManager)
+    {
+      OUR_DEBUG((LM_INFO, "[CConnectManagerGroup::PostMessage]No find send Queue object.\n"));
+      return false;		
+    }
+
+    pConnectManager->PostMessageAll(pBuffPacket, u1SendType, u2CommandID, blSendState);
+  }
+
+  //用完了就删除
+  App_BuffPacketManager::instance()->Delete(pBuffPacket);
+
+  return true;
 }
