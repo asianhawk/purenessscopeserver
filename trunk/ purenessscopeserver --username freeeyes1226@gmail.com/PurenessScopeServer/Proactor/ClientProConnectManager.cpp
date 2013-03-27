@@ -373,7 +373,7 @@ IClientMessage* CClientProConnectManager::GetClientMessage(int nServerID)
 	return NULL;
 }
 
-bool CClientProConnectManager::SendData(int nServerID, const char* pData, int nSize)
+bool CClientProConnectManager::SendData(int nServerID, const char* pData, int nSize, bool blIsDelete)
 {
 	ACE_Guard<ACE_Recursive_Thread_Mutex> guard(m_ThreadWritrLock);
 	mapProactorClientInfo::iterator f = m_mapClientInfo.find(nServerID);
@@ -381,7 +381,10 @@ bool CClientProConnectManager::SendData(int nServerID, const char* pData, int nS
 	{
 		//如果这个链接已经存在，则不创建新的链接
 		OUR_DEBUG((LM_ERROR, "[CClientProConnectManager::Close]nServerID =(%d) is not exist.\n", nServerID));
-		SAFE_DELETE_ARRAY(pData);
+    if(true == blIsDelete)
+    {
+		  SAFE_DELETE_ARRAY(pData);
+    }
 		return false;
 	}
 
@@ -391,7 +394,10 @@ bool CClientProConnectManager::SendData(int nServerID, const char* pData, int nS
 	if(NULL == pmblk)
 	{
 		OUR_DEBUG((LM_ERROR, "[CClientProConnectManager::Close]nServerID =(%d) pmblk is NULL.\n", nServerID));
-		SAFE_DELETE_ARRAY(pData);
+    if(true == blIsDelete)
+    {
+		  SAFE_DELETE_ARRAY(pData);
+    }
 		return false;
 	}
 	

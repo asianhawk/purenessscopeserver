@@ -10,15 +10,24 @@ class IClientManager
 public:
 	virtual ~IClientManager() {};
 
-	virtual bool Connect(int nServerID, const char* pIP, int nPort, IClientMessage* pClientMessage)          = 0;
+  //设置TCP链接参数，pClientMessage为远端数据到达处理类。
+	virtual bool Connect(int nServerID, const char* pIP, int nPort, IClientMessage* pClientMessage)          = 0;    
+  //设置UDP链接参数，pClientUDPMessage为远端数据到达处理类。
 	virtual bool ConnectUDP(int nServerID, const char* pIP, int nPort, IClientUDPMessage* pClientUDPMessage) = 0;
+  //关闭某一个ServerID对应的TCP链接
 	virtual bool Close(int nServerID)                                                                        = 0;
+  //关闭某一个ServerID对应的UDP链接
 	virtual bool CloseUDP(int nServerID)                                                                     = 0;
-	virtual bool SendData(int nServerID, const char* pData, int nSize)                                       = 0;
+  //发送一个TCP的数据包，发送完数据需要回收相应的pData内存，不能使用CBuffPacket，因为是内存池，所以这里不能删除
+	virtual bool SendData(int nServerID, const char* pData, int nSize, bool blIsDelete = true)               = 0;
+  //发送一个UDP的数据包，发送完数据需要回收相应的pData内存，不能使用CBuffPacket，因为是内存池，所以这里不能删除
 	virtual bool SendDataUDP(int nServerID, const char* pIP, int nPort, const char* pMessage, uint32 u4Len)  = 0;
-	virtual bool StartConnectTask(int nIntervalTime)                                                         = 0;                             
+  //链接存活检查，如果发现链接在不发送数据包的时候断开了，则会自动重建
+	virtual bool StartConnectTask(int nIntervalTime)                                                         = 0;   
+  //关闭连接存活检查
 	virtual void CancelConnectTask()                                                                         = 0;                                                                  
-	virtual void Close()                                                                                     = 0;
+  //关闭所有对外链接包括TCP和UDP
+  virtual void Close()                                                                                     = 0;
 };
 
 #endif

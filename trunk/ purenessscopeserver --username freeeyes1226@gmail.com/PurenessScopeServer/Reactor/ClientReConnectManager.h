@@ -53,7 +53,7 @@ public:
 	bool Close(int nServerID);                                                                         //关闭连接
 	bool CloseUDP(int nServerID);                                                                      //关闭链接（UDP）
 	bool ConnectErrorClose(int nServerID);                                                             //由内部错误引起的失败，由ProConnectClient调用
-	bool SendData(int nServerID, const char* pData, int nSize);                                        //发送数据
+	bool SendData(int nServerID, const char* pData, int nSize, bool blIsDelete = true);                //发送数据
 	bool SendDataUDP(int nServerID,const char* pIP, int nPort, const char* pMessage, uint32 u4Len);    //发送数据（UDP）
 	bool SetHandler(int nServerID, CConnectClient* pConnectClient);                                    //将指定的CProConnectClient*绑定给nServerID
 	IClientMessage* GetClientMessage(int nServerID);                                                   //获得ClientMessage对象
