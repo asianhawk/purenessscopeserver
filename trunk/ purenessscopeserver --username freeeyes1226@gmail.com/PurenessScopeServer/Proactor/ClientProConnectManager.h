@@ -24,7 +24,7 @@ public:
 	~CProactorClientInfo();
 
 	bool Init(const char* pIP, int nPort, CProAsynchConnect* pProAsynchConnect, IClientMessage* pClientMessage);  //初始化链接地址和端口
-	bool Run();                                                     //开始链接
+	bool Run(bool blIsReadly);                                      //开始链接
 	bool SendData(ACE_Message_Block* pmblk);                        //发送数据
 	bool ConnectError(int nError);                                  //链接错误，报错
 	bool SetServerID(int nServerID);                                //设置服务器ID
@@ -78,6 +78,7 @@ private:
 	 ACE_Recursive_Thread_Mutex  m_ThreadWritrLock;             //线程锁
 	 ActiveTimer                 m_ActiveTimer;                 //时间管理器
 	 int                         m_nTaskID;                     //定时检测工具
+   bool                        m_blProactorFinish;            //Proactor是否已经注册 
 };
 
 typedef ACE_Singleton<CClientProConnectManager, ACE_Recursive_Thread_Mutex> App_ClientProConnectManager;

@@ -22,7 +22,7 @@ public:
 	~CReactorClientInfo();
 
 	bool Init(int nServerID, const char* pIP, int nPort, ReactorConnect* pReactorConnect, IClientMessage* pClientMessage, ACE_Reactor* pReactor);  //初始化链接地址和端口
-	bool Run();                                //开始链接
+	bool Run(bool blIsReady);                                       //开始链接
 	bool SendData(ACE_Message_Block* pmblk);                        //发送数据
 	bool ConnectError(int nError);                                  //链接错误，报错
 	int  GetServerID();                                             //得到服务器ID
@@ -71,13 +71,14 @@ private:
 	typedef map<int, CReactorUDPClient*>  mapReactorUDPConnectInfo;
 
 public:
-	mapReactorConnectInfo       m_mapConnectInfo;
-	mapReactorUDPConnectInfo    m_mapReactorUDPConnectInfo;
-	ReactorConnect              m_ReactorConnect;
+	mapReactorConnectInfo       m_mapConnectInfo;              //TCP连接对象管理器  
+	mapReactorUDPConnectInfo    m_mapReactorUDPConnectInfo;    //UDP连接对象管理器
+	ReactorConnect              m_ReactorConnect;              //Reactor连接客户端对象
 	ACE_Recursive_Thread_Mutex  m_ThreadWritrLock;             //线程锁
 	ActiveTimer                 m_ActiveTimer;                 //时间管理器
 	int                         m_nTaskID;                     //定时检测工具
 	ACE_Reactor*                m_pReactor;                    //当前的反应器
+  bool                        m_blReactorFinish;             //Reactor是否已经注册 
 };
 
 typedef ACE_Singleton<CClientReConnectManager, ACE_Recursive_Thread_Mutex> App_ClientReConnectManager;

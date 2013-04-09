@@ -26,7 +26,7 @@ bool CProactorClientInfo::Init(const char* pIP, int nPort, CProAsynchConnect* pP
 	return true;
 }
 
-bool CProactorClientInfo::Run()
+bool CProactorClientInfo::Run(bool blIsReadly)
 {
 	if(NULL != m_pProConnectClient)
 	{
@@ -49,12 +49,15 @@ bool CProactorClientInfo::Run()
 	}
 	*/
 
-	m_pProAsynchConnect->SetConnectState(true);
-	if(m_pProAsynchConnect->connect(m_AddrServer) == -1)
-	{
-		OUR_DEBUG((LM_ERROR, "[CProactorClientInfo::Run]m_pAsynchConnect open error(%d).\n", ACE_OS::last_error()));
-		return false;
-	}
+  if(true == blIsReadly)
+  {
+	  m_pProAsynchConnect->SetConnectState(true);
+	  if(m_pProAsynchConnect->connect(m_AddrServer) == -1)
+	  {
+		  OUR_DEBUG((LM_ERROR, "[CProactorClientInfo::Run]m_pAsynchConnect open error(%d).\n", ACE_OS::last_error()));
+		  return false;
+	  }
+  }
 
 	return true;
 }
@@ -64,7 +67,7 @@ bool CProactorClientInfo::SendData(ACE_Message_Block* pmblk)
 	if(NULL == m_pProConnectClient)
 	{
 		//如果连接不存在，则建立链接。
-		Run();
+		Run(true);
 		if(NULL != pmblk)
 		{
 			pmblk->release();
@@ -144,7 +147,8 @@ IClientMessage* CProactorClientInfo::GetClientMessage()
 
 CClientProConnectManager::CClientProConnectManager(void)
 {
-	m_nTaskID = -1;
+	m_nTaskID          = -1;
+  m_blProactorFinish = false;
 }
 
 CClientProConnectManager::~CClientProConnectManager(void)
@@ -167,6 +171,9 @@ bool CClientProConnectManager::Init(ACE_Proactor* pProactor)
 	}
 	else
 	{
+    //标记Proactor已经连接成功
+    m_blProactorFinish = true;
+
 		//连接器启动成功，这时候启动定时器
 		m_ActiveTimer.activate();
 
@@ -195,7 +202,7 @@ bool CClientProConnectManager::Connect(int nServerID, const char* pIP, int nPort
 	}
 
 	//开始链接
-	if(false == pClientInfo->Run())
+	if(false == pClientInfo->Run(m_blProactorFinish))
 	{
 		delete pClientInfo;
 		pClientInfo = NULL;
@@ -500,7 +507,7 @@ int CClientProConnectManager::handle_timeout(const ACE_Time_Value &tv, const voi
 		if(NULL == pClientInfo->GetProConnectClient())
 		{
 			//如果连接不存在，则重新建立连接
-			pClientInfo->Run();
+			pClientInfo->Run(m_blProactorFinish);
 		}
 	}
 	return 0;

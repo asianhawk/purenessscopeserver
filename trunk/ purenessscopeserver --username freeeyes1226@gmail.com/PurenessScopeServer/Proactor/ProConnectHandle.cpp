@@ -175,6 +175,13 @@ void CProConnectHandle::open(ACE_HANDLE h, ACE_Message_Block&)
 	ACE_Time_Value tvOpenEnd(ACE_OS::gettimeofday());
 	ACE_Time_Value tvOpen(tvOpenEnd - tvOpenBegin);
 
+  if(App_ForbiddenIP::instance()->CheckIP(m_addrRemote.get_host_addr()) == false)
+  {
+    //在禁止列表中，不允许访问
+    OUR_DEBUG((LM_ERROR, "[CConnectHandler::open]IP Forbidden(%s).\n", m_addrRemote.get_host_addr()));
+    return;
+  }
+
 	//检查单位时间链接次数是否达到上限
 	if(false == App_IPAccount::instance()->AddIP((string)m_addrRemote.get_host_addr()))
 	{

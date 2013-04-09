@@ -29,7 +29,7 @@ bool CReactorClientInfo::Init(int nServerID, const char* pIP, int nPort, Reactor
 	return true;
 }
 
-bool CReactorClientInfo::Run()
+bool CReactorClientInfo::Run(bool blIsReady)
 {
 	if(NULL != m_pConnectClient)
 	{
@@ -52,12 +52,16 @@ bool CReactorClientInfo::Run()
 
 	m_pConnectClient->SetServerID(m_nServerID);
 	m_pConnectClient->reactor(m_pReactor);
-	if(m_pReactorConnect->connect(m_pConnectClient, m_AddrServer) == -1)
-	{
-		OUR_DEBUG((LM_ERROR, "[CReactorClientInfo::Run]m_pAsynchConnect open error(%d).\n", ACE_OS::last_error()));
-		//这里设置为True，为了让自动重试起作用
-		return true;
-	}
+
+  if(blIsReady == true)
+  {
+	  if(m_pReactorConnect->connect(m_pConnectClient, m_AddrServer) == -1)
+	  {
+		  OUR_DEBUG((LM_ERROR, "[CReactorClientInfo::Run]m_pAsynchConnect open error(%d).\n", ACE_OS::last_error()));
+		  //这里设置为True，为了让自动重试起作用
+		  return true;
+	  }
+  }
 
 	return true;
 }
@@ -67,7 +71,7 @@ bool CReactorClientInfo::SendData(ACE_Message_Block* pmblk)
 	if(NULL == m_pConnectClient)
 	{
 		//如果连接不存在，则建立链接。
-		Run();
+		Run(true);
 		if(NULL != pmblk)
 		{
 			pmblk->release();
@@ -126,8 +130,9 @@ IClientMessage* CReactorClientInfo::GetClientMessage()
 
 CClientReConnectManager::CClientReConnectManager(void)
 {
-	m_nTaskID  = -1;
-	m_pReactor = NULL;
+	m_nTaskID         = -1;
+	m_pReactor        = NULL;
+  m_blReactorFinish = false;
 }
 
 CClientReConnectManager::~CClientReConnectManager(void)
@@ -144,7 +149,8 @@ bool CClientReConnectManager::Init(ACE_Reactor* pReactor)
 		return false;
 	}
 
-	m_pReactor = pReactor;
+	m_pReactor        = pReactor;
+  m_blReactorFinish = true;
 	return true;
 }
 
@@ -169,7 +175,7 @@ bool CClientReConnectManager::Connect(int nServerID, const char* pIP, int nPort,
 	}
 
 	//开始链接
-	if(false == pClientInfo->Run())
+	if(false == pClientInfo->Run(m_blReactorFinish))
 	{
 		delete pClientInfo;
 		pClientInfo = NULL;
@@ -461,7 +467,7 @@ int CClientReConnectManager::handle_timeout(const ACE_Time_Value &tv, const void
 		if(NULL == pClientInfo->GetConnectClient())
 		{
 			//如果连接不存在，则重新建立连接
-			pClientInfo->Run();
+			pClientInfo->Run(m_blReactorFinish);
 		}
 	}
 	return 0;
