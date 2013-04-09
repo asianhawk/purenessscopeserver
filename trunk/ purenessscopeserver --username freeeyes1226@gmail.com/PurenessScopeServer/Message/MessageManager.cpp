@@ -264,6 +264,7 @@ bool CMessageManager::UnloadModuleCommand(const char* pModuleName, uint8 u1State
 					App_ModuleLoader::instance()->UnLoadModule(pModuleName);
 					m_mapModuleClient.erase(f);
 					SAFE_DELETE(pModuleClient);
+          return true;
 				}
 
 				//如果是2，则重新加载这个模块
