@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config>
+<Plugin PluginFileName="TcpTestd.dll" />
+<PluginTest SendCount="1" RecvCount="1" ThreadCount="1" />
+<Command CommandID="0x1000" CommandGroup="1" CommandSort="1" CommandText="0a 00 00 00 00 10 be cd aa 8f 3c 01 00 00" />
+</config>
