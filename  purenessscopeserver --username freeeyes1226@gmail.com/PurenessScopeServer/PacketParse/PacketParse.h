@@ -24,6 +24,8 @@ public:
 	uint32 GetPacketDataLen();                        //得到包体长度(未解密)
 	uint16 GetPacketCommandID();                      //得到数据包命令字
 
+  const char* GetPacketVersion();                   //得到包解析模块的版本
+
 	bool GetIsHead();                                 //得到包头标记位，如果当前是包头，则返回True，否则返回False
 
 	ACE_Message_Block* GetMessageHead();              //得到解密好的数据块（包头）
@@ -44,14 +46,14 @@ public:
 	void Close();
 
 private:
-	uint32 m_u4PacketHead;
-	uint32 m_u4PacketData;
-	uint32 m_u4HeadSrcSize;
-	uint32 m_u4BodySrcSize;
-	uint16 m_u2PacketCommandID;
-	bool   m_blIsHead;
+  uint32 m_u4PacketHead;
+  uint32 m_u4PacketData;
+  uint32 m_u4HeadSrcSize;
+  uint32 m_u4BodySrcSize;
+  uint16 m_u2PacketCommandID;
+  bool   m_blIsHead;
+  char   m_szPacketVersion[MAX_BUFF_20];   //包解析器版本
 
-	ACE_Message_Block* m_pmbHead;   //包头部分
-	ACE_Message_Block* m_pmbBody;   //包体部分
-
+  ACE_Message_Block* m_pmbHead;   //包头部分
+  ACE_Message_Block* m_pmbBody;   //包体部分
 };

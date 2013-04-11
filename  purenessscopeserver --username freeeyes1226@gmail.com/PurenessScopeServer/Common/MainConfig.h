@@ -7,6 +7,8 @@
 #include "ace/Singleton.h"
 #include <vector>
 
+#include "PacketParse.h"
+
 struct _ServerInfo
 {
 	char m_szServerIP[MAX_BUFF_20];
@@ -42,6 +44,8 @@ public:
 	const char* GetError();
 
 	const char* GetServerName();
+  const char* GetServerVersion();
+  const char* GetPacketVersion();
 	uint16 GetServerID();
 	uint16 GetServerPortCount();
 	_ServerInfo* GetServerPort(int nIndex);
@@ -96,6 +100,9 @@ private:
 
 	int        m_nServerID;                        //服务器ID
 	char       m_szServerName[MAX_BUFF_20];        //服务器名称
+  char       m_szServerVersion[MAX_BUFF_20];     //服务器版本
+
+  char       m_szPacketVersion[MAX_BUFF_20];     //数据解析包模块的版本号
 
 	uint32     m_u4MsgHighMark;                    //消息的高水位阀值
 	uint32     m_u4MsgLowMark;                     //消息的低水位阀值

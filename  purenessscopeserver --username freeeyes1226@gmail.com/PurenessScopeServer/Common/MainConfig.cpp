@@ -35,6 +35,8 @@ CMainConfig::CMainConfig(void)
 	m_u2SendQueueCount      = SENDQUEUECOUNT;
 
 	m_szServerName[0]       = '\0';
+  m_szServerVersion[0]    = '\0';
+  m_szPacketVersion[0]    = '\0';
 	m_szModulePath[0]       = '\0';
 	m_szResourceName[0]     = '\0';
 	m_szEncryptPass[0]      = '\0';
@@ -55,6 +57,10 @@ const char* CMainConfig::GetError()
 
 bool CMainConfig::Init(const char* szConfigPath)
 {
+  //获得数据解析包的版本号
+  CPacketParse objPacketParse;
+  sprintf_safe(m_szPacketVersion, MAX_BUFF_20, "%s", objPacketParse.GetPacketVersion());
+
   char* pData = NULL;
 	OUR_DEBUG((LM_INFO, "[CMainConfig::Init]Filename = %s.\n", szConfigPath));
 	if(false == m_MainConfig.Init(szConfigPath))
@@ -73,6 +79,12 @@ bool CMainConfig::Init(const char* szConfigPath)
   if(NULL != pData)
   {
 	  sprintf_safe(m_szServerName, MAX_BUFF_20, "%s", pData);
+  }
+
+  pData = m_MainConfig.GetData("ServerVersion", "Version");
+  if(NULL != pData)
+  {
+    sprintf_safe(m_szServerVersion, MAX_BUFF_20, "%s", pData);
   }
 
 	//获得监听端口信息
@@ -314,6 +326,8 @@ void CMainConfig::Display()
 {
 	OUR_DEBUG((LM_INFO, "[CMainConfig::Display]m_nServerID = %d.\n", m_nServerID));
 	OUR_DEBUG((LM_INFO, "[CMainConfig::Display]m_szServerName = %s.\n", m_szServerName));
+  OUR_DEBUG((LM_INFO, "[CMainConfig::Display]m_szServerVersion = %s.\n", m_szServerVersion));
+  OUR_DEBUG((LM_INFO, "[CMainConfig::Display]m_szPacketVersion = %s.\n", m_szPacketVersion));
 
 	for(int i = 0; i < (int)m_vecServerInfo.size(); i++)
 	{
@@ -572,6 +586,16 @@ uint16 CMainConfig::GetForbiddenTime()
 uint8 CMainConfig::GetCommandAccount()
 {
 	return m_u1CommandAccount;
+}
+
+const char* CMainConfig::GetServerVersion()
+{
+  return m_szServerVersion;
+}
+
+const char* CMainConfig::GetPacketVersion()
+{
+  return m_szPacketVersion;
 }
 
 

@@ -200,6 +200,11 @@ int CConsoleMessage::ParseCommand(const char* pCommand, IBuffPacket* pBuffPacket
 		DoMessage_ShowAllCommandInfo(CommandInfo, pBuffPacket);
 		return CONSOLE_MESSAGE_SUCCESS;
 	}
+  else if(ACE_OS::strcmp(CommandInfo.m_szCommandTitle, CONSOLEMESSAGE_SERVERINFO) == 0)
+  {
+    DoMessage_ShowServerInfo(CommandInfo, pBuffPacket);
+    return CONSOLE_MESSAGE_SUCCESS;
+  }
 	else
 	{
 		return CONSOLE_MESSAGE_FAIL;
@@ -952,5 +957,41 @@ bool CConsoleMessage::DoMessage_ShowAllCommandInfo(_CommandInfo& CommandInfo, IB
 	}
 	
 	return true;	
+}
+
+bool CConsoleMessage::DoMessage_ShowServerInfo(_CommandInfo& CommandInfo, IBuffPacket* pBuffPacket)
+{
+  if(ACE_OS::strcmp(CommandInfo.m_szCommandExp, "-a") == 0)
+  {
+    VCHARS_STR strSTemp;
+
+    //返回服务器ID
+    uint16 u2SerevrID = (uint32)App_MainConfig::instance()->GetServerID();
+    (*pBuffPacket) << u2SerevrID;
+
+    //返回服务器名称
+    strSTemp.text  = App_MainConfig::instance()->GetServerName();
+    strSTemp.u1Len = (uint8)ACE_OS::strlen(App_MainConfig::instance()->GetServerName());
+    (*pBuffPacket) << strSTemp;
+
+    //返回服务器版本
+    strSTemp.text  = App_MainConfig::instance()->GetServerVersion();
+    strSTemp.u1Len = (uint8)ACE_OS::strlen(App_MainConfig::instance()->GetServerName());
+    (*pBuffPacket) << strSTemp;
+
+    //返回加载模块个数
+    (*pBuffPacket) << (uint16)App_ModuleLoader::instance()->GetCurrModuleCount();
+
+    //返回工作线程个数
+    (*pBuffPacket) << (uint16)App_MessageService::instance()->GetThreadInfo()->GetThreadCount();
+
+    //返回当前协议包的版本号
+    strSTemp.text  = App_MainConfig::instance()->GetServerVersion();
+    strSTemp.u1Len = (uint8)ACE_OS::strlen(App_MainConfig::instance()->GetPacketVersion());
+    (*pBuffPacket) << strSTemp;
+
+  }
+
+  return true;
 }
 

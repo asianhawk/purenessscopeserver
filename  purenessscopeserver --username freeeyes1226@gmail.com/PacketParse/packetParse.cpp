@@ -9,6 +9,9 @@ CPacketParse::CPacketParse(void)
 	m_u4HeadSrcSize     = 0;
 	m_u4BodySrcSize     = 0;
 
+  //这里修改属于你的包解析版本号
+  sprintf_safe(m_szPacketVersion, MAX_BUFF_20, "0.90");
+
 	m_blIsHead          = false;
 
 	m_pmbHead           = NULL;
@@ -153,4 +156,9 @@ void CPacketParse::Close()
 	}
 
 	m_blIsHead = false;
+}
+
+const char* CPacketParse::GetPacketVersion()
+{
+  return m_szPacketVersion;
 }
