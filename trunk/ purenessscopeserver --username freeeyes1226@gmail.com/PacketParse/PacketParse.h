@@ -8,7 +8,7 @@
 #define PACKETPARSE_BUILD_DLL __declspec(dllimport)
 #endif
 #else
-#define DLLCLASS_EXPORTS
+#define PACKETPARSE_BUILD_DLL
 #endif 
 
 #ifdef WIN32
@@ -37,6 +37,8 @@ public:
 	bool SetPacketHead(char* pData, uint32 u4Len);
 	bool SetPacketData(char* pData, uint32 u4Len);
 
+  const char* GetPacketVersion();
+
 	uint32 GetPacketHeadSrcLen();                     //得到数据包原始包头长度
 	uint32 GetPacketBodySrcLen();                     //得到数据包原始包体长度
 
@@ -53,6 +55,7 @@ private:
 	uint32 m_u4BodySrcSize;
 	uint16 m_u2PacketCommandID;
 	bool   m_blIsHead;
+  char   m_szPacketVersion[MAX_BUFF_20];   //包解析器版本
 
 	ACE_Message_Block* m_pmbHead;   //包头部分
 	ACE_Message_Block* m_pmbBody;   //包体部分
