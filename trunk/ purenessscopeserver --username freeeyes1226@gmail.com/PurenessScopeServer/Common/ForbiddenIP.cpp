@@ -173,11 +173,11 @@ bool CForbiddenIP::SaveConfig()
   {
     if(m_VecForeverForbiddenIP[i].m_u1ConnectType == CONNECT_TCP)
     {
-      sprintf_safe(szTemp, MAX_BUFF_500, "<ForbiddenIP ip=\"%s\" type=\"TCP\" desc=\"ForbiddenIP£¬type is 'TCP' or 'UDP'\" />\r\n", i, m_VecForeverForbiddenIP[i].m_szClientIP); 
+      sprintf_safe(szTemp, MAX_BUFF_500, "<ForbiddenIP ip=\"%s\" type=\"TCP\" desc=\"ForbiddenIP£¬type is 'TCP' or 'UDP'\" />\r\n", m_VecForeverForbiddenIP[i].m_szClientIP); 
     }
     else
     {
-      sprintf_safe(szTemp, MAX_BUFF_500, "<ForbiddenIP ip=\"%s\" type=\"UDP\" desc=\"ForbiddenIP£¬type is 'TCP' or 'UDP'\" />\r\n", i, m_VecForeverForbiddenIP[i].m_szClientIP); 
+      sprintf_safe(szTemp, MAX_BUFF_500, "<ForbiddenIP ip=\"%s\" type=\"UDP\" desc=\"ForbiddenIP£¬type is 'TCP' or 'UDP'\" />\r\n", m_VecForeverForbiddenIP[i].m_szClientIP); 
     }
 
     size_t stSize = ACE_OS::fwrite(szTemp, sizeof(char), ACE_OS::strlen(szTemp), pFile);
