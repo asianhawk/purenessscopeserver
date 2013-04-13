@@ -1,4 +1,5 @@
-ï»¿<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <config>
-	<ForbiddenIP ip="127.1.0.*" type="TCP" desc="ForbiddenIPï¼Œtype is 'TCP' or 'UDP'" />
-</config>ï»¿
+<ForbiddenIP ip="10.1.1.12" type="TCP" desc="ForbiddenIP£¬type is 'TCP' or 'UDP'" />
+<ForbiddenIP ip="123.0.0.1" type="TCP" desc="ForbiddenIP£¬type is 'TCP' or 'UDP'" />
+</config>
