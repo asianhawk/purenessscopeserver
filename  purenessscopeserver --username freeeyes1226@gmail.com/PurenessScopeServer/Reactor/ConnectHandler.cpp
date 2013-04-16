@@ -653,158 +653,118 @@ bool CConnectHandler::SendMessage(IBuffPacket* pBuffPacket, bool blState, uint8 
 	//OUR_DEBUG((LM_DEBUG,"[CConnectHandler::SendMessage]Connectid=%d,m_nIOCount=%d.\n", GetConnectID(), m_nIOCount));
 
 	CPacketParse PacketParse;
+  ACE_Message_Block* pMbData = NULL;
 
-	if(NULL == pBuffPacket)
-	{
-		OUR_DEBUG((LM_DEBUG,"[CConnectHandler::SendMessage] Connectid=[%d] pBuffPacket is NULL.\n", GetConnectID()));
-		Close();
-		return false;
-	}
-	
-	//如果不是立刻发送，则把数据拷贝到缓冲数据中去
-	if(false == blState)
-	{
-		if(pBuffPacket->GetPacketLen() + (uint32)m_pBlockMessage->length() >= m_u4MaxPacketSize)
-		{
-			OUR_DEBUG((LM_DEBUG,"[CConnectHandler::SendMessage] Connectid=[%d] m_pBlockMessage is not enougth.\n", GetConnectID()));
-			App_BuffPacketManager::instance()->Delete(pBuffPacket);
-			Close();
-			return false;
-		}
-		else
-		{
-			//添加进缓冲区
-			ACE_Message_Block* pMbBufferData = NULL;
-			
-			//SENDMESSAGE_NOMAL是需要包头的时候，否则，不组包直接发送
-			if(u1SendType == SENDMESSAGE_NOMAL)
-			{
-				int nSendLength = PacketParse.MakePacketLength(pBuffPacket->GetPacketLen());
-				pMbBufferData = App_MessageBlockManager::instance()->Create(nSendLength);
-					
-				if(NULL == pMbBufferData)
-				{
-					OUR_DEBUG((LM_DEBUG,"[CConnectHandler::SendMessage] Connectid=[%d] pMbBufferData create error.\n", GetConnectID()));
-					//删除发送数据包 
-					App_BuffPacketManager::instance()->Delete(pBuffPacket);
-					Close();
-					return false;					
-				}
-					
-				//这里组成返回数据包
-				PacketParse.MakePacket(pBuffPacket->GetData(), pBuffPacket->GetPacketLen(), pMbBufferData);
-			}
-			else
-			{
-				pMbBufferData = App_MessageBlockManager::instance()->Create(pBuffPacket->GetPacketLen());
-					
-				if(NULL == pMbBufferData)
-				{
-					OUR_DEBUG((LM_DEBUG,"[CConnectHandler::SendMessage] Connectid=[%d] pMbBufferData create error.\n", GetConnectID()));
-					//删除发送数据包 
-					App_BuffPacketManager::instance()->Delete(pBuffPacket);
-					Close();
-					return false;					
-				}
-					
-				//如果不是SENDMESSAGE_NOMAL，则直接组包
-				ACE_OS::memcpy(pMbBufferData->wr_ptr(), pBuffPacket->GetData(), pBuffPacket->GetPacketLen());
-				pMbBufferData->wr_ptr(pBuffPacket->GetPacketLen());
-			}
+  //如果不是直接发送数据，则拼接数据包
+  if(u1SendType == SENDMESSAGE_NOMAL)
+  {
+    //先判断要发送的数据长度，看看是否可以放入缓冲，缓冲是否已经放满。
+    uint32 u4SendPacketSize = 0;
+    if(u1SendType == SENDMESSAGE_NOMAL)
+    {
+      u4SendPacketSize = PacketParse.MakePacketLength(pBuffPacket->GetPacketLen());
+    }
+    else
+    {
+      u4SendPacketSize = (uint32)m_pBlockMessage->length();
+    }
 
-			//获得发送字节数
-			u4PacketSize = (uint32)pMbBufferData->length();
-			
-			ACE_OS::memcpy(m_pBlockMessage->wr_ptr(), pMbBufferData->rd_ptr(), pMbBufferData->length());
-			m_pBlockMessage->wr_ptr(pMbBufferData->length());
-			pMbBufferData->release();
-			 
-			//删除发送数据包 
-			App_BuffPacketManager::instance()->Delete(pBuffPacket);
-			Close();
-			return true;
-		}
-	}
-	
-	ACE_Message_Block* pMbData = NULL;
-	
-	//先扫描有之前有没有需要发送的缓存
-	if(m_pBlockMessage->length() > 0)
-	{
-		//OUR_DEBUG((LM_DEBUG,"[CConnectHandler::SendMessage] Connectid=[%d] combo buffer(%d).\n", GetConnectID(), m_pBlockMessage->length()));
-	
-		//SENDMESSAGE_NOMAL是需要包头的时候，否则，不组包直接发送
-		if(u1SendType == SENDMESSAGE_NOMAL)
-		{
-			int nSendLength = PacketParse.MakePacketLength(pBuffPacket->GetPacketLen());
-			ACE_Message_Block* pTempMbData = App_MessageBlockManager::instance()->Create(nSendLength);
-				
-			//这里组成返回数据包
-			PacketParse.MakePacket(pBuffPacket->GetData(), pBuffPacket->GetPacketLen(), pTempMbData);
+    if(u4SendPacketSize + (uint32)m_pBlockMessage->length() >= m_u4MaxPacketSize)
+    {
+      OUR_DEBUG((LM_DEBUG,"[CConnectHandler::SendMessage] Connectid=[%d] m_pBlockMessage is not enougth.\n", GetConnectID()));
+      App_BuffPacketManager::instance()->Delete(pBuffPacket);
+      Close();
+      return false;
+    }
+    else
+    {
+      //添加进缓冲区
+      ACE_Message_Block* pMbBufferData = NULL;
 
-			//获得本包发送字节数
-			u4PacketSize = (uint32)pTempMbData->length();
-			
-			pMbData = App_MessageBlockManager::instance()->Create(nSendLength + (uint32)m_pBlockMessage->length());
-			
-			//复制缓冲数据粘合在一起
-			ACE_OS::memcpy(pMbData->wr_ptr(), m_pBlockMessage->rd_ptr(), m_pBlockMessage->length());
-			pMbData->wr_ptr(m_pBlockMessage->length());
-				
-			//如果不是SENDMESSAGE_NOMAL，则直接组包
-			ACE_OS::memcpy(pMbData->wr_ptr(), pTempMbData->rd_ptr(), pTempMbData->length());
-			pMbData->wr_ptr(pTempMbData->length());
-			pTempMbData->release();
-		}
-		else
-		{
-			pMbData = App_MessageBlockManager::instance()->Create(pBuffPacket->GetPacketLen() + m_pBlockMessage->length());
-				
-			//复制缓冲数据粘合在一起
-			ACE_OS::memcpy(pMbData->wr_ptr(), m_pBlockMessage->rd_ptr(), m_pBlockMessage->length());
-			pMbData->wr_ptr(m_pBlockMessage->length());
+      //SENDMESSAGE_NOMAL是需要包头的时候，否则，不组包直接发送
+      if(u1SendType == SENDMESSAGE_NOMAL)
+      {
+        //这里组成返回数据包
+        PacketParse.MakePacket(pBuffPacket->GetData(), pBuffPacket->GetPacketLen(), m_pBlockMessage);
+      }
+      else
+      {
+        //如果不是SENDMESSAGE_NOMAL，则直接组包
+        ACE_OS::memcpy(m_pBlockMessage->wr_ptr(), pBuffPacket->GetData(), pBuffPacket->GetPacketLen());
+        m_pBlockMessage->wr_ptr(pBuffPacket->GetPacketLen());
+      }
+    }
 
-			//获得本包发送字节数
-			u4PacketSize = (uint32)pBuffPacket->GetPacketLen();
-				
-			//如果不是SENDMESSAGE_NOMAL，则直接组包
-			ACE_OS::memcpy(pMbData->wr_ptr(), pBuffPacket->GetData(), pBuffPacket->GetPacketLen());
-			pMbData->wr_ptr(pBuffPacket->GetPacketLen());
-		}	
-		
-		m_pBlockMessage->reset();
-	} 
-	else
-	{
-		//如果没有缓冲则直接发送
-		//SENDMESSAGE_NOMAL是需要包头的时候，否则，不组包直接发送
-		if(u1SendType == SENDMESSAGE_NOMAL)
-		{
-			int nSendLength = PacketParse.MakePacketLength(pBuffPacket->GetPacketLen());
-			pMbData = App_MessageBlockManager::instance()->Create(nSendLength);
-				
-			//这里组成返回数据包
-			PacketParse.MakePacket(pBuffPacket->GetData(), pBuffPacket->GetPacketLen(), pMbData);
+    //如果不是立刻发送，则把数据拷贝到缓冲数据中去
+    if(false == blState)
+    {
+      //删除发送数据包 
+      App_BuffPacketManager::instance()->Delete(pBuffPacket);
+      Close();
+      return true;
+    }
 
-			//获得本包发送字节数
-			u4PacketSize = (uint32)pMbData->length();
-		}
-		else
-		{
-			pMbData = App_MessageBlockManager::instance()->Create(pBuffPacket->GetPacketLen());
-				
-			//如果不是SENDMESSAGE_NOMAL，则直接组包
-			ACE_OS::memcpy(pMbData->wr_ptr(), pBuffPacket->GetData(), pBuffPacket->GetPacketLen());
-			pMbData->wr_ptr(pBuffPacket->GetPacketLen());
+    //因为是异步发送，发送的数据指针不可以立刻释放，所以需要在这里创建一个新的发送数据块，将数据考入
+    pMbData = App_MessageBlockManager::instance()->Create((uint32)m_pBlockMessage->length());
+    if(NULL == pMbData)
+    {
+      OUR_DEBUG((LM_DEBUG,"[CConnectHandler::SendMessage] Connectid=[%d] pMbData is NULL.\n", GetConnectID()));
+      App_BuffPacketManager::instance()->Delete(pBuffPacket);
+      Close();
+      return false;
+    }
 
-			//获得本包发送字节数
-			u4PacketSize = (uint32)pBuffPacket->GetPacketLen();
-		}
-	}
+    ACE_OS::memcpy(pMbData->wr_ptr(), m_pBlockMessage->rd_ptr(), m_pBlockMessage->length());
+    pMbData->wr_ptr(m_pBlockMessage->length());
+    //放入完成，则清空缓存数据，使命完成
+    m_pBlockMessage->reset();
 
-	App_BuffPacketManager::instance()->Delete(pBuffPacket);
+    //删除发送数据包 
+    App_BuffPacketManager::instance()->Delete(pBuffPacket);
+  }
+  else
+  {
+    //如果之前有缓冲数据，则和缓冲数据一起发送
+    if(m_pBlockMessage->length() > 0)
+    {
+      ACE_OS::memcpy(m_pBlockMessage->wr_ptr(), pBuffPacket->GetData(), pBuffPacket->GetPacketLen());
+      m_pBlockMessage->wr_ptr(pBuffPacket->GetPacketLen());
 
-	return PutSendPacket(pMbData);;
+      //因为是异步发送，发送的数据指针不可以立刻释放，所以需要在这里创建一个新的发送数据块，将数据考入
+      pMbData = App_MessageBlockManager::instance()->Create((uint32)m_pBlockMessage->length());
+      if(NULL == pMbData)
+      {
+        OUR_DEBUG((LM_DEBUG,"[CConnectHandler::SendMessage] Connectid=[%d] pMbData is NULL.\n", GetConnectID()));
+        App_BuffPacketManager::instance()->Delete(pBuffPacket);
+        Close();
+        return false;
+      }
+
+      ACE_OS::memcpy(pMbData->wr_ptr(), m_pBlockMessage->rd_ptr(), m_pBlockMessage->length());
+      pMbData->wr_ptr(m_pBlockMessage->length());
+      //放入完成，则清空缓存数据，使命完成
+      m_pBlockMessage->reset();
+    }
+    else
+    {
+      pMbData = App_MessageBlockManager::instance()->Create((uint32)m_pBlockMessage->length());
+      if(NULL == pMbData)
+      {
+        OUR_DEBUG((LM_DEBUG,"[CConnectHandler::SendMessage] Connectid=[%d] pMbData is NULL.\n", GetConnectID()));
+        App_BuffPacketManager::instance()->Delete(pBuffPacket);
+        Close();
+        return false;
+      }
+
+      ACE_OS::memcpy(pMbData->wr_ptr(), pBuffPacket->GetData(), pBuffPacket->GetPacketLen());
+      pMbData->wr_ptr(pBuffPacket->GetPacketLen());
+    }
+
+    //删除发送数据包 
+    App_BuffPacketManager::instance()->Delete(pBuffPacket);
+  }
+
+	return PutSendPacket(pMbData);
 }
 
 bool CConnectHandler::PutSendPacket(ACE_Message_Block* pMbData)
