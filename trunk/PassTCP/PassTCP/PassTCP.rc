@@ -54,8 +54,8 @@ BEGIN
     "#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_CHS)\r\n"
     "LANGUAGE 4, 2\r\n"
     "#pragma code_page(936)\r\n"
-    "#include ""res\\PassTCP.rc2""  // ??è? Microsoft Visual C++ ?¨¤?§?è?-|¨???¨￠?§o???\r\n"
-    "#include ""l.CHS\\afxres.rc""      // ?¨¤?§o?¨￠??¨￠?§|?t\r\n"
+    "#include ""res\\PassTCP.rc2""  // ??¨¨? Microsoft Visual C++ ??§?è??ì?¨¨?-|?§????§?é??ìo???\r\n"
+    "#include ""l.CHS\\afxres.rc""      // ??§?è??ìo??§?é???§?é??ì|?t\r\n"
     "#endif\r\n"
     "\0"
 END
@@ -111,7 +111,7 @@ BEGIN
     PUSHBUTTON      "开始压测",IDC_BUTTON1,14,68,50,14
     PUSHBUTTON      "停止压测",IDC_BUTTON2,73,68,50,14
     PUSHBUTTON      "导出压测数据文档",IDC_BUTTON3,132,68,71,14
-    LTEXT           "压测发送二进制串( 目前上限是1024字节，需要扩充请修改代码)",IDC_STATIC,190,100,196,8
+    LTEXT           "压测发送二进制串",IDC_STATIC,190,100,56,8
     EDITTEXT        IDC_EDIT5,189,111,231,75,ES_MULTILINE | ES_AUTOHSCROLL
     LTEXT           "连接成功数",IDC_STATIC,14,105,35,8
     EDITTEXT        IDC_EDIT6,53,102,42,14,ES_AUTOHSCROLL
@@ -229,8 +229,8 @@ END
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_CHS)
 LANGUAGE 4, 2
 #pragma code_page(936)
-#include "res\PassTCP.rc2"  // ?¤? Microsoft Visual C++ ?à¨¤?-|ì??á¨o???
-#include "l.CHS\afxres.rc"      // ?à¨o?á??á¨|?t
+#include "res\PassTCP.rc2"  // ??è? Microsoft Visual C++ ?¨¤?§?è?-|¨???¨￠?§o???
+#include "l.CHS\afxres.rc"      // ?¨¤?§o?¨￠??¨￠?§|?t
 #endif
 
 /////////////////////////////////////////////////////////////////////////////
