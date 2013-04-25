@@ -53,7 +53,7 @@ void CDlgClientConnect::OnBnClickedButton1()
   // TODO: Add your control notification handler code here
   char szSendMessage[200] = {'\0'};
   char szCommand[100]     = {'\0'};
-  sprintf_s(szCommand, 100, "ClientCount -cp");
+  sprintf_s(szCommand, 100, "%s ClientCount -cp", m_pTcpClientConnect->GetKey());
   int nSendLen = (int)strlen(szCommand); 
 
   memcpy_s(szSendMessage, 200, &nSendLen, sizeof(int));
@@ -81,7 +81,7 @@ void CDlgClientConnect::OnBnClickedButton1()
   }
 
   //获得CPU和内存占用量
-  sprintf_s(szCommand, 100, "ShowCurrProcessInfo -a");
+  sprintf_s(szCommand, 100, "%s ShowCurrProcessInfo -a", m_pTcpClientConnect->GetKey());
   nSendLen = (int)strlen(szCommand); 
 
   memcpy_s(szSendMessage, 200, &nSendLen, sizeof(int));
@@ -134,7 +134,7 @@ void CDlgClientConnect::OnBnClickedButton6()
 
   char szSendMessage[200] = {'\0'};
   char szCommand[100]     = {'\0'};
-  sprintf_s(szCommand, 100, "ShowConnectHistory -a");
+  sprintf_s(szCommand, 100, "%s ShowConnectHistory -a", m_pTcpClientConnect->GetKey());
   int nSendLen = (int)strlen(szCommand); 
 
   memcpy_s(szSendMessage, 200, &nSendLen, sizeof(int));

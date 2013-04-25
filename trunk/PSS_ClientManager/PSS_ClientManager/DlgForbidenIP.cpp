@@ -81,7 +81,7 @@ void CDlgForbidenIP::OnBnClickedButton1()
 
   char szSendMessage[200] = {'\0'};
   char szCommand[100]     = {'\0'};
-  sprintf_s(szCommand, 100, "ForbiddenIP -c %s -t %d -s %s ", szIP, nType, szSeconds);
+  sprintf_s(szCommand, 100, "%s ForbiddenIP -c %s -t %d -s %s ", m_pTcpClientConnect->GetKey(), szIP, nType, szSeconds);
   int nSendLen = (int)strlen(szCommand); 
 
   memcpy_s(szSendMessage, 200, &nSendLen, sizeof(int));
@@ -134,7 +134,7 @@ void CDlgForbidenIP::OnBnClickedButton2()
 
   char szSendMessage[200] = {'\0'};
   char szCommand[100]     = {'\0'};
-  sprintf_s(szCommand, 100, "LiftedIP %s", szIP);
+  sprintf_s(szCommand, 100, "%s LiftedIP %s", m_pTcpClientConnect->GetKey(), szIP);
   int nSendLen = (int)strlen(szCommand); 
 
   memcpy_s(szSendMessage, 200, &nSendLen, sizeof(int));
@@ -193,7 +193,7 @@ void CDlgForbidenIP::OnBnClickedButton3()
 
   char szSendMessage[200] = {'\0'};
   char szCommand[100]     = {'\0'};
-  sprintf_s(szCommand, 100, "ShowForbiddenIP -a");
+  sprintf_s(szCommand, 100, "%s ShowForbiddenIP -a", m_pTcpClientConnect->GetKey());
   int nSendLen = (int)strlen(szCommand); 
 
   memcpy_s(szSendMessage, 200, &nSendLen, sizeof(int));

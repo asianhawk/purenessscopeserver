@@ -21,6 +21,18 @@ struct _ServerInfo
 	}
 };
 
+struct _ConsoleKey
+{
+  char m_szKey[MAX_BUFF_100];
+
+  _ConsoleKey()
+  {
+    m_szKey[0] = '\0';
+  }
+};
+
+typedef vector<_ConsoleKey> vecConsoleKey;
+
 struct _ConsoleClientIP
 {
 	char m_szServerIP[MAX_BUFF_20];
@@ -76,6 +88,7 @@ public:
 	uint8  GetConsoleSupport();
 	int    GetConsolePort();
 	const char* GetConsoleIP();
+  vecConsoleKey* GetConsoleKey();
 	uint16 GetRecvQueueTimeout();
 	uint16 GetSendQueueTimeout();
 	uint16 GetSendQueueCount();
@@ -143,11 +156,13 @@ private:
 	uint32     m_u4ReactorCount;                   //系统中遇到的反应器的个数
 
 	typedef vector<_ServerInfo> vecServerInfo;
+  typedef vector<_ServerInfo> vecServerInfo;
 	vecServerInfo m_vecServerInfo;
 	vecServerInfo m_vecUDPServerInfo;
 
 	typedef vector<_ConsoleClientIP> vecConsoleClientIP;
 	vecConsoleClientIP m_vecConsoleClientIP;                  //服务器后台允许的IP
+  vecConsoleKey      m_vecConsoleKey;                       //服务器允许的key值
 };
 
 typedef ACE_Singleton<CMainConfig, ACE_Null_Mutex> App_MainConfig;

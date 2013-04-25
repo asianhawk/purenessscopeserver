@@ -9,9 +9,10 @@ CTcpClientConnect::~CTcpClientConnect(void)
 {
 }
 
-void CTcpClientConnect::Init( const char* pIp, int nPort )
+void CTcpClientConnect::Init( const char* pIp, int nPort, const char* pKey )
 {
   sprintf_s(m_szServerIP, 20, "%s", pIp);
+  sprintf_s(m_szConsoleKey, 50, "%s", pKey);
   m_nServerPort = nPort;
 }
 
@@ -111,4 +112,9 @@ bool CTcpClientConnect::SendConsoleMessage( const char* pMessage, int nMessageLe
   delete[] pBuff;
   closesocket(sckClient);
   return true;
+}
+
+char* CTcpClientConnect::GetKey()
+{
+  return m_szConsoleKey;
 }

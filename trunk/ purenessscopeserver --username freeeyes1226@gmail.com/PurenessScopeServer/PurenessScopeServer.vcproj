@@ -637,10 +637,6 @@
 				Name="headfile"
 				>
 				<File
-					RelativePath=".\Reactor\ConsoleHandler.h"
-					>
-				</File>
-				<File
 					RelativePath=".\Console\ConsoleMessage.h"
 					>
 				</File>
@@ -648,18 +644,6 @@
 			<Filter
 				Name="cppfile"
 				>
-				<File
-					RelativePath=".\Reactor\ConsoleHandler.cpp"
-					>
-					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-				</File>
 				<File
 					RelativePath=".\Console\ConsoleMessage.cpp"
 					>
@@ -1164,6 +1148,10 @@
 					>
 				</File>
 				<File
+					RelativePath=".\Reactor\ConsoleHandler.h"
+					>
+				</File>
+				<File
 					RelativePath=".\Reactor\ServerManager.h"
 					>
 				</File>
@@ -1225,6 +1213,18 @@
 				</File>
 				<File
 					RelativePath=".\Reactor\ConnectHandler.cpp"
+					>
+					<FileConfiguration
+						Name="Release|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath=".\Reactor\ConsoleHandler.cpp"
 					>
 					<FileConfiguration
 						Name="Release|Win32"

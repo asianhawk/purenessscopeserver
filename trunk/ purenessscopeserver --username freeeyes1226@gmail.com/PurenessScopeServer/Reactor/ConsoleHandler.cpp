@@ -99,6 +99,9 @@ int CConsoleHandler::open(void*)
 {
 	m_nIOCount = 1;
 
+  //初始化key值列表
+  m_ConsoleMessage.SetConsoleKey(App_MainConfig::instance()->GetConsoleKey());
+
 	int nRet = ACE_Svc_Handler<ACE_SOCK_STREAM, ACE_MT_SYNCH>::open();
 	if(nRet != 0)
 	{

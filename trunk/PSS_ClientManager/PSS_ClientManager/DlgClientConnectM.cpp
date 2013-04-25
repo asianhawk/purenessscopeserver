@@ -60,7 +60,7 @@ void CDlgClientConnectM::OnBnClickedButton1()
 
   char szSendMessage[200] = {'\0'};
   char szCommand[100]     = {'\0'};
-  sprintf_s(szCommand, 100, "CloseClient %d", (int)atoi(szScoketFD));
+  sprintf_s(szCommand, 100, "%s CloseClient %d", m_pTcpClientConnect->GetKey(), (int)atoi(szScoketFD));
   int nSendLen = (int)strlen(szCommand); 
 
   memcpy_s(szSendMessage, 200, &nSendLen, sizeof(int));
@@ -103,7 +103,7 @@ void CDlgClientConnectM::OnBnClickedButton2()
 
   char szSendMessage[200] = {'\0'};
   char szCommand[100]     = {'\0'};
-  sprintf_s(szCommand, 100, "ConnectClient -a");
+  sprintf_s(szCommand, 100, "%s ConnectClient -a", m_pTcpClientConnect->GetKey());
   int nSendLen = (int)strlen(szCommand); 
 
   memcpy_s(szSendMessage, 200, &nSendLen, sizeof(int));

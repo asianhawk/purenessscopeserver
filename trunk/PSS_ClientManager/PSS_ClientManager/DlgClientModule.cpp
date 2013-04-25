@@ -45,7 +45,7 @@ void CDlgClientModule::OnBnClickedButton2()
 
   char szSendMessage[200] = {'\0'};
   char szCommand[100]     = {'\0'};
-  sprintf_s(szCommand, 100, "ShowAllCommand -a");
+  sprintf_s(szCommand, 100, "%s ShowAllCommand -a", m_pTcpClientConnect->GetKey());
   int nSendLen = (int)strlen(szCommand); 
 
   memcpy_s(szSendMessage, 200, &nSendLen, sizeof(int));
@@ -147,7 +147,7 @@ void CDlgClientModule::OnBnClickedButton1()
 
   char szSendMessage[200] = {'\0'};
   char szCommand[100]     = {'\0'};
-  sprintf_s(szCommand, 100, "CommandInfo %s", szCommandID);
+  sprintf_s(szCommand, 100, "%s CommandInfo %s", m_pTcpClientConnect->GetKey(), szCommandID);
   int nSendLen = (int)strlen(szCommand); 
 
   memcpy_s(szSendMessage, 200, &nSendLen, sizeof(int));
