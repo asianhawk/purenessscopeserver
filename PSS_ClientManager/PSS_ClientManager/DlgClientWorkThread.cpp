@@ -46,7 +46,7 @@ void CDlgClientWorkThread::OnBnClickedButton1()
 
   char szSendMessage[200] = {'\0'};
   char szCommand[100]     = {'\0'};
-  sprintf_s(szCommand, 100, "WorkThreadState -s");
+  sprintf_s(szCommand, 100, "%s WorkThreadState -s", m_pTcpClientConnect->GetKey());
   int nSendLen = (int)strlen(szCommand); 
 
   memcpy_s(szSendMessage, 200, &nSendLen, sizeof(int));

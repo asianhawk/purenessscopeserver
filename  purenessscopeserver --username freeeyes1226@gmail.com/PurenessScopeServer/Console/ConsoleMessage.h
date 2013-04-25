@@ -87,12 +87,16 @@ public:
 
 	int Dispose(ACE_Message_Block* pmb, IBuffPacket* pBuffPacket);             //要处理的命令字解析, pBuffPacket为返回要发送给客户端的数据
 
+//初始化部分
+  bool SetConsoleKey(vecConsoleKey* pvecConsoleKey);       //添加验证允许的key值
+
 //公用数据部分
 private:
 	int ParseCommand(const char* pCommand, IBuffPacket* pBuffPacket);          //执行命令
 	bool GetCommandInfo(const char* pCommand, _CommandInfo& CommandInfo);      //把命令切割成应该有的数据格式
 	bool GetFileInfo(const char* pFile, _FileInfo& FileInfo);                  //将一个全路径切分成文件名
-	bool GetForbiddenIP(const char* pCommand, _ForbiddenIP& ForbiddenIP);
+	bool GetForbiddenIP(const char* pCommand, _ForbiddenIP& ForbiddenIP);      //得到禁止的IP列表
+  bool CheckConsoleKey(const char* pKey);                                    //验证key
 
 //命令具体实现部分
 private:
@@ -115,6 +119,9 @@ private:
 	bool DoMessage_ShowClientHisTory(_CommandInfo& CommandInfo, IBuffPacket* pBuffPacket);
 	bool DoMessage_ShowAllCommandInfo(_CommandInfo& CommandInfo, IBuffPacket* pBuffPacket);
   bool DoMessage_ShowServerInfo(_CommandInfo& CommandInfo, IBuffPacket* pBuffPacket);
+
+private:
+  vecConsoleKey* m_pvecConsoleKey;
 };
 
 #endif

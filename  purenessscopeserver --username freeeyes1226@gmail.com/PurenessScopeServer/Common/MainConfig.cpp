@@ -276,7 +276,9 @@ bool CMainConfig::Init(const char* szConfigPath)
 
   //获得Console可接受的客户端IP
 	m_vecConsoleClientIP.clear();
+  
   pNextTiXmlElementIP   = NULL;
+
 	while(true)
 	{
 		_ConsoleClientIP ConsoleClientIP;
@@ -292,6 +294,26 @@ bool CMainConfig::Init(const char* szConfigPath)
 
 		m_vecConsoleClientIP.push_back(ConsoleClientIP);
 	}
+
+  //获得允许的Console链接key值
+  m_vecConsoleKey.clear();
+  TiXmlElement* pNextTiXmlElementKey  = NULL;
+
+  while(true)
+  {
+    _ConsoleKey objConsoleKey;
+    pData = m_MainConfig.GetData("ConsoleKey", "Key", pNextTiXmlElementKey);
+    if(NULL != pData)
+    {
+      sprintf_safe(objConsoleKey.m_szKey, MAX_BUFF_100, "%s", pData);
+    }
+    else
+    {
+      break;
+    }
+
+    m_vecConsoleKey.push_back(objConsoleKey);
+  }
 
 	//开始获得ConnectValid对应的参数
 	pData = m_MainConfig.GetData("ConnectValid", "ConnectCount");
@@ -547,6 +569,12 @@ uint16 CMainConfig::GetSendQueueCount()
 
 bool CMainConfig::CompareConsoleClinetIP(const char* pConsoleClientIP)
 {
+  //如果没有配置IP，则默认全部可以
+  if((int)m_vecConsoleClientIP.size() == 0)
+  {
+    return true;
+  }
+
 	for(int i = 0; i < (int)m_vecConsoleClientIP.size(); i++)
 	{
 		if(ACE_OS::strcmp(m_vecConsoleClientIP[i].m_szServerIP, pConsoleClientIP) == 0)
@@ -596,6 +624,11 @@ const char* CMainConfig::GetServerVersion()
 const char* CMainConfig::GetPacketVersion()
 {
   return m_szPacketVersion;
+}
+
+vecConsoleKey* CMainConfig::GetConsoleKey()
+{
+  return &m_vecConsoleKey;
 }
 
 

@@ -135,6 +135,15 @@ void CClientTcpSocket::Run()
         nTotalRecvLen = m_pSocket_Info->m_nRecvLength;
       }
 
+      //记录应收字节总数
+      int nRecvAllSize = nTotalRecvLen;
+
+      //如果需要记录日志，则将数据计入日志
+      if(m_pSocket_Info->m_blIsWriteFile == true)
+      {
+        WriteFile_SendBuff(pSendData, nSendLen);
+      }
+
       int nTotalSendLen = nSendLen;
       int nBeginSend    = 0;
       int nCurrSendLen  = 0;
@@ -190,9 +199,16 @@ void CClientTcpSocket::Run()
             nTotalRecvLen -= nCurrRecvLen;
             if(nTotalRecvLen == 0)
             {
-              //发送完成
+              //接收完成
               m_pSocket_State_Info->m_nSuccessRecv++;
               blRecvFlag = true;
+
+              //如果需要记录日志，则将数据计入日志
+              if(m_pSocket_Info->m_blIsWriteFile == true)
+              {
+                WriteFile_RecvBuff(szRecvBuffData, nRecvAllSize);
+              }
+
               break;
             }
             else
@@ -220,4 +236,62 @@ void CClientTcpSocket::Run()
     m_pSocket_State_Info->m_nCurrectSocket = 0;
     blIsConnect = false;
   }
+}
+
+bool CClientTcpSocket::WriteFile_SendBuff( const char* pData, int nLen )
+{
+  FILE* pFile = NULL;
+  char szFileName[20];
+  sprintf_s(szFileName, "Thread%d.log", m_pSocket_Info->m_nThreadID);
+  fopen_s(&pFile, szFileName, "a+");
+  if(pFile == NULL)
+  {
+    return false;
+  }
+
+  string strLog;
+  strLog = "[SendBuff]";
+
+  for(int i = 0; i < nLen; i++)
+  {
+    char szChar[20];
+    sprintf_s(szChar, 20, " 0x%02X", (unsigned char )pData[i]);
+    strLog += szChar;
+  }
+
+  strLog += "\n";
+
+  fwrite(strLog.c_str(), strLog.length(), sizeof(char), pFile);
+
+  fclose(pFile);
+  return true;
+}
+
+bool CClientTcpSocket::WriteFile_RecvBuff( const char* pData, int nLen )
+{
+  FILE* pFile = NULL;
+  char szFileName[20];
+  sprintf_s(szFileName, "Thread%d.log", m_pSocket_Info->m_nThreadID);
+  fopen_s(&pFile, szFileName, "a+");
+  if(pFile == NULL)
+  {
+    return false;
+  }
+
+  string strLog;
+  strLog = "[RecvBuff]";
+
+  for(int i = 0; i < nLen; i++)
+  {
+    char szChar[20];
+    sprintf_s(szChar, 20, " 0x%02X", (unsigned char )pData[i]);
+    strLog += szChar;
+  }
+
+  strLog += "\n";
+
+  fwrite(strLog.c_str(), strLog.length(), sizeof(char), pFile);
+
+  fclose(pFile);
+  return true;
 }

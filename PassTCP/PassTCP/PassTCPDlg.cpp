@@ -85,6 +85,7 @@ void CPassTCPDlg::DoDataExchange(CDataExchange* pDX)
   DDX_Control(pDX, IDC_EDIT12, m_txtFailRecv);
   DDX_Control(pDX, IDC_EDIT14, m_txtRecvLength);
   DDX_Control(pDX, IDC_CHECK5, m_chkRadomSendCount);
+  DDX_Control(pDX, IDC_CHECK6, m_chkIsWriteLog);
 }
 
 BEGIN_MESSAGE_MAP(CPassTCPDlg, CDialog)
@@ -279,6 +280,15 @@ void CPassTCPDlg::OnBnClickedButton1()
     else
     {
       pSocket_Info->m_blIsSendCount = false;
+    }
+
+    if(m_chkIsWriteLog.GetCheck() == BST_CHECKED)
+    {
+      pSocket_Info->m_blIsWriteFile = true;
+    }
+    else
+    {
+      pSocket_Info->m_blIsWriteFile = false;
     }
 
     CClientTcpSocket* pClientTcpSocket = new CClientTcpSocket();

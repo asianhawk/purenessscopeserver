@@ -46,7 +46,7 @@ void CDlgServerConnect::OnBnClickedButton2()
 
   char szSendMessage[200] = {'\0'};
   char szCommand[100]     = {'\0'};
-  sprintf_s(szCommand, 100, "ServerConnectTCP -a");
+  sprintf_s(szCommand, 100, "%s ServerConnectTCP -a", m_pTcpClientConnect->GetKey());
   int nSendLen = (int)strlen(szCommand); 
 
   memcpy_s(szSendMessage, 200, &nSendLen, sizeof(int));

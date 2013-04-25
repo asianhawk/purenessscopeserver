@@ -2,6 +2,9 @@
 
 #include <WinSock2.h>
 #include <time.h>
+#include <string>
+
+using namespace std;
 
 #define MAX_BUFF_20   20
 #define MAX_BUFF_100  100
@@ -189,6 +192,7 @@ struct _Socket_Info
   bool  m_blIsRecv;                  //是否接收回应包
   bool  m_blIsBroken;                //是否断线重连
   bool  m_blIsSendCount;             //是否随机数据包数
+  bool  m_blIsWriteFile;             //是否写入文件
 
   _Socket_Info()
   {
@@ -205,6 +209,7 @@ struct _Socket_Info
     m_blIsRecv         = true;
     m_blIsBroken       = true;
     m_blIsSendCount    = false;
+    m_blIsWriteFile    = false;
   }
 
   ~_Socket_Info()
@@ -265,6 +270,10 @@ public:
 
   void SetSocketThread(_Socket_Info* pSocket_Info, _Socket_State_Info* pSocket_State_Info);
   _Socket_State_Info* GetStateInfo();
+
+private:
+  bool WriteFile_SendBuff(const char* pData, int nLen);
+  bool WriteFile_RecvBuff(const char* pData, int nLen);
 
 private:
   _Socket_Info*       m_pSocket_Info;

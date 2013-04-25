@@ -2,6 +2,7 @@
 
 CConsoleMessage::CConsoleMessage()
 {
+  m_pvecConsoleKey = NULL;
 }
 
 CConsoleMessage::~CConsoleMessage()
@@ -45,15 +46,52 @@ bool CConsoleMessage::GetCommandInfo(const char* pCommand, _CommandInfo& Command
 {
 	int i = 0;
 	int nLen = (int)ACE_OS::strlen(pCommand);
+  char szKey[MAX_BUFF_100] = {'\0'};
+
+  AppLogManager::instance()->WriteLog(LOG_SYSTEM_CONSOLEDATA, "<Command>%s.", pCommand);
+
 	if(nLen > MAX_BUFF_100*2 + 1)
 	{
 		OUR_DEBUG((LM_ERROR, "[CConsoleMessage::GetCommandInfo]pCommand is too long.\n"));
 		return false;
 	}
 
-	bool blFind = false;
+  //获得key值
+  int nKeyEnd = 0;
+  bool blFind = false;
+  for(nKeyEnd = 0; nKeyEnd < nLen; nKeyEnd++)
+  {
+    if(nKeyEnd >= MAX_BUFF_100 - 1)
+    {
+      OUR_DEBUG((LM_ERROR, "[CConsoleMessage::GetCommandInfo]pCommand key is too long.\n"));
+      return false;
+    }
+
+    if(pCommand[nKeyEnd] == ' ')
+    {
+      blFind = true;
+      break;
+    }
+  }
+
+  if(blFind == false)
+  {
+    OUR_DEBUG((LM_ERROR, "[CConsoleMessage::GetCommandInfo]No find command.\n"));
+    return false;
+  }
+
+	ACE_OS::memcpy(&szKey, pCommand, nKeyEnd);
+  szKey[nKeyEnd] = '\0';
+
+  if(false == CheckConsoleKey(szKey))
+  {
+    OUR_DEBUG((LM_ERROR, "[CConsoleMessage::GetCommandInfo]szKey is invalid.\n"));
+    return false;
+  }
+
+
 	//获得命令头
-	for(i = 0; i < nLen; i++)
+	for(i = nKeyEnd + 1; i < nLen; i++)
 	{
 		if(i >= MAX_BUFF_100 - 1)
 		{
@@ -74,8 +112,8 @@ bool CConsoleMessage::GetCommandInfo(const char* pCommand, _CommandInfo& Command
 		return false;
 	}
 
-	ACE_OS::memcpy(&CommandInfo.m_szCommandTitle, pCommand, i);
-	CommandInfo.m_szCommandTitle[i] = '\0';
+	ACE_OS::memcpy(&CommandInfo.m_szCommandTitle, pCommand + nKeyEnd + 1, i - nKeyEnd - 1);
+	CommandInfo.m_szCommandTitle[i - nKeyEnd - 1] = '\0';
 
 	//获得扩展参数
 	ACE_OS::memcpy(&CommandInfo.m_szCommandExp, pCommand + i + 1, (nLen - i + 1));
@@ -993,5 +1031,30 @@ bool CConsoleMessage::DoMessage_ShowServerInfo(_CommandInfo& CommandInfo, IBuffP
   }
 
   return true;
+}
+
+bool CConsoleMessage::SetConsoleKey(vecConsoleKey* pvecConsoleKey)
+{
+  m_pvecConsoleKey = pvecConsoleKey;
+  return true;
+}
+
+bool CConsoleMessage::CheckConsoleKey( const char* pKey )
+{
+  if(NULL == m_pvecConsoleKey)
+  {
+    return false;
+  }
+
+  for(int i = 0; i < (int)m_pvecConsoleKey->size(); i++)
+  {
+    if(ACE_OS::strcmp((*m_pvecConsoleKey)[i].m_szKey, pKey) == 0)
+    {
+      //key值对上了
+      return true;
+    }
+  }
+
+  return false;
 }
 

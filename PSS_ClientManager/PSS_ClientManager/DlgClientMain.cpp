@@ -28,6 +28,7 @@ void CDlgClientMain::DoDataExchange(CDataExchange* pDX)
   DDX_Control(pDX, IDC_EDIT3, m_txtServerInfo);
   DDX_Control(pDX, IDC_EDIT4, m_txtModuleName);
   DDX_Control(pDX, IDC_LIST1, m_lcModuleList);
+  DDX_Control(pDX, IDC_EDIT6, m_txtKey);
 }
 
 
@@ -52,12 +53,15 @@ void CDlgClientMain::OnBnClickedButton1()
   // TODO: Add your control notification handler code here
   CString strServerIP;
   CString strServerPort;
+  CString strConsoleKey;
 
-  char szSeverIP[20]    = {'\0'};
-  char szServerPort[20] = {'\0'};
+  char szSeverIP[20]     = {'\0'};
+  char szServerPort[20]  = {'\0'};
+  char szConsoleKey[100] = {'\0'};
 
   m_txtServerIP.GetWindowText(strServerIP);
   m_txtServerPort.GetWindowText(strServerPort);
+  m_txtKey.GetWindowText(strConsoleKey);
 
   int nSrcLen = WideCharToMultiByte(CP_ACP, 0, strServerIP, strServerIP.GetLength(), NULL, 0, NULL, NULL);
   int nDecLen = WideCharToMultiByte(CP_ACP, 0, strServerIP, nSrcLen, szSeverIP, 20, NULL,NULL);
@@ -67,7 +71,11 @@ void CDlgClientMain::OnBnClickedButton1()
   nDecLen = WideCharToMultiByte(CP_ACP, 0, strServerPort, nSrcLen, szServerPort, 20, NULL,NULL);
   szServerPort[nDecLen] = '\0';
 
-  if(strlen(szSeverIP) == 0 || strlen(szServerPort) == 0)
+  nSrcLen = WideCharToMultiByte(CP_ACP, 0, strConsoleKey, strConsoleKey.GetLength(), NULL, 0, NULL, NULL);
+  nDecLen = WideCharToMultiByte(CP_ACP, 0, strConsoleKey, nSrcLen, szConsoleKey, 100, NULL,NULL);
+  szConsoleKey[nDecLen] = '\0';
+
+  if(strlen(szSeverIP) == 0 || strlen(szServerPort) == 0  || strlen(szConsoleKey) == 0)
   {
     MessageBox(_T(MESSAGE_INSERT_NULL) , _T(MESSAGE_TITLE_ERROR), MB_OK);
     return;
@@ -75,7 +83,7 @@ void CDlgClientMain::OnBnClickedButton1()
 
   int nPort = atoi(szServerPort);
 
-  m_pTcpClientConnect->Init(szSeverIP, nPort);
+  m_pTcpClientConnect->Init(szSeverIP, nPort, szConsoleKey);
 
   MessageBox(_T(MESSAGE_TITLE_CONNECT), _T(MESSAGE_TITLE_SUCCESS), MB_OK);
 }
@@ -90,7 +98,7 @@ void CDlgClientMain::OnBnClickedButton2()
   // TODO: Add your control notification handler code here
   char szSendMessage[200] = {'\0'};
   char szCommand[100]     = {'\0'};
-  sprintf_s(szCommand, 100, "ShowServerInfo -a");
+  sprintf_s(szCommand, 100, "%s ShowServerInfo -a", m_pTcpClientConnect->GetKey());
   int nSendLen = (int)strlen(szCommand); 
 
   memcpy_s(szSendMessage, 200, &nSendLen, sizeof(int));
@@ -172,7 +180,7 @@ void CDlgClientMain::OnBnClickedButton3()
 
   char szSendMessage[200] = {'\0'};
   char szCommand[100]     = {'\0'};
-  sprintf_s(szCommand, 100, "ShowModule -a");
+  sprintf_s(szCommand, 100, "%s ShowModule -a", m_pTcpClientConnect->GetKey());
   int nSendLen = (int)strlen(szCommand); 
 
   memcpy_s(szSendMessage, 200, &nSendLen, sizeof(int));
@@ -275,7 +283,7 @@ void CDlgClientMain::OnBnClickedButton4()
 
   char szSendMessage[200] = {'\0'};
   char szCommand[100]     = {'\0'};
-  sprintf_s(szCommand, 100, "UnLoadModule %s", szModuleName);
+  sprintf_s(szCommand, 100, "%s UnLoadModule %s", m_pTcpClientConnect->GetKey(), szModuleName);
   int nSendLen = (int)strlen(szCommand); 
 
   memcpy_s(szSendMessage, 200, &nSendLen, sizeof(int));
@@ -325,7 +333,7 @@ void CDlgClientMain::OnBnClickedButton5()
 
   char szSendMessage[200] = {'\0'};
   char szCommand[100]     = {'\0'};
-  sprintf_s(szCommand, 100, "ReLoadModule %s", szModuleName);
+  sprintf_s(szCommand, 100, "%s ReLoadModule %s", m_pTcpClientConnect->GetKey(), szModuleName);
   int nSendLen = (int)strlen(szCommand); 
 
   memcpy_s(szSendMessage, 200, &nSendLen, sizeof(int));
