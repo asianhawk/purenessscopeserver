@@ -163,6 +163,10 @@ BOOL CDlgClientMain::OnInitDialog()
 {
   CDialog::OnInitDialog();
 
+  m_txtServerIP.SetWindowText(_T("127.0.0.1"));
+  m_txtServerPort.SetWindowText(_T("10010"));
+  m_txtKey.SetWindowText(_T("freeeyes"));
+
   m_lcModuleList.InsertColumn(0, _T("当前已加载模块"), LVCFMT_CENTER, 200);
   m_lcModuleList.InsertColumn(1, _T("模块名称"), LVCFMT_CENTER, 100);
   m_lcModuleList.InsertColumn(2, _T("模块信息"), LVCFMT_CENTER, 100);
