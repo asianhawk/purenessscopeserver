@@ -481,7 +481,7 @@ void CClientReConnectManager::GetConnectInfo(vecClientConnectInfo& VecClientConn
 	for(mapReactorConnectInfo::iterator b = m_mapConnectInfo.begin(); b!= m_mapConnectInfo.end(); b++)
 	{
 		CReactorClientInfo* pClientInfo = (CReactorClientInfo* )b->second;
-		if(NULL != pClientInfo)
+		if(NULL != pClientInfo && NULL != pClientInfo->GetConnectClient())
 		{
 			_ClientConnectInfo ClientConnectInfo = pClientInfo->GetConnectClient()->GetClientConnectInfo();
 			VecClientConnectInfo.push_back(ClientConnectInfo);

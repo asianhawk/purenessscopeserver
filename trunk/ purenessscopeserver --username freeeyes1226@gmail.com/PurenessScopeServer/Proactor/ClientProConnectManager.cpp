@@ -524,7 +524,7 @@ void CClientProConnectManager::GetConnectInfo(vecClientConnectInfo& VecClientCon
 	for(b; b!= e; b++)
 	{
 		CProactorClientInfo* pClientInfo = (CProactorClientInfo* )b->second;
-		if(NULL != pClientInfo)
+		if(NULL != pClientInfo && NULL != pClientInfo->GetProConnectClient())
 		{
 			_ClientConnectInfo ClientConnectInfo = pClientInfo->GetProConnectClient()->GetClientConnectInfo();
 			VecClientConnectInfo.push_back(ClientConnectInfo);
