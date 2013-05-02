@@ -41,14 +41,14 @@ void CProConnectClient::Close()
 			this->handle(ACE_INVALID_HANDLE);
 		}
 
-		App_ClientProConnectManager::instance()->Close(m_nServerID);
+		App_ClientProConnectManager::instance()->CloseByClient(m_nServerID);
 
 		OUR_DEBUG((LM_DEBUG, "[CProConnectClient::Close]delete OK.\n"));
 		delete this;
 	}
 }
 
-void CProConnectClient::ClinetClose()
+void CProConnectClient::ClientClose()
 {
 	if(this->handle() != ACE_INVALID_HANDLE)
 	{
