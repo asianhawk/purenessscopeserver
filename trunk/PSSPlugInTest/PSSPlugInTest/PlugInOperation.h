@@ -41,6 +41,7 @@ public:
   bool StartConnectTask(int nIntervalTime)                                                         { return true; };                            
   void CancelConnectTask()                                                                         {};                                                                 
   void Close()                                                                                     {};
+  bool GetConnectState(int nServerID)                                                              { return true; };
 };
 
 class CLogManager : public ILogManager

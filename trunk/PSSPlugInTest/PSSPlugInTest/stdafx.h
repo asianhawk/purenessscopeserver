@@ -35,7 +35,8 @@
 #include <afxcmn.h>             // MFC support for Windows Common Controls
 #endif // _AFX_NO_AFXCMN_SUPPORT
 
-#include <afxcontrolbars.h>     // MFC support for ribbons and control bars
+//#include <afxcontrolbars.h>     // 功能区和控件条的 MFC 支持
+#define CWinAppEx CWinApp
 
 #ifdef _UNICODE
 #if defined _M_IX86

@@ -51,6 +51,7 @@ public:
 	bool Init(ACE_Proactor* pProactor);                                                                //初始化链接器
 	bool Connect(int nServerID, const char* pIP, int nPort, IClientMessage* pClientMessage);           //链接指定的服务器（TCP）
 	bool ConnectUDP(int nServerID, const char* pIP, int nPort, IClientUDPMessage* pClientUDPMessage);  //建立一个指向UDP的链接（UDP）
+	bool CloseByClient(int nServerID);                                                                 //远程被动关闭(TCP)
 	bool Close(int nServerID);                                                                         //关闭连接（TCP）
 	bool CloseUDP(int nServerID);                                                                      //关闭链接（UDP）
 	bool ConnectErrorClose(int nServerID);                                                             //由内部错误引起的失败，由ProConnectClient调用
@@ -60,7 +61,8 @@ public:
 	IClientMessage* GetClientMessage(int nServerID);                                                   //获得ClientMessage对象
 	bool StartConnectTask(int nIntervalTime = CONNECT_LIMIT_RETRY);                                    //设置自动重连的定时器
 	void CancelConnectTask();                                                                          //关闭重连定时器
-	void Close();
+	void Close();                                                                                      //关闭所有连接 
+	bool GetConnectState(int nServerID);                                                               //得到指定连接的当前状态
 
 	void GetConnectInfo(vecClientConnectInfo& VecClientConnectInfo);      //返回当前存活链接的信息（TCP）
 	void GetUDPConnectInfo(vecClientConnectInfo& VecClientConnectInfo);   //返回当前存活链接的信息（UDP）

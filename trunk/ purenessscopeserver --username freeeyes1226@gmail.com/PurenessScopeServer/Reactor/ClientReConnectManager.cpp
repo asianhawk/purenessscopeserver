@@ -369,16 +369,20 @@ bool CClientReConnectManager::SendData(int nServerID, const char* pData, int nSi
 	if(NULL == pmblk)
 	{
 		OUR_DEBUG((LM_ERROR, "[CClientReConnectManager::SendData]nServerID =(%d) pmblk is NULL.\n", nServerID));
-    if(true == blIsDelete)
-    {
-		  SAFE_DELETE_ARRAY(pData);
-    }
+		if(true == blIsDelete)
+		{
+			  SAFE_DELETE_ARRAY(pData);
+		}
 		return false;
 	}
 
 	ACE_OS::memcpy(pmblk->wr_ptr(), pData, nSize);
 	pmblk->wr_ptr(nSize);
-	SAFE_DELETE_ARRAY(pData);
+
+	if(true == blIsDelete)
+	{
+		SAFE_DELETE_ARRAY(pData);
+	}
 
 	//发送数据
 	return pClientInfo->SendData(pmblk);
@@ -501,5 +505,56 @@ void CClientReConnectManager::GetUDPConnectInfo(vecClientConnectInfo& VecClientC
 			_ClientConnectInfo ClientConnectInfo = pClientInfo->GetClientConnectInfo();
 			VecClientConnectInfo.push_back(ClientConnectInfo);
 		}
+	}
+}
+
+bool CClientReConnectManager::CloseByClient( int nServerID )
+{
+	//如果是因为远程连接断开，则只删除ProConnectClient的指针
+	ACE_Guard<ACE_Recursive_Thread_Mutex> guard(m_ThreadWritrLock);
+	mapReactorConnectInfo::iterator f = m_mapConnectInfo.find(nServerID);
+	if(f == m_mapConnectInfo.end())
+	{
+		//如果这个链接已经存在，则不创建新的链接
+		OUR_DEBUG((LM_ERROR, "[CClientReConnectManager::Close]nServerID =(%d) is exist.\n", nServerID));
+		return false;
+	}
+
+	CReactorClientInfo* pClientInfo = (CReactorClientInfo* )f->second;
+	if(NULL == pClientInfo)
+	{
+		OUR_DEBUG((LM_ERROR, "[CClientReConnectManager::Close]nServerID =(%d) pClientInfo is NULL.\n", nServerID));
+		return false;
+	}
+
+	pClientInfo->SetConnectClient(NULL);
+	return true;
+}
+
+bool CClientReConnectManager::GetConnectState( int nServerID )
+{
+	ACE_Guard<ACE_Recursive_Thread_Mutex> guard(m_ThreadWritrLock);
+	mapReactorConnectInfo::iterator f = m_mapConnectInfo.find(nServerID);
+	if(f == m_mapConnectInfo.end())
+	{
+		//如果这个链接已经存在，则不创建新的链接
+		OUR_DEBUG((LM_ERROR, "[CClientReConnectManager::Close]nServerID =(%d) is exist.\n", nServerID));
+		return false;
+	}
+
+	CReactorClientInfo* pClientInfo = (CReactorClientInfo* )f->second;
+	if(NULL == pClientInfo)
+	{
+		OUR_DEBUG((LM_ERROR, "[CClientReConnectManager::Close]nServerID =(%d) pClientInfo is NULL.\n", nServerID));
+		return false;
+	}
+
+	if(NULL == pClientInfo->GetConnectClient())
+	{
+		return false;
+	}
+	else
+	{
+		return true;
 	}
 }

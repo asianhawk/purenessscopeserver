@@ -123,7 +123,7 @@ bool CProactorClientInfo::Close()
 	}
 	else
 	{
-		m_pProConnectClient->ClinetClose();
+		m_pProConnectClient->ClientClose();
 		return true;
 	}
 
@@ -300,7 +300,7 @@ bool CClientProConnectManager::Close(int nServerID)
 	//关闭链接对象
 	if(NULL != pClientInfo->GetProConnectClient())
 	{
-		pClientInfo->GetProConnectClient()->ClinetClose();
+		pClientInfo->GetProConnectClient()->ClientClose();
 	}
 	
 	pClientInfo->SetProConnectClient(NULL);
@@ -388,10 +388,10 @@ bool CClientProConnectManager::SendData(int nServerID, const char* pData, int nS
 	{
 		//如果这个链接已经存在，则不创建新的链接
 		OUR_DEBUG((LM_ERROR, "[CClientProConnectManager::Close]nServerID =(%d) is not exist.\n", nServerID));
-    if(true == blIsDelete)
-    {
-		  SAFE_DELETE_ARRAY(pData);
-    }
+		if(true == blIsDelete)
+		{
+			  SAFE_DELETE_ARRAY(pData);
+		}
 		return false;
 	}
 
@@ -401,16 +401,20 @@ bool CClientProConnectManager::SendData(int nServerID, const char* pData, int nS
 	if(NULL == pmblk)
 	{
 		OUR_DEBUG((LM_ERROR, "[CClientProConnectManager::Close]nServerID =(%d) pmblk is NULL.\n", nServerID));
-    if(true == blIsDelete)
-    {
-		  SAFE_DELETE_ARRAY(pData);
-    }
+		if(true == blIsDelete)
+		{
+			SAFE_DELETE_ARRAY(pData);
+		}
 		return false;
 	}
 	
 	ACE_OS::memcpy(pmblk->wr_ptr(), pData, nSize);
 	pmblk->wr_ptr(nSize);
-	SAFE_DELETE_ARRAY(pData);
+	
+	if(true == blIsDelete)
+	{
+		SAFE_DELETE_ARRAY(pData);
+	}
 
 	//发送数据
 	return pClientInfo->SendData(pmblk);
@@ -549,4 +553,58 @@ void CClientProConnectManager::GetUDPConnectInfo(vecClientConnectInfo& VecClient
 		}
 	}
 
+}
+
+bool CClientProConnectManager::CloseByClient(int nServerID)
+{
+	//如果是因为远程客户端断开，则只删除ProConnectClient的指针
+	ACE_Guard<ACE_Recursive_Thread_Mutex> guard(m_ThreadWritrLock);
+	mapProactorClientInfo::iterator f = m_mapClientInfo.find(nServerID);
+	if(f == m_mapClientInfo.end())
+	{
+		//如果这个链接已经存在，则不创建新的链接
+		OUR_DEBUG((LM_ERROR, "[CClientProConnectManager::Close]nServerID =(%d) is exist.\n", nServerID));
+		return false;
+	}
+
+	CProactorClientInfo* pClientInfo = (CProactorClientInfo* )f->second;
+	if(NULL == pClientInfo)
+	{
+		OUR_DEBUG((LM_ERROR, "[CClientProConnectManager::Close]nServerID =(%d) pClientInfo is NULL.\n", nServerID));
+		return false;
+	}
+
+	pClientInfo->SetProConnectClient(NULL);
+
+	return true;
+}
+
+
+bool CClientProConnectManager::GetConnectState(int nServerID)
+{
+	//检查当前连接是否是活跃的
+	ACE_Guard<ACE_Recursive_Thread_Mutex> guard(m_ThreadWritrLock);
+	mapProactorClientInfo::iterator f = m_mapClientInfo.find(nServerID);
+	if(f == m_mapClientInfo.end())
+	{
+		//如果这个链接已经存在，则不创建新的链接
+		OUR_DEBUG((LM_ERROR, "[GetConnectState::Close]nServerID =(%d) is exist.\n", nServerID));
+		return false;
+	}
+
+	CProactorClientInfo* pClientInfo = (CProactorClientInfo* )f->second;
+	if(NULL == pClientInfo)
+	{
+		OUR_DEBUG((LM_ERROR, "[GetConnectState::Close]nServerID =(%d) pClientInfo is NULL.\n", nServerID));
+		return false;
+	}
+
+	if(NULL == pClientInfo->GetProConnectClient())
+	{
+		return false;
+	}
+	else
+	{
+		return true;
+	}
 }

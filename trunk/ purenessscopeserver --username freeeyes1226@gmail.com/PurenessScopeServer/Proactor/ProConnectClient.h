@@ -31,7 +31,7 @@ public:
 	virtual void addresses(const ACE_INET_Addr &remote_address, const ACE_INET_Addr &local_address);   //获得链接地址
 
 	void Close();                                          //链接关闭
-	void ClinetClose();                                    //客户端自我关闭
+	void ClientClose();                                    //客户端自我关闭
 	void SetServerID(int nServerID);                       //设置当前的ServerID
 	void SetClientMessage(IClientMessage* pClientMessage); //设置消息接收处理类
 	int  GetServerID();                                    //获得当前ServerID

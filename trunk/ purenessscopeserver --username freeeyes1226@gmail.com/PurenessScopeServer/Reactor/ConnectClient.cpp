@@ -37,7 +37,7 @@ bool CConnectClient::Close()
 		OUR_DEBUG((LM_ERROR, "[CConnectClient::Close]Close(%s:%d) OK.\n", m_addrRemote.get_host_addr(), m_addrRemote.get_port_number()));
 
 		//删除链接对象
-		App_ClientReConnectManager::instance()->Close(m_nServerID);
+		App_ClientReConnectManager::instance()->CloseByClient(m_nServerID);
 
 		//回归用过的指针
 		delete this;
