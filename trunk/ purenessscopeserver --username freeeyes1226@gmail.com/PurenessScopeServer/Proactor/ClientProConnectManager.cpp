@@ -52,6 +52,7 @@ bool CProactorClientInfo::Run(bool blIsReadly)
   if(true == blIsReadly)
   {
 	  m_pProAsynchConnect->SetConnectState(true);
+	  OUR_DEBUG((LM_ERROR, "[CProactorClientInfo::Run]Connect IP=%s,Port=%d.\n", m_AddrServer.get_host_addr(), m_AddrServer.get_port_number()));
 	  if(m_pProAsynchConnect->connect(m_AddrServer) == -1)
 	  {
 		  OUR_DEBUG((LM_ERROR, "[CProactorClientInfo::Run]m_pAsynchConnect open error(%d).\n", ACE_OS::last_error()));
@@ -171,8 +172,8 @@ bool CClientProConnectManager::Init(ACE_Proactor* pProactor)
 	}
 	else
 	{
-    //标记Proactor已经连接成功
-    m_blProactorFinish = true;
+		//标记Proactor已经连接成功
+		m_blProactorFinish = true;
 
 		//连接器启动成功，这时候启动定时器
 		m_ActiveTimer.activate();
@@ -214,6 +215,11 @@ bool CClientProConnectManager::Connect(int nServerID, const char* pIP, int nPort
 	//链接已经建立，添加进map
 	m_mapClientInfo[nServerID] = pClientInfo;
 	OUR_DEBUG((LM_ERROR, "[CClientProConnectManager::Connect]nServerID =(%d) connect is OK.\n", nServerID));
+
+	//自动休眠0.1秒
+	ACE_Time_Value tvSleep(0, PRO_CONNECT_SERVER_TIMEOUT);
+	ACE_OS::sleep(tvSleep);
+
 	return true;
 }
 

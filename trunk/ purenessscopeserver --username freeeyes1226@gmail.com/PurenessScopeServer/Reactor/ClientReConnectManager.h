@@ -9,6 +9,8 @@
 #include "ConnectClient.h"
 #include "ReactorUDPClient.h"
 
+#define RE_CONNECT_SERVER_TIMEOUT 100*1000
+
 #include <map>
 
 using namespace std;

@@ -13,6 +13,8 @@
 #include "IClientManager.h"
 #include "ProactorUDPClient.h"
 
+#define PRO_CONNECT_SERVER_TIMEOUT 100*1000
+
 #include <map>
 
 using namespace std;

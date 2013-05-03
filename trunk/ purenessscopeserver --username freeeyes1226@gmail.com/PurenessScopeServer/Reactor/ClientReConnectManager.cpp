@@ -53,15 +53,19 @@ bool CReactorClientInfo::Run(bool blIsReady)
 	m_pConnectClient->SetServerID(m_nServerID);
 	m_pConnectClient->reactor(m_pReactor);
 
-  if(blIsReady == true)
-  {
-	  if(m_pReactorConnect->connect(m_pConnectClient, m_AddrServer) == -1)
-	  {
-		  OUR_DEBUG((LM_ERROR, "[CReactorClientInfo::Run]m_pAsynchConnect open error(%d).\n", ACE_OS::last_error()));
-		  //这里设置为True，为了让自动重试起作用
-		  return true;
-	  }
-  }
+    if(blIsReady == true)
+    {
+		if(m_pReactorConnect->connect(m_pConnectClient, m_AddrServer) == -1)
+		{
+  			OUR_DEBUG((LM_ERROR, "[CReactorClientInfo::Run]m_pAsynchConnect open error(%d).\n", ACE_OS::last_error()));
+			//这里设置为True，为了让自动重试起作用
+			return true;
+		}
+    }
+
+	//自动休眠0.1秒
+	ACE_Time_Value tvSleep(0, RE_CONNECT_SERVER_TIMEOUT);
+	ACE_OS::sleep(tvSleep);
 
 	return true;
 }
