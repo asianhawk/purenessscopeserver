@@ -5,6 +5,8 @@ CProactorClientInfo::CProactorClientInfo()
 	m_pProConnectClient = NULL;
 	m_pProAsynchConnect = NULL;
 	m_pClientMessage    = NULL;
+	m_szServerIP[0]     = '\0';
+	m_nPort             = 0;
 }
 
 CProactorClientInfo::~CProactorClientInfo()
@@ -13,6 +15,7 @@ CProactorClientInfo::~CProactorClientInfo()
 
 bool CProactorClientInfo::Init(const char* pIP, int nPort, CProAsynchConnect* pProAsynchConnect, IClientMessage* pClientMessage)
 {
+	ACE_DEBUG((LM_ERROR, "[CProactorClientInfo::Init]SetAddrServer(%s:%d) error.\n", pIP, nPort));
 	int nRet = m_AddrServer.set(nPort, pIP);
 	if(-1 == nRet)
 	{
@@ -22,6 +25,9 @@ bool CProactorClientInfo::Init(const char* pIP, int nPort, CProAsynchConnect* pP
 
 	m_pProAsynchConnect = pProAsynchConnect;
 	m_pClientMessage    = pClientMessage;
+
+	sprintf_safe(m_szServerIP, MAX_BUFF_20, "%s", pIP);
+	m_nPort = nPort;
 
 	return true;
 }
@@ -49,16 +55,16 @@ bool CProactorClientInfo::Run(bool blIsReadly)
 	}
 	*/
 
-  if(true == blIsReadly)
-  {
-	  m_pProAsynchConnect->SetConnectState(true);
-	  OUR_DEBUG((LM_ERROR, "[CProactorClientInfo::Run]Connect IP=%s,Port=%d.\n", m_AddrServer.get_host_addr(), m_AddrServer.get_port_number()));
-	  if(m_pProAsynchConnect->connect(m_AddrServer) == -1)
-	  {
-		  OUR_DEBUG((LM_ERROR, "[CProactorClientInfo::Run]m_pAsynchConnect open error(%d).\n", ACE_OS::last_error()));
-		  return false;
-	  }
-  }
+    if(true == blIsReadly)
+    {
+	    m_pProAsynchConnect->SetConnectState(true);
+	    OUR_DEBUG((LM_ERROR, "[CProactorClientInfo::Run]Connect IP=%s,Port=%d.\n", m_AddrServer.get_host_addr(), m_AddrServer.get_port_number()));
+	    if(m_pProAsynchConnect->connect(m_AddrServer) == -1)
+	    {
+	  	    OUR_DEBUG((LM_ERROR, "[CProactorClientInfo::Run]m_pAsynchConnect open error(%d).\n", ACE_OS::last_error()));
+		    return false;
+	    }
+    }
 
 	return true;
 }
@@ -513,11 +519,32 @@ int CClientProConnectManager::handle_timeout(const ACE_Time_Value &tv, const voi
 
 	for(b; b!= e; b++)
 	{
+		int nServerID = (int)b->first;
+
+		/*
+		//测试代码
+		if(GetConnectState(nServerID) == false)
+		{
+			OUR_DEBUG((LM_ERROR, "[CClientProConnectManager::handle_timeout]nServerID == false (%d).\n", nServerID));
+		}
+		else
+		{
+			OUR_DEBUG((LM_ERROR, "[CClientProConnectManager::handle_timeout]nServerID == true (%d).\n", nServerID));
+		}
+		*/
+
 		CProactorClientInfo* pClientInfo = (CProactorClientInfo* )b->second;
 		if(NULL == pClientInfo->GetProConnectClient())
 		{
+			//设置当前nServerID
+			pClientInfo->SetServerID(nServerID);
+
 			//如果连接不存在，则重新建立连接
 			pClientInfo->Run(m_blProactorFinish);
+
+			//自动休眠0.1秒
+			ACE_Time_Value tvSleep(0, PRO_CONNECT_SERVER_TIMEOUT);
+			ACE_OS::sleep(tvSleep);
 		}
 	}
 	return 0;
