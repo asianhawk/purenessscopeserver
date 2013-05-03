@@ -83,12 +83,12 @@ int CBaseCommand::DoMessage(IMessage* pMessage, bool& bDeleteFlag)
 
 void CBaseCommand::InitServer()
 {
-	CPostServerData* pPostServerData = new CPostServerData();
-	if(NULL != pPostServerData)
-	{
-		m_pServerObject->GetClientManager()->Connect(1, "127.0.0.1", 10040, pPostServerData);
-		m_pServerObject->GetClientManager()->Connect(2, "127.0.0.1", 10050, pPostServerData);
-	}
+	CPostServerData* pPostServerData1 = new CPostServerData();
+	CPostServerData* pPostServerData2 = new CPostServerData();
+
+	m_pServerObject->GetClientManager()->Connect(1, "127.0.0.1", 10040, (IClientMessage* )pPostServerData1);
+	m_pServerObject->GetClientManager()->Connect(2, "127.0.0.1", 10050, (IClientMessage* )pPostServerData2);
+
 }
 
 

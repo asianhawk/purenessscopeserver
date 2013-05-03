@@ -471,11 +471,17 @@ int CClientReConnectManager::handle_timeout(const ACE_Time_Value &tv, const void
 
 	for(mapReactorConnectInfo::iterator b = m_mapConnectInfo.begin(); b!= m_mapConnectInfo.end(); b++)
 	{
+		int nServerID = (int)b->first;
+
 		CReactorClientInfo* pClientInfo = (CReactorClientInfo* )b->second;
 		if(NULL == pClientInfo->GetConnectClient())
 		{
 			//如果连接不存在，则重新建立连接
 			pClientInfo->Run(m_blReactorFinish);
+
+			//自动休眠0.1秒
+			ACE_Time_Value tvSleep(0, RE_CONNECT_SERVER_TIMEOUT);
+			ACE_OS::sleep(tvSleep);
 		}
 	}
 	return 0;

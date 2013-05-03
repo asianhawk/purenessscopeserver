@@ -37,10 +37,12 @@ public:
 	IClientMessage* GetClientMessage();                             //获得当前的消息处理指针
 
 private:
-	ACE_INET_Addr      m_AddrServer;             //远程服务器的地址
-	CProConnectClient* m_pProConnectClient;      //当前链接对象
-	CProAsynchConnect* m_pProAsynchConnect;      //异步链接对象
-	IClientMessage*    m_pClientMessage;         //回调函数类，回调返回错误和返回数据方法
+	ACE_INET_Addr      m_AddrServer;               //远程服务器的地址
+	CProConnectClient* m_pProConnectClient;        //当前链接对象
+	CProAsynchConnect* m_pProAsynchConnect;        //异步链接对象
+	IClientMessage*    m_pClientMessage;           //回调函数类，回调返回错误和返回数据方法
+	char               m_szServerIP[MAX_BUFF_20];  //远端服务器地址
+	int                m_nPort;                    //远端服务器端口
 };
 
 //管理所有连接到其他服务器的管理类
