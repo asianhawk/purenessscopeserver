@@ -127,13 +127,6 @@ bool CProServerManager::Init()
 	App_ServerObject::instance()->SetTimerManager((ActiveTimer* )App_TimerManager::instance());
 	App_ServerObject::instance()->SetModuleMessageManager((IModuleMessageManager* )App_ModuleMessageManager::instance());
 
-	//初始化模块加载
-	blState = App_ModuleLoader::instance()->LoadModule(App_MainConfig::instance()->GetModulePath(), App_MainConfig::instance()->GetModuleString());
-	if(false == blState)
-	{
-		return false;
-	}
-
 	return true;
 }
 
@@ -304,6 +297,13 @@ bool CProServerManager::Start()
 	App_ClientProConnectManager::instance()->Init(App_ProactorManager::instance()->GetAce_Proactor(REACTOR_POSTDEFINE));
 	App_ClientProConnectManager::instance()->StartConnectTask(CONNECT_LIMIT_RETRY);
 
+	//初始化模块加载，因为这里可能包含了中间服务器连接加载
+	blState = App_ModuleLoader::instance()->LoadModule(App_MainConfig::instance()->GetModulePath(), App_MainConfig::instance()->GetModuleString());
+	if(false == blState)
+	{
+		OUR_DEBUG((LM_INFO, "[CProServerManager::Start]LoadModule is error.\n"));
+		return false;
+	}
 
 	//开始消息处理线程
 	App_MessageService::instance()->Start();

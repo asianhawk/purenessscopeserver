@@ -86,7 +86,8 @@ void CBaseCommand::InitServer()
 	CPostServerData* pPostServerData = new CPostServerData();
 	if(NULL != pPostServerData)
 	{
-		m_pServerObject->GetClientManager()->Connect(1, "127.0.0.1", 10005, pPostServerData);
+		m_pServerObject->GetClientManager()->Connect(1, "127.0.0.1", 10040, pPostServerData);
+		m_pServerObject->GetClientManager()->Connect(2, "127.0.0.1", 10050, pPostServerData);
 	}
 }
 

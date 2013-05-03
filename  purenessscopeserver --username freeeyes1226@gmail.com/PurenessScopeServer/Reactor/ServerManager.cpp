@@ -130,13 +130,6 @@ bool CServerManager::Init()
 	App_ServerObject::instance()->SetTimerManager((ActiveTimer* )App_TimerManager::instance());
 	App_ServerObject::instance()->SetModuleMessageManager((IModuleMessageManager* )App_ModuleMessageManager::instance());
 
-	//初始化模块加载
-	blState = App_ModuleLoader::instance()->LoadModule(App_MainConfig::instance()->GetModulePath(), App_MainConfig::instance()->GetModuleString());
-	if(false == blState)
-	{
-		return false;
-	}
-
 	return true;
 }
 
@@ -284,6 +277,14 @@ bool CServerManager::Start()
 	//启动中间服务器链接管理器
 	App_ClientReConnectManager::instance()->Init(App_ReactorManager::instance()->GetAce_Reactor(REACTOR_POSTDEFINE));
 	App_ClientReConnectManager::instance()->StartConnectTask(CONNECT_LIMIT_RETRY);
+
+	//初始化模块加载，因为这里可能包含了中间服务器连接加载
+	bool blState = App_ModuleLoader::instance()->LoadModule(App_MainConfig::instance()->GetModulePath(), App_MainConfig::instance()->GetModuleString());
+	if(false == blState)
+	{
+		OUR_DEBUG((LM_INFO, "[CServerManager::Start]LoadModule is error.\n"));
+		return false;
+	}
 
 	//开始消息处理线程
 	App_MessageService::instance()->Start();
