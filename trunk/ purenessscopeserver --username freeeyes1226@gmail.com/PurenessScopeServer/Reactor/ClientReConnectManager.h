@@ -82,7 +82,8 @@ public:
 	ActiveTimer                 m_ActiveTimer;                 //时间管理器
 	int                         m_nTaskID;                     //定时检测工具
 	ACE_Reactor*                m_pReactor;                    //当前的反应器
-  bool                        m_blReactorFinish;             //Reactor是否已经注册 
+	bool                        m_blReactorFinish;             //Reactor是否已经注册
+	uint32                      m_u4ConnectServerTimeout;      //连接间隔时间
 };
 
 typedef ACE_Singleton<CClientReConnectManager, ACE_Recursive_Thread_Mutex> App_ClientReConnectManager;

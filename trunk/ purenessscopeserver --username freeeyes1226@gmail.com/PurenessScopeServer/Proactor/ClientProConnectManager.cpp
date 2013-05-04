@@ -50,21 +50,21 @@ bool CProactorClientInfo::Run(bool blIsReadly)
 	//链接远端服务器
 	if(m_pProAsynchConnect->GetConnectState() == true)
 	{
-		OUR_DEBUG((LM_ERROR, "[CProactorClientInfo::Run]m_pProAsynchConnect is run.\n"));
-		return false;
+	OUR_DEBUG((LM_ERROR, "[CProactorClientInfo::Run]m_pProAsynchConnect is run.\n"));
+	return false;
 	}
 	*/
 
-    if(true == blIsReadly)
-    {
-	    m_pProAsynchConnect->SetConnectState(true);
-	    OUR_DEBUG((LM_ERROR, "[CProactorClientInfo::Run]Connect IP=%s,Port=%d.\n", m_AddrServer.get_host_addr(), m_AddrServer.get_port_number()));
-	    if(m_pProAsynchConnect->connect(m_AddrServer) == -1)
-	    {
-	  	    OUR_DEBUG((LM_ERROR, "[CProactorClientInfo::Run]m_pAsynchConnect open error(%d).\n", ACE_OS::last_error()));
-		    return false;
-	    }
-    }
+	if(true == blIsReadly)
+	{
+		m_pProAsynchConnect->SetConnectState(true);
+		OUR_DEBUG((LM_ERROR, "[CProactorClientInfo::Run]Connect IP=%s,Port=%d.\n", m_AddrServer.get_host_addr(), m_AddrServer.get_port_number()));
+		if(m_pProAsynchConnect->connect(m_AddrServer) == -1)
+		{
+			OUR_DEBUG((LM_ERROR, "[CProactorClientInfo::Run]m_pAsynchConnect open error(%d).\n", ACE_OS::last_error()));
+			return false;
+		}
+	}
 
 	return true;
 }
@@ -155,7 +155,7 @@ IClientMessage* CProactorClientInfo::GetClientMessage()
 CClientProConnectManager::CClientProConnectManager(void)
 {
 	m_nTaskID          = -1;
-  m_blProactorFinish = false;
+	m_blProactorFinish = false;
 }
 
 CClientProConnectManager::~CClientProConnectManager(void)
@@ -169,6 +169,12 @@ bool CClientProConnectManager::Init(ACE_Proactor* pProactor)
 	{
 		OUR_DEBUG((LM_ERROR, "[CClientProConnectManager::Init]pProactor is NULL.\n"));
 		return false;
+	}
+
+	m_u4ConnectServerTimeout = App_MainConfig::instance()->GetConnectServerTimeout() * 1000; //转换为微妙
+	if(m_u4ConnectServerTimeout == 0)
+	{
+		m_u4ConnectServerTimeout = PRO_CONNECT_SERVER_TIMEOUT;
 	}
 
 	if(-1 == m_ProAsynchConnect.open(false, pProactor, true))
@@ -223,7 +229,7 @@ bool CClientProConnectManager::Connect(int nServerID, const char* pIP, int nPort
 	OUR_DEBUG((LM_ERROR, "[CClientProConnectManager::Connect]nServerID =(%d) connect is OK.\n", nServerID));
 
 	//自动休眠0.1秒
-	ACE_Time_Value tvSleep(0, PRO_CONNECT_SERVER_TIMEOUT);
+	ACE_Time_Value tvSleep(0, m_u4ConnectServerTimeout);
 	ACE_OS::sleep(tvSleep);
 
 	return true;
@@ -301,7 +307,7 @@ bool CClientProConnectManager::Close(int nServerID)
 		OUR_DEBUG((LM_ERROR, "[CClientProConnectManager::Close]nServerID =(%d) is exist.\n", nServerID));
 		return false;
 	}
-	
+
 	CProactorClientInfo* pClientInfo = (CProactorClientInfo* )f->second;
 	if(NULL == pClientInfo)
 	{
@@ -314,7 +320,7 @@ bool CClientProConnectManager::Close(int nServerID)
 	{
 		pClientInfo->GetProConnectClient()->ClientClose();
 	}
-	
+
 	pClientInfo->SetProConnectClient(NULL);
 	SAFE_DELETE(pClientInfo);
 	//从map里面删除当前存在的对象
@@ -388,7 +394,7 @@ IClientMessage* CClientProConnectManager::GetClientMessage(int nServerID)
 	{
 		return pClientInfo->GetClientMessage();
 	}
-	
+
 	return NULL;
 }
 
@@ -402,7 +408,7 @@ bool CClientProConnectManager::SendData(int nServerID, const char* pData, int nS
 		OUR_DEBUG((LM_ERROR, "[CClientProConnectManager::Close]nServerID =(%d) is not exist.\n", nServerID));
 		if(true == blIsDelete)
 		{
-			  SAFE_DELETE_ARRAY(pData);
+			SAFE_DELETE_ARRAY(pData);
 		}
 		return false;
 	}
@@ -419,10 +425,10 @@ bool CClientProConnectManager::SendData(int nServerID, const char* pData, int nS
 		}
 		return false;
 	}
-	
+
 	ACE_OS::memcpy(pmblk->wr_ptr(), pData, nSize);
 	pmblk->wr_ptr(nSize);
-	
+
 	if(true == blIsDelete)
 	{
 		SAFE_DELETE_ARRAY(pData);
@@ -525,11 +531,11 @@ int CClientProConnectManager::handle_timeout(const ACE_Time_Value &tv, const voi
 		//测试代码
 		if(GetConnectState(nServerID) == false)
 		{
-			OUR_DEBUG((LM_ERROR, "[CClientProConnectManager::handle_timeout]nServerID == false (%d).\n", nServerID));
+		OUR_DEBUG((LM_ERROR, "[CClientProConnectManager::handle_timeout]nServerID == false (%d).\n", nServerID));
 		}
 		else
 		{
-			OUR_DEBUG((LM_ERROR, "[CClientProConnectManager::handle_timeout]nServerID == true (%d).\n", nServerID));
+		OUR_DEBUG((LM_ERROR, "[CClientProConnectManager::handle_timeout]nServerID == true (%d).\n", nServerID));
 		}
 		*/
 
@@ -543,7 +549,7 @@ int CClientProConnectManager::handle_timeout(const ACE_Time_Value &tv, const voi
 			pClientInfo->Run(m_blProactorFinish);
 
 			//自动休眠0.1秒
-			ACE_Time_Value tvSleep(0, PRO_CONNECT_SERVER_TIMEOUT);
+			ACE_Time_Value tvSleep(0, m_u4ConnectServerTimeout);
 			ACE_OS::sleep(tvSleep);
 		}
 	}

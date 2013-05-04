@@ -53,19 +53,15 @@ bool CReactorClientInfo::Run(bool blIsReady)
 	m_pConnectClient->SetServerID(m_nServerID);
 	m_pConnectClient->reactor(m_pReactor);
 
-    if(blIsReady == true)
-    {
+	if(blIsReady == true)
+	{
 		if(m_pReactorConnect->connect(m_pConnectClient, m_AddrServer) == -1)
 		{
-  			OUR_DEBUG((LM_ERROR, "[CReactorClientInfo::Run]m_pAsynchConnect open error(%d).\n", ACE_OS::last_error()));
+			OUR_DEBUG((LM_ERROR, "[CReactorClientInfo::Run]m_pAsynchConnect open error(%d).\n", ACE_OS::last_error()));
 			//这里设置为True，为了让自动重试起作用
 			return true;
 		}
-    }
-
-	//自动休眠0.1秒
-	ACE_Time_Value tvSleep(0, RE_CONNECT_SERVER_TIMEOUT);
-	ACE_OS::sleep(tvSleep);
+	}
 
 	return true;
 }
@@ -136,7 +132,7 @@ CClientReConnectManager::CClientReConnectManager(void)
 {
 	m_nTaskID         = -1;
 	m_pReactor        = NULL;
-  m_blReactorFinish = false;
+	m_blReactorFinish = false;
 }
 
 CClientReConnectManager::~CClientReConnectManager(void)
@@ -153,8 +149,14 @@ bool CClientReConnectManager::Init(ACE_Reactor* pReactor)
 		return false;
 	}
 
+	m_u4ConnectServerTimeout = App_MainConfig::instance()->GetConnectServerTimeout() * 1000; //转换为微妙
+	if(m_u4ConnectServerTimeout == 0)
+	{
+		m_u4ConnectServerTimeout = RE_CONNECT_SERVER_TIMEOUT;
+	}
+
 	m_pReactor        = pReactor;
-  m_blReactorFinish = true;
+	m_blReactorFinish = true;
 	return true;
 }
 
@@ -188,6 +190,11 @@ bool CClientReConnectManager::Connect(int nServerID, const char* pIP, int nPort,
 
 	//链接已经建立，添加进map
 	m_mapConnectInfo[nServerID] = pClientInfo;
+
+	//自动休眠0.1秒
+	ACE_Time_Value tvSleep(0, m_u4ConnectServerTimeout);
+	ACE_OS::sleep(tvSleep);
+
 	OUR_DEBUG((LM_ERROR, "[CClientReConnectManager::Connect]nServerID =(%d) connect is OK.\n", nServerID));
 	return true;
 }
@@ -360,10 +367,10 @@ bool CClientReConnectManager::SendData(int nServerID, const char* pData, int nSi
 	{
 		//如果这个链接已经存在，则不创建新的链接
 		OUR_DEBUG((LM_ERROR, "[CProConnectManager::SendData]nServerID =(%d) is not exist.\n", nServerID));
-    if(true == blIsDelete)
-    {
-		  SAFE_DELETE_ARRAY(pData);
-    }
+		if(true == blIsDelete)
+		{
+			SAFE_DELETE_ARRAY(pData);
+		}
 		return false;
 	}
 
@@ -375,7 +382,7 @@ bool CClientReConnectManager::SendData(int nServerID, const char* pData, int nSi
 		OUR_DEBUG((LM_ERROR, "[CClientReConnectManager::SendData]nServerID =(%d) pmblk is NULL.\n", nServerID));
 		if(true == blIsDelete)
 		{
-			  SAFE_DELETE_ARRAY(pData);
+			SAFE_DELETE_ARRAY(pData);
 		}
 		return false;
 	}
@@ -480,7 +487,7 @@ int CClientReConnectManager::handle_timeout(const ACE_Time_Value &tv, const void
 			pClientInfo->Run(m_blReactorFinish);
 
 			//自动休眠0.1秒
-			ACE_Time_Value tvSleep(0, RE_CONNECT_SERVER_TIMEOUT);
+			ACE_Time_Value tvSleep(0, m_u4ConnectServerTimeout);
 			ACE_OS::sleep(tvSleep);
 		}
 	}
