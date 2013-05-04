@@ -78,13 +78,14 @@ private:
 	typedef map<int, CProactorUDPClient*>  mapProactorUDPClientInfo;           //管理所有已经存在的客户端链接信息（UDP）
 
 private:
-	 CProAsynchConnect           m_ProAsynchConnect;
-	 mapProactorClientInfo       m_mapClientInfo;               //TCP客户端链接
-	 mapProactorUDPClientInfo    m_mapProactorUDPClientInfo;    //UDP客户端链接
-	 ACE_Recursive_Thread_Mutex  m_ThreadWritrLock;             //线程锁
-	 ActiveTimer                 m_ActiveTimer;                 //时间管理器
-	 int                         m_nTaskID;                     //定时检测工具
-   bool                        m_blProactorFinish;            //Proactor是否已经注册 
+	CProAsynchConnect           m_ProAsynchConnect;
+	mapProactorClientInfo       m_mapClientInfo;               //TCP客户端链接
+	mapProactorUDPClientInfo    m_mapProactorUDPClientInfo;    //UDP客户端链接
+	ACE_Recursive_Thread_Mutex  m_ThreadWritrLock;             //线程锁
+	ActiveTimer                 m_ActiveTimer;                 //时间管理器
+	int                         m_nTaskID;                     //定时检测工具
+	bool                        m_blProactorFinish;            //Proactor是否已经注册 
+	uint32                      m_u4ConnectServerTimeout;      //连接间隔时间
 };
 
 typedef ACE_Singleton<CClientProConnectManager, ACE_Recursive_Thread_Mutex> App_ClientProConnectManager;

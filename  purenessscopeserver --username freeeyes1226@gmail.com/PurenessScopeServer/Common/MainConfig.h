@@ -23,12 +23,12 @@ struct _ServerInfo
 
 struct _ConsoleKey
 {
-  char m_szKey[MAX_BUFF_100];
+	char m_szKey[MAX_BUFF_100];
 
-  _ConsoleKey()
-  {
-    m_szKey[0] = '\0';
-  }
+	_ConsoleKey()
+	{
+		m_szKey[0] = '\0';
+	}
 };
 
 typedef vector<_ConsoleKey> vecConsoleKey;
@@ -56,8 +56,8 @@ public:
 	const char* GetError();
 
 	const char* GetServerName();
-  const char* GetServerVersion();
-  const char* GetPacketVersion();
+	const char* GetServerVersion();
+	const char* GetPacketVersion();
 	uint16 GetServerID();
 	uint16 GetServerPortCount();
 	_ServerInfo* GetServerPort(int nIndex);
@@ -88,7 +88,7 @@ public:
 	uint8  GetConsoleSupport();
 	int    GetConsolePort();
 	const char* GetConsoleIP();
-  vecConsoleKey* GetConsoleKey();
+	vecConsoleKey* GetConsoleKey();
 	uint16 GetRecvQueueTimeout();
 	uint16 GetSendQueueTimeout();
 	uint16 GetSendQueueCount();
@@ -106,16 +106,17 @@ public:
 	uint32 GetValidRecvSize();
 	uint16 GetForbiddenTime();
 	uint8 GetCommandAccount();
+	uint32 GetConnectServerTimeout();
 
 private:
-  CXmlOpeation m_MainConfig;
+	CXmlOpeation m_MainConfig;
 	char       m_szError[MAX_BUFF_500];
 
 	int        m_nServerID;                        //服务器ID
 	char       m_szServerName[MAX_BUFF_20];        //服务器名称
-  char       m_szServerVersion[MAX_BUFF_20];     //服务器版本
+	char       m_szServerVersion[MAX_BUFF_20];     //服务器版本
 
-  char       m_szPacketVersion[MAX_BUFF_20];     //数据解析包模块的版本号
+	char       m_szPacketVersion[MAX_BUFF_20];     //数据解析包模块的版本号
 
 	uint32     m_u4MsgHighMark;                    //消息的高水位阀值
 	uint32     m_u4MsgLowMark;                     //消息的低水位阀值
@@ -154,15 +155,16 @@ private:
 	int        m_nConsolePort;                     //Console服务器的端口
 
 	uint32     m_u4ReactorCount;                   //系统中遇到的反应器的个数
+	uint32     m_u4ConnectServerTimerout;          //连接远程服务器间隔时间         
 
 	typedef vector<_ServerInfo> vecServerInfo;
-  typedef vector<_ServerInfo> vecServerInfo;
+	typedef vector<_ServerInfo> vecServerInfo;
 	vecServerInfo m_vecServerInfo;
 	vecServerInfo m_vecUDPServerInfo;
 
 	typedef vector<_ConsoleClientIP> vecConsoleClientIP;
 	vecConsoleClientIP m_vecConsoleClientIP;                  //服务器后台允许的IP
-  vecConsoleKey      m_vecConsoleKey;                       //服务器允许的key值
+	vecConsoleKey      m_vecConsoleKey;                       //服务器允许的key值
 };
 
 typedef ACE_Singleton<CMainConfig, ACE_Null_Mutex> App_MainConfig;
