@@ -160,7 +160,7 @@ void CDlgClientConnectM::OnBnClickedButton2()
       struct tm tmDate;
       time_t newRawTime = ClientConnectInfo.m_nBeginTime;
       localtime_s(&tmDate, &newRawTime);
-      sprintf_s(szUpdateTime, 30, "%04d-%02d-%02d %02d:%02d:%02d", tmDate.tm_yday + 1900, 
+      sprintf_s(szUpdateTime, 30, "%04d-%02d-%02d %02d:%02d:%02d", tmDate.tm_year + 1900, 
         tmDate.tm_mon + 1,
         tmDate.tm_mday,
         tmDate.tm_hour,
