@@ -35,6 +35,7 @@ public:
 	void SetProConnectClient(CProConnectClient* pProConnectClient); //设置ProConnectClient指针
 	CProConnectClient* GetProConnectClient();                       //得到ProConnectClient指针
 	IClientMessage* GetClientMessage();                             //获得当前的消息处理指针
+	ACE_INET_Addr GetServerAddr();                                  //获得服务器的地址 
 
 private:
 	ACE_INET_Addr      m_AddrServer;               //远程服务器的地址

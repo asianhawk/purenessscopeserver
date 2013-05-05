@@ -157,7 +157,6 @@ void CDlgClientConnectM::OnBnClickedButton2()
       char szUpdateTime[30] = {'\0'};
       memcpy_s(&ClientConnectInfo.m_nBeginTime, sizeof(int), &szRecvBuff[nPos], sizeof(int));
       nPos += sizeof(int);
-      nPos += sizeof(int);
       struct tm tmDate;
       time_t newRawTime = ClientConnectInfo.m_nBeginTime;
       localtime_s(&tmDate, &newRawTime);
@@ -195,7 +194,7 @@ void CDlgClientConnectM::OnBnClickedButton2()
       int nDecLen = MultiByteToWideChar(CP_ACP, 0, ClientConnectInfo.m_szIP, -1, szzTCPIP, 50);
 
       nSrcLen = MultiByteToWideChar(CP_ACP, 0, szUpdateTime, -1, NULL, 0);
-      nDecLen = MultiByteToWideChar(CP_ACP, 0, szUpdateTime, -1, szzUpdateTime, 50);
+      nDecLen = MultiByteToWideChar(CP_ACP, 0, szUpdateTime, -1, szzUpdateTime, 30);
 
       strConnectID.Format(_T("%d"), ClientConnectInfo.m_nConnectID);
       strSendPacketCount.Format(_T("%d"), ClientConnectInfo.m_nSendCount);
