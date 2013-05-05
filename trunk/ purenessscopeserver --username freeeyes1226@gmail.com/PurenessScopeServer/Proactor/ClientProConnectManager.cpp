@@ -15,7 +15,7 @@ CProactorClientInfo::~CProactorClientInfo()
 
 bool CProactorClientInfo::Init(const char* pIP, int nPort, CProAsynchConnect* pProAsynchConnect, IClientMessage* pClientMessage)
 {
-	ACE_DEBUG((LM_ERROR, "[CProactorClientInfo::Init]SetAddrServer(%s:%d) error.\n", pIP, nPort));
+	ACE_DEBUG((LM_ERROR, "[CProactorClientInfo::Init]SetAddrServer(%s:%d) Begin.\n", pIP, nPort));
 	int nRet = m_AddrServer.set(nPort, pIP);
 	if(-1 == nRet)
 	{
@@ -151,6 +151,12 @@ IClientMessage* CProactorClientInfo::GetClientMessage()
 {
 	return m_pClientMessage;
 }
+
+ACE_INET_Addr CProactorClientInfo::GetServerAddr()
+{
+	return m_AddrServer;
+}
+
 
 CClientProConnectManager::CClientProConnectManager(void)
 {
@@ -567,10 +573,23 @@ void CClientProConnectManager::GetConnectInfo(vecClientConnectInfo& VecClientCon
 	for(b; b!= e; b++)
 	{
 		CProactorClientInfo* pClientInfo = (CProactorClientInfo* )b->second;
-		if(NULL != pClientInfo && NULL != pClientInfo->GetProConnectClient())
+		if(NULL != pClientInfo)
 		{
-			_ClientConnectInfo ClientConnectInfo = pClientInfo->GetProConnectClient()->GetClientConnectInfo();
-			VecClientConnectInfo.push_back(ClientConnectInfo);
+			if(NULL != pClientInfo->GetProConnectClient())
+			{
+				//链接已经建立
+				_ClientConnectInfo ClientConnectInfo = pClientInfo->GetProConnectClient()->GetClientConnectInfo();
+				ClientConnectInfo.m_addrRemote = pClientInfo->GetServerAddr();
+				VecClientConnectInfo.push_back(ClientConnectInfo);
+			}
+			else
+			{
+				//连接未建立
+				_ClientConnectInfo ClientConnectInfo;
+				ClientConnectInfo.m_addrRemote = pClientInfo->GetServerAddr();
+				ClientConnectInfo.m_blValid    = false;
+				VecClientConnectInfo.push_back(ClientConnectInfo);
+			}
 		}
 	}
 }

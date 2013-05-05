@@ -67,6 +67,7 @@ void CDlgServerConnect::OnBnClickedButton2()
     int nStrLen       = 0;
     int nPos          = 4;
     int nTCPCount     = 0;
+	int nState        = 0;
     memcpy_s(&nTCPCount, sizeof(int), &szRecvBuff[nPos], sizeof(int));
     nPos += sizeof(int);
 
@@ -74,6 +75,9 @@ void CDlgServerConnect::OnBnClickedButton2()
     {
       //开始还原数据结构
       _ClientConnectInfo ClientConnectInfo;
+
+	  memcpy_s(&nState, sizeof(int), &szRecvBuff[nPos], sizeof(char));
+	  nPos += sizeof(char);
 
       memcpy_s(&nStrLen, sizeof(char), &szRecvBuff[nPos], sizeof(char));
       nPos += sizeof(char);
@@ -97,8 +101,18 @@ void CDlgServerConnect::OnBnClickedButton2()
       memcpy_s(&ClientConnectInfo.m_nAllSendSize, sizeof(int), &szRecvBuff[nPos], sizeof(int));
       nPos += sizeof(int);
 
+	  char szUpdateTime[30] = {'\0'};
       memcpy_s(&ClientConnectInfo.m_nBeginTime, sizeof(int), &szRecvBuff[nPos], sizeof(int));
       nPos += sizeof(int);
+	  struct tm tmDate;
+	  time_t newRawTime = ClientConnectInfo.m_nBeginTime;
+	  localtime_s(&tmDate, &newRawTime);
+	  sprintf_s(szUpdateTime, 30, "%04d-%02d-%02d %02d:%02d:%02d", tmDate.tm_yday + 1900, 
+		  tmDate.tm_mon + 1,
+		  tmDate.tm_mday,
+		  tmDate.tm_hour,
+		  tmDate.tm_min,
+		  tmDate.tm_sec);
 
       memcpy_s(&ClientConnectInfo.m_nAliveTime, sizeof(int), &szRecvBuff[nPos], sizeof(int));
       nPos += sizeof(int);
@@ -106,14 +120,15 @@ void CDlgServerConnect::OnBnClickedButton2()
       memcpy_s(&ClientConnectInfo.m_nRecvQueueCount, sizeof(int), &szRecvBuff[nPos], sizeof(int));
       nPos += sizeof(int);
 
-      memcpy_s(&ClientConnectInfo.m_nRecvQueueTimeCost, sizeof(int), &szRecvBuff[nPos], sizeof(long long));
+      //memcpy_s(&ClientConnectInfo.m_nRecvQueueTimeCost, sizeof(long long), &szRecvBuff[nPos], sizeof(long long));
       nPos += sizeof(long long);
 
-      memcpy_s(&ClientConnectInfo.m_nSendQueueTimeCost, sizeof(int), &szRecvBuff[nPos], sizeof(long long));
+      //memcpy_s(&ClientConnectInfo.m_nSendQueueTimeCost, sizeof(long long), &szRecvBuff[nPos], sizeof(long long));
       nPos += sizeof(long long);
 
       //显示在界面上
-      wchar_t szzTCPIP[50] = {'\0'};
+      wchar_t szzTCPIP[50]      = {'\0'};
+	  wchar_t szzUpdateTime[30] = {'\0'};
       CString strConnectID;
       CString strSendPacketCount;
       CString strRecvPacketCount;
@@ -126,6 +141,9 @@ void CDlgServerConnect::OnBnClickedButton2()
       int nSrcLen = MultiByteToWideChar(CP_ACP, 0, ClientConnectInfo.m_szIP, -1, NULL, 0);
       int nDecLen = MultiByteToWideChar(CP_ACP, 0, ClientConnectInfo.m_szIP, -1, szzTCPIP, 50);
 
+	  nSrcLen = MultiByteToWideChar(CP_ACP, 0, szUpdateTime, -1, NULL, 0);
+	  nDecLen = MultiByteToWideChar(CP_ACP, 0, szUpdateTime, -1, szzUpdateTime, 30);
+
       strConnectID.Format(_T("%d"), ClientConnectInfo.m_nConnectID);
       strSendPacketCount.Format(_T("%d"), ClientConnectInfo.m_nSendCount);
       strRecvPacketCount.Format(_T("%d"), ClientConnectInfo.m_nRecvCount);
@@ -135,14 +153,22 @@ void CDlgServerConnect::OnBnClickedButton2()
       strAliveSecond.Format(_T("%d"), ClientConnectInfo.m_nAliveTime);
       strLogicCount.Format(_T("%d"), ClientConnectInfo.m_nRecvQueueCount);
 
-      m_lcServerConnect.InsertItem(i, szzTCPIP);
-      m_lcServerConnect.SetItemText(i, 1, strConnectID);
-      m_lcServerConnect.SetItemText(i, 2, strSendPacketCount);
-      m_lcServerConnect.SetItemText(i, 3, strRecvPacketCount);
-      m_lcServerConnect.SetItemText(i, 4, strSendSize);
-      m_lcServerConnect.SetItemText(i, 5, strRecvSize);
-      m_lcServerConnect.SetItemText(i, 6, strCreateTime);
-      m_lcServerConnect.SetItemText(i, 7, strAliveSecond);
+      m_lcServerConnect.InsertItem(i, strConnectID);
+      m_lcServerConnect.SetItemText(i, 1, szzTCPIP);
+	  if(nState == 0)
+	  {
+		  m_lcServerConnect.SetItemText(i, 2, _T("链接已存在"));
+	  }
+	  else
+	  {
+		  m_lcServerConnect.SetItemText(i, 2, _T("链接不存在"));
+	  }
+      m_lcServerConnect.SetItemText(i, 3, strSendPacketCount);
+      m_lcServerConnect.SetItemText(i, 4, strRecvPacketCount);
+      m_lcServerConnect.SetItemText(i, 5, strSendSize);
+      m_lcServerConnect.SetItemText(i, 6, strRecvSize);
+      m_lcServerConnect.SetItemText(i, 7, szzUpdateTime);
+      m_lcServerConnect.SetItemText(i, 8, strAliveSecond);
 
       objvecClientConnectInfo.push_back(ClientConnectInfo);
     }
@@ -160,12 +186,13 @@ BOOL CDlgServerConnect::OnInitDialog()
 
   m_lcServerConnect.InsertColumn(0, _T("ID"), LVCFMT_CENTER, 100);
   m_lcServerConnect.InsertColumn(1, _T("IP地址"), LVCFMT_CENTER, 100);
-  m_lcServerConnect.InsertColumn(2, _T("发送包数"), LVCFMT_CENTER, 80);
-  m_lcServerConnect.InsertColumn(3, _T("接收包数"), LVCFMT_CENTER, 80);
-  m_lcServerConnect.InsertColumn(4, _T("发送字节"), LVCFMT_CENTER, 80);
-  m_lcServerConnect.InsertColumn(5, _T("接收字节"), LVCFMT_CENTER, 80);
-  m_lcServerConnect.InsertColumn(6, _T("创建时间"), LVCFMT_CENTER, 80);
-  m_lcServerConnect.InsertColumn(7, _T("存活秒数"), LVCFMT_CENTER, 80);
+  m_lcServerConnect.InsertColumn(2, _T("连接状态"), LVCFMT_CENTER, 80);
+  m_lcServerConnect.InsertColumn(3, _T("发送包数"), LVCFMT_CENTER, 80);
+  m_lcServerConnect.InsertColumn(4, _T("接收包数"), LVCFMT_CENTER, 80);
+  m_lcServerConnect.InsertColumn(5, _T("发送字节"), LVCFMT_CENTER, 80);
+  m_lcServerConnect.InsertColumn(6, _T("接收字节"), LVCFMT_CENTER, 80);
+  m_lcServerConnect.InsertColumn(7, _T("创建时间"), LVCFMT_CENTER, 80);
+  m_lcServerConnect.InsertColumn(8, _T("存活秒数"), LVCFMT_CENTER, 80);
 
   return TRUE;
 }

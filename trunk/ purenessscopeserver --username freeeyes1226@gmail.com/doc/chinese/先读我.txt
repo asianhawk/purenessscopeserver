@@ -52,6 +52,12 @@ PurenessScopeServer由4部分组成，其中两部分来协助完成。他们分别是：
 编译教程请参考http://www.cs.wustl.edu/~schmidt/ACE-install.html
 在编译完ACE后，请在对应权限的.bash_profile文件中添加
 
+如果想用configure去编译。
+记得先yum -y install openssl-devel (RedHat Linux) 
+否则会提示找不到ssl的库
+或者 ../configure --disable-ssl
+如果你用不到SSL的话
+
 LD_LIBRARY_PATH=/usr/local/lib/:/home/freeeyes/PurenessScopeServer/PurenessScopeServer/Linux_Bin/
 export LD_LIBRARY_PATH
 

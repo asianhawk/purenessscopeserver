@@ -128,6 +128,11 @@ IClientMessage* CReactorClientInfo::GetClientMessage()
 	return m_pClientMessage;
 }
 
+ACE_INET_Addr CReactorClientInfo::GetServerAddr()
+{
+	return m_AddrServer;
+}
+
 CClientReConnectManager::CClientReConnectManager(void)
 {
 	m_nTaskID         = -1;
@@ -502,10 +507,21 @@ void CClientReConnectManager::GetConnectInfo(vecClientConnectInfo& VecClientConn
 	for(mapReactorConnectInfo::iterator b = m_mapConnectInfo.begin(); b!= m_mapConnectInfo.end(); b++)
 	{
 		CReactorClientInfo* pClientInfo = (CReactorClientInfo* )b->second;
-		if(NULL != pClientInfo && NULL != pClientInfo->GetConnectClient())
+		if(NULL != pClientInfo)
 		{
-			_ClientConnectInfo ClientConnectInfo = pClientInfo->GetConnectClient()->GetClientConnectInfo();
-			VecClientConnectInfo.push_back(ClientConnectInfo);
+			if(NULL != pClientInfo->GetConnectClient())
+			{
+				_ClientConnectInfo ClientConnectInfo = pClientInfo->GetConnectClient()->GetClientConnectInfo();
+				ClientConnectInfo.m_addrRemote = pClientInfo->GetServerAddr();
+				VecClientConnectInfo.push_back(ClientConnectInfo);
+			}
+			else
+			{
+				_ClientConnectInfo ClientConnectInfo;
+				ClientConnectInfo.m_blValid    = false;
+				ClientConnectInfo.m_addrRemote = pClientInfo->GetServerAddr();
+				VecClientConnectInfo.push_back(ClientConnectInfo);
+			}
 		}
 	}
 }

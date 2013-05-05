@@ -783,26 +783,34 @@ bool CConsoleMessage::DoMessage_ServerConnectTCP(_CommandInfo& CommandInfo, IBuf
 		for(int i = 0; i < (int)VecClientConnectInfo.size(); i++)
 		{
 			_ClientConnectInfo ClientConnectInfo = VecClientConnectInfo[i];
-			if(true == ClientConnectInfo.m_blValid)
+
+			//remote.get_host_addr(), remote.get_port_number()
+			sprintf_safe(szIP, MAX_BUFF_100, "%s:%d", ClientConnectInfo.m_addrRemote.get_host_addr(), ClientConnectInfo.m_addrRemote.get_port_number());
+
+			VCHARS_STR strSName;
+			strSName.text  = szIP;
+			strSName.u1Len = (uint8)ACE_OS::strlen(szIP);
+
+			if(ClientConnectInfo.m_blValid == true)
 			{
-				sprintf_safe(szIP, MAX_BUFF_100, "0.0.0.0:0");
-
-				VCHARS_STR strSName;
-				strSName.text  = szIP;
-				strSName.u1Len = (uint8)ACE_OS::strlen(szIP);
-
-				(*pBuffPacket) << strSName;
-				(*pBuffPacket) << ClientConnectInfo.m_u4ConnectID;
-				(*pBuffPacket) << ClientConnectInfo.m_u4RecvCount;
-				(*pBuffPacket) << ClientConnectInfo.m_u4SendCount;
-				(*pBuffPacket) << ClientConnectInfo.m_u4AllRecvSize;
-				(*pBuffPacket) << ClientConnectInfo.m_u4AllSendSize;
-				(*pBuffPacket) << ClientConnectInfo.m_u4BeginTime;
-				(*pBuffPacket) << ClientConnectInfo.m_u4AliveTime;
-				(*pBuffPacket) << ClientConnectInfo.m_u4RecvQueueCount;
-				(*pBuffPacket) << ClientConnectInfo.m_u8RecvQueueTimeCost;
-				(*pBuffPacket) << ClientConnectInfo.m_u8SendQueueTimeCost;
+				(*pBuffPacket) << (uint8)0;   //链接已存在
 			}
+			else
+			{
+				(*pBuffPacket) << (uint8)1;   //连接不存在
+			}
+
+			(*pBuffPacket) << strSName;
+			(*pBuffPacket) << ClientConnectInfo.m_u4ConnectID;
+			(*pBuffPacket) << ClientConnectInfo.m_u4RecvCount;
+			(*pBuffPacket) << ClientConnectInfo.m_u4SendCount;
+			(*pBuffPacket) << ClientConnectInfo.m_u4AllRecvSize;
+			(*pBuffPacket) << ClientConnectInfo.m_u4AllSendSize;
+			(*pBuffPacket) << ClientConnectInfo.m_u4BeginTime;
+			(*pBuffPacket) << ClientConnectInfo.m_u4AliveTime;
+			(*pBuffPacket) << ClientConnectInfo.m_u4RecvQueueCount;
+			(*pBuffPacket) << ClientConnectInfo.m_u8RecvQueueTimeCost;
+			(*pBuffPacket) << ClientConnectInfo.m_u8SendQueueTimeCost;
 		}
 #else
 		vecClientConnectInfo VecClientConnectInfo;
@@ -811,26 +819,34 @@ bool CConsoleMessage::DoMessage_ServerConnectTCP(_CommandInfo& CommandInfo, IBuf
 		for(int i = 0; i < (int)VecClientConnectInfo.size(); i++)
 		{
 			_ClientConnectInfo ClientConnectInfo = VecClientConnectInfo[i];
-			if(true == ClientConnectInfo.m_blValid)
+
+			//sprintf_safe(szIP, MAX_BUFF_100, "0.0.0.0:0");
+			sprintf_safe(szIP, MAX_BUFF_100, "%s:%d", ClientConnectInfo.m_addrRemote.get_host_addr(), ClientConnectInfo.m_addrRemote.get_port_number());
+
+			VCHARS_STR strSName;
+			strSName.text  = szIP;
+			strSName.u1Len = (uint8)ACE_OS::strlen(szIP);
+
+			if(ClientConnectInfo.m_blValid == true)
 			{
-				sprintf_safe(szIP, MAX_BUFF_100, "0.0.0.0:0");
-
-				VCHARS_STR strSName;
-				strSName.text  = szIP;
-				strSName.u1Len = (uint8)ACE_OS::strlen(szIP);
-
-				(*pBuffPacket) << strSName;
-				(*pBuffPacket) << ClientConnectInfo.m_u4ConnectID;
-				(*pBuffPacket) << ClientConnectInfo.m_u4RecvCount;
-				(*pBuffPacket) << ClientConnectInfo.m_u4SendCount;
-				(*pBuffPacket) << ClientConnectInfo.m_u4AllRecvSize;
-				(*pBuffPacket) << ClientConnectInfo.m_u4AllSendSize;
-				(*pBuffPacket) << ClientConnectInfo.m_u4BeginTime;
-				(*pBuffPacket) << ClientConnectInfo.m_u4AliveTime;
-				(*pBuffPacket) << ClientConnectInfo.m_u4RecvQueueCount;
-				(*pBuffPacket) << ClientConnectInfo.m_u8RecvQueueTimeCost;
-				(*pBuffPacket) << ClientConnectInfo.m_u8SendQueueTimeCost;
+				(*pBuffPacket) << (uint8)0;   //链接已存在
 			}
+			else
+			{
+				(*pBuffPacket) << (uint8)1;   //连接不存在
+			}
+
+			(*pBuffPacket) << strSName;
+			(*pBuffPacket) << ClientConnectInfo.m_u4ConnectID;
+			(*pBuffPacket) << ClientConnectInfo.m_u4RecvCount;
+			(*pBuffPacket) << ClientConnectInfo.m_u4SendCount;
+			(*pBuffPacket) << ClientConnectInfo.m_u4AllRecvSize;
+			(*pBuffPacket) << ClientConnectInfo.m_u4AllSendSize;
+			(*pBuffPacket) << ClientConnectInfo.m_u4BeginTime;
+			(*pBuffPacket) << ClientConnectInfo.m_u4AliveTime;
+			(*pBuffPacket) << ClientConnectInfo.m_u4RecvQueueCount;
+			(*pBuffPacket) << ClientConnectInfo.m_u8RecvQueueTimeCost;
+			(*pBuffPacket) << ClientConnectInfo.m_u8SendQueueTimeCost;
 		}
 #endif
 	}
