@@ -662,7 +662,7 @@ bool CConnectHandler::SendMessage(IBuffPacket* pBuffPacket, bool blState, uint8 
     uint32 u4SendPacketSize = 0;
     if(u1SendType == SENDMESSAGE_NOMAL)
     {
-      u4SendPacketSize = PacketParse.MakePacketLength(pBuffPacket->GetPacketLen());
+      u4SendPacketSize = PacketParse.MakePacketLength(u4PacketSize);
     }
     else
     {
@@ -679,7 +679,7 @@ bool CConnectHandler::SendMessage(IBuffPacket* pBuffPacket, bool blState, uint8 
     else
     {
       //添加进缓冲区
-      ACE_Message_Block* pMbBufferData = NULL;
+      //ACE_Message_Block* pMbBufferData = NULL;
 
       //SENDMESSAGE_NOMAL是需要包头的时候，否则，不组包直接发送
       if(u1SendType == SENDMESSAGE_NOMAL)

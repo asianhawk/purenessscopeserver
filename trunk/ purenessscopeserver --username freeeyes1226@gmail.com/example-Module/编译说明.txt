@@ -8,4 +8,5 @@
 ..\PurenessScopeServer\Windows_Bin
 
 如果是linux下，程序会自动生成在
+请直接进行make
 ..\PurenessScopeServer\Linux_Bin
