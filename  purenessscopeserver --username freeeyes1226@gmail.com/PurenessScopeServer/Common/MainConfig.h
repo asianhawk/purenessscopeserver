@@ -158,7 +158,6 @@ private:
 	uint32     m_u4ConnectServerTimerout;          //连接远程服务器间隔时间         
 
 	typedef vector<_ServerInfo> vecServerInfo;
-	typedef vector<_ServerInfo> vecServerInfo;
 	vecServerInfo m_vecServerInfo;
 	vecServerInfo m_vecUDPServerInfo;
 

@@ -483,7 +483,7 @@ int CClientReConnectManager::handle_timeout(const ACE_Time_Value &tv, const void
 
 	for(mapReactorConnectInfo::iterator b = m_mapConnectInfo.begin(); b!= m_mapConnectInfo.end(); b++)
 	{
-		int nServerID = (int)b->first;
+		//int nServerID = (int)b->first;
 
 		CReactorClientInfo* pClientInfo = (CReactorClientInfo* )b->second;
 		if(NULL == pClientInfo->GetConnectClient())

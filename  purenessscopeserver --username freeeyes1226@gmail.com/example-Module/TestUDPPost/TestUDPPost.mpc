@@ -1,6 +1,6 @@
-project(TcpTestPost):acelib{
-  sharedname=TcpTestPost
-  dynamicflags += TEST_TCPPOST_BUILD_DLL
+project(UDPTestPost):acelib{
+  sharedname=UDPTestPost
+  dynamicflags += TEST_UDPPOST_BUILD_DLL
   libout = ./
   specific (prop:microsoft){
 	dllout = ../../PurenessScopeServer/Windows_Bin
@@ -8,5 +8,5 @@ project(TcpTestPost):acelib{
 	dllout = ../../PurenessScopeServer/Linux_Bin
   }
   includes += .
-  includes += ../include
+  includes += ../Include
 }
