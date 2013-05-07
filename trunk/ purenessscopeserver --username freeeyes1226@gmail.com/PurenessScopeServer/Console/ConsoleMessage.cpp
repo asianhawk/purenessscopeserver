@@ -2,7 +2,7 @@
 
 CConsoleMessage::CConsoleMessage()
 {
-  m_pvecConsoleKey = NULL;
+	m_pvecConsoleKey = NULL;
 }
 
 CConsoleMessage::~CConsoleMessage()
@@ -46,9 +46,9 @@ bool CConsoleMessage::GetCommandInfo(const char* pCommand, _CommandInfo& Command
 {
 	int i = 0;
 	int nLen = (int)ACE_OS::strlen(pCommand);
-  char szKey[MAX_BUFF_100] = {'\0'};
+	char szKey[MAX_BUFF_100] = {'\0'};
 
-  AppLogManager::instance()->WriteLog(LOG_SYSTEM_CONSOLEDATA, "<Command>%s.", pCommand);
+	AppLogManager::instance()->WriteLog(LOG_SYSTEM_CONSOLEDATA, "<Command>%s.", pCommand);
 
 	if(nLen > MAX_BUFF_100*2 + 1)
 	{
@@ -56,38 +56,38 @@ bool CConsoleMessage::GetCommandInfo(const char* pCommand, _CommandInfo& Command
 		return false;
 	}
 
-  //获得key值
-  int nKeyEnd = 0;
-  bool blFind = false;
-  for(nKeyEnd = 0; nKeyEnd < nLen; nKeyEnd++)
-  {
-    if(nKeyEnd >= MAX_BUFF_100 - 1)
-    {
-      OUR_DEBUG((LM_ERROR, "[CConsoleMessage::GetCommandInfo]pCommand key is too long.\n"));
-      return false;
-    }
+	//获得key值
+	int nKeyEnd = 0;
+	bool blFind = false;
+	for(nKeyEnd = 0; nKeyEnd < nLen; nKeyEnd++)
+	{
+		if(nKeyEnd >= MAX_BUFF_100 - 1)
+		{
+			OUR_DEBUG((LM_ERROR, "[CConsoleMessage::GetCommandInfo]pCommand key is too long.\n"));
+			return false;
+		}
 
-    if(pCommand[nKeyEnd] == ' ')
-    {
-      blFind = true;
-      break;
-    }
-  }
+		if(pCommand[nKeyEnd] == ' ')
+		{
+			blFind = true;
+			break;
+		}
+	}
 
-  if(blFind == false)
-  {
-    OUR_DEBUG((LM_ERROR, "[CConsoleMessage::GetCommandInfo]No find command.\n"));
-    return false;
-  }
+	if(blFind == false)
+	{
+		OUR_DEBUG((LM_ERROR, "[CConsoleMessage::GetCommandInfo]No find command.\n"));
+		return false;
+	}
 
 	ACE_OS::memcpy(&szKey, pCommand, nKeyEnd);
-  szKey[nKeyEnd] = '\0';
+	szKey[nKeyEnd] = '\0';
 
-  if(false == CheckConsoleKey(szKey))
-  {
-    OUR_DEBUG((LM_ERROR, "[CConsoleMessage::GetCommandInfo]szKey is invalid.\n"));
-    return false;
-  }
+	if(false == CheckConsoleKey(szKey))
+	{
+		OUR_DEBUG((LM_ERROR, "[CConsoleMessage::GetCommandInfo]szKey is invalid.\n"));
+		return false;
+	}
 
 
 	//获得命令头
@@ -238,11 +238,16 @@ int CConsoleMessage::ParseCommand(const char* pCommand, IBuffPacket* pBuffPacket
 		DoMessage_ShowAllCommandInfo(CommandInfo, pBuffPacket);
 		return CONSOLE_MESSAGE_SUCCESS;
 	}
-  else if(ACE_OS::strcmp(CommandInfo.m_szCommandTitle, CONSOLEMESSAGE_SERVERINFO) == 0)
-  {
-    DoMessage_ShowServerInfo(CommandInfo, pBuffPacket);
-    return CONSOLE_MESSAGE_SUCCESS;
-  }
+	else if(ACE_OS::strcmp(CommandInfo.m_szCommandTitle, CONSOLEMESSAGE_SERVERINFO) == 0)
+	{
+		DoMessage_ShowServerInfo(CommandInfo, pBuffPacket);
+		return CONSOLE_MESSAGE_SUCCESS;
+	}
+	else if(ACE_OS::strcmp(CommandInfo.m_szCommandTitle, CONSOLEMESSAGE_SERVERRECONNECT) == 0)
+	{
+		DoMessage_ReConnectServer(CommandInfo, pBuffPacket);
+		return CONSOLE_MESSAGE_SUCCESS;
+	}
 	else
 	{
 		return CONSOLE_MESSAGE_FAIL;
@@ -253,7 +258,7 @@ bool CConsoleMessage::GetFileInfo(const char* pFile, _FileInfo& FileInfo)
 {
 	int i = 0;
 	int nLen = (int)ACE_OS::strlen(pFile);
-	
+
 	bool blFind = false;
 	for(i = nLen - 1; i >= 0; i--)
 	{
@@ -316,6 +321,25 @@ bool CConsoleMessage::GetForbiddenIP(const char* pCommand, _ForbiddenIP& Forbidd
 	ACE_OS::memcpy(szTempData, pPosBegin + 3, nLen);
 	szTempData[nLen] = '\0';
 	ForbiddenIP.m_u4Second = (uint32)ACE_OS::atoi(szTempData);
+
+	return true;
+}
+
+bool CConsoleMessage::GetConnectServerID(const char* pCommand, int& nServerID)
+{
+	char szTempData[MAX_BUFF_100] = {'\0'};
+
+	int nCommandLen = ACE_OS::strlen(pCommand);
+	//获得IP地址
+	char* pPosBegin = (char* )ACE_OS::strstr(pCommand, "-s ");
+	int nLen = nCommandLen - (pPosBegin - pCommand) - 3;
+	if(nLen >= MAX_BUFF_100 || nLen < 0)
+	{
+		return false;
+	}
+	ACE_OS::memcpy(szTempData, pPosBegin + 3, nLen);
+
+	nServerID = ACE_OS::atoi(szTempData);
 
 	return true;
 }
@@ -784,7 +808,6 @@ bool CConsoleMessage::DoMessage_ServerConnectTCP(_CommandInfo& CommandInfo, IBuf
 		{
 			_ClientConnectInfo ClientConnectInfo = VecClientConnectInfo[i];
 
-			//remote.get_host_addr(), remote.get_port_number()
 			sprintf_safe(szIP, MAX_BUFF_100, "%s:%d", ClientConnectInfo.m_addrRemote.get_host_addr(), ClientConnectInfo.m_addrRemote.get_port_number());
 
 			VCHARS_STR strSName;
@@ -820,7 +843,6 @@ bool CConsoleMessage::DoMessage_ServerConnectTCP(_CommandInfo& CommandInfo, IBuf
 		{
 			_ClientConnectInfo ClientConnectInfo = VecClientConnectInfo[i];
 
-			//sprintf_safe(szIP, MAX_BUFF_100, "0.0.0.0:0");
 			sprintf_safe(szIP, MAX_BUFF_100, "%s:%d", ClientConnectInfo.m_addrRemote.get_host_addr(), ClientConnectInfo.m_addrRemote.get_port_number());
 
 			VCHARS_STR strSName;
@@ -1009,68 +1031,156 @@ bool CConsoleMessage::DoMessage_ShowAllCommandInfo(_CommandInfo& CommandInfo, IB
 			}
 		}
 	}
-	
+
 	return true;	
 }
 
 bool CConsoleMessage::DoMessage_ShowServerInfo(_CommandInfo& CommandInfo, IBuffPacket* pBuffPacket)
 {
-  if(ACE_OS::strcmp(CommandInfo.m_szCommandExp, "-a") == 0)
-  {
-    VCHARS_STR strSTemp;
+	if(ACE_OS::strcmp(CommandInfo.m_szCommandExp, "-a") == 0)
+	{
+		VCHARS_STR strSTemp;
 
-    //返回服务器ID
-    uint16 u2SerevrID = (uint32)App_MainConfig::instance()->GetServerID();
-    (*pBuffPacket) << u2SerevrID;
+		//返回服务器ID
+		uint16 u2SerevrID = (uint32)App_MainConfig::instance()->GetServerID();
+		(*pBuffPacket) << u2SerevrID;
 
-    //返回服务器名称
-    strSTemp.text  = App_MainConfig::instance()->GetServerName();
-    strSTemp.u1Len = (uint8)ACE_OS::strlen(App_MainConfig::instance()->GetServerName());
-    (*pBuffPacket) << strSTemp;
+		//返回服务器名称
+		strSTemp.text  = App_MainConfig::instance()->GetServerName();
+		strSTemp.u1Len = (uint8)ACE_OS::strlen(App_MainConfig::instance()->GetServerName());
+		(*pBuffPacket) << strSTemp;
 
-    //返回服务器版本
-    strSTemp.text  = App_MainConfig::instance()->GetServerVersion();
-    strSTemp.u1Len = (uint8)ACE_OS::strlen(App_MainConfig::instance()->GetServerName());
-    (*pBuffPacket) << strSTemp;
+		//返回服务器版本
+		strSTemp.text  = App_MainConfig::instance()->GetServerVersion();
+		strSTemp.u1Len = (uint8)ACE_OS::strlen(App_MainConfig::instance()->GetServerName());
+		(*pBuffPacket) << strSTemp;
 
-    //返回加载模块个数
-    (*pBuffPacket) << (uint16)App_ModuleLoader::instance()->GetCurrModuleCount();
+		//返回加载模块个数
+		(*pBuffPacket) << (uint16)App_ModuleLoader::instance()->GetCurrModuleCount();
 
-    //返回工作线程个数
-    (*pBuffPacket) << (uint16)App_MessageService::instance()->GetThreadInfo()->GetThreadCount();
+		//返回工作线程个数
+		(*pBuffPacket) << (uint16)App_MessageService::instance()->GetThreadInfo()->GetThreadCount();
 
-    //返回当前协议包的版本号
-    strSTemp.text  = App_MainConfig::instance()->GetServerVersion();
-    strSTemp.u1Len = (uint8)ACE_OS::strlen(App_MainConfig::instance()->GetPacketVersion());
-    (*pBuffPacket) << strSTemp;
+		//返回当前协议包的版本号
+		strSTemp.text  = App_MainConfig::instance()->GetServerVersion();
+		strSTemp.u1Len = (uint8)ACE_OS::strlen(App_MainConfig::instance()->GetPacketVersion());
+		(*pBuffPacket) << strSTemp;
 
-  }
+	}
 
-  return true;
+	return true;
+}
+
+bool CConsoleMessage::DoMessage_ReConnectServer( _CommandInfo& CommandInfo, IBuffPacket* pBuffPacket )
+{
+	int nSerevrID = 0;
+	if(GetConnectServerID(CommandInfo.m_szCommandExp, nSerevrID) == true)
+	{
+		char szIP[MAX_BUFF_100] = {'\0'};
+#ifdef WIN32  //如果是windows
+		App_ClientProConnectManager::instance()->ReConnect(nSerevrID);
+
+		//获得当前连接状态
+		vecClientConnectInfo VecClientConnectInfo;
+		App_ClientProConnectManager::instance()->GetConnectInfo(VecClientConnectInfo);
+		(*pBuffPacket) << (uint32)VecClientConnectInfo.size();
+		for(int i = 0; i < (int)VecClientConnectInfo.size(); i++)
+		{
+			_ClientConnectInfo ClientConnectInfo = VecClientConnectInfo[i];
+
+			sprintf_safe(szIP, MAX_BUFF_100, "%s:%d", ClientConnectInfo.m_addrRemote.get_host_addr(), ClientConnectInfo.m_addrRemote.get_port_number());
+
+			VCHARS_STR strSName;
+			strSName.text  = szIP;
+			strSName.u1Len = (uint8)ACE_OS::strlen(szIP);
+
+			if(ClientConnectInfo.m_blValid == true)
+			{
+				(*pBuffPacket) << (uint8)0;   //链接已存在
+			}
+			else
+			{
+				(*pBuffPacket) << (uint8)1;   //连接不存在
+			}
+
+			(*pBuffPacket) << strSName;
+			(*pBuffPacket) << ClientConnectInfo.m_u4ConnectID;
+			(*pBuffPacket) << ClientConnectInfo.m_u4RecvCount;
+			(*pBuffPacket) << ClientConnectInfo.m_u4SendCount;
+			(*pBuffPacket) << ClientConnectInfo.m_u4AllRecvSize;
+			(*pBuffPacket) << ClientConnectInfo.m_u4AllSendSize;
+			(*pBuffPacket) << ClientConnectInfo.m_u4BeginTime;
+			(*pBuffPacket) << ClientConnectInfo.m_u4AliveTime;
+			(*pBuffPacket) << ClientConnectInfo.m_u4RecvQueueCount;
+			(*pBuffPacket) << ClientConnectInfo.m_u8RecvQueueTimeCost;
+			(*pBuffPacket) << ClientConnectInfo.m_u8SendQueueTimeCost;
+		}
+#else   //如果是linux
+		App_ClientReConnectManager::instance()->ReConnect(nSerevrID);
+
+		//获得当前连接状态
+		vecClientConnectInfo VecClientConnectInfo;
+		App_ClientReConnectManager::instance()->GetConnectInfo(VecClientConnectInfo);
+		(*pBuffPacket) << (uint8)VecClientConnectInfo.size();
+		for(int i = 0; i < (int)VecClientConnectInfo.size(); i++)
+		{
+			_ClientConnectInfo ClientConnectInfo = VecClientConnectInfo[i];
+
+			sprintf_safe(szIP, MAX_BUFF_100, "%s:%d", ClientConnectInfo.m_addrRemote.get_host_addr(), ClientConnectInfo.m_addrRemote.get_port_number());
+
+			VCHARS_STR strSName;
+			strSName.text  = szIP;
+			strSName.u1Len = (uint8)ACE_OS::strlen(szIP);
+
+			if(ClientConnectInfo.m_blValid == true)
+			{
+				(*pBuffPacket) << (uint8)0;   //链接已存在
+			}
+			else
+			{
+				(*pBuffPacket) << (uint8)1;   //连接不存在
+			}
+
+			(*pBuffPacket) << strSName;
+			(*pBuffPacket) << ClientConnectInfo.m_u4ConnectID;
+			(*pBuffPacket) << ClientConnectInfo.m_u4RecvCount;
+			(*pBuffPacket) << ClientConnectInfo.m_u4SendCount;
+			(*pBuffPacket) << ClientConnectInfo.m_u4AllRecvSize;
+			(*pBuffPacket) << ClientConnectInfo.m_u4AllSendSize;
+			(*pBuffPacket) << ClientConnectInfo.m_u4BeginTime;
+			(*pBuffPacket) << ClientConnectInfo.m_u4AliveTime;
+			(*pBuffPacket) << ClientConnectInfo.m_u4RecvQueueCount;
+			(*pBuffPacket) << ClientConnectInfo.m_u8RecvQueueTimeCost;
+			(*pBuffPacket) << ClientConnectInfo.m_u8SendQueueTimeCost;
+		}
+#endif
+	}
+
+	return true;
 }
 
 bool CConsoleMessage::SetConsoleKey(vecConsoleKey* pvecConsoleKey)
 {
-  m_pvecConsoleKey = pvecConsoleKey;
-  return true;
+	m_pvecConsoleKey = pvecConsoleKey;
+	return true;
 }
 
 bool CConsoleMessage::CheckConsoleKey( const char* pKey )
 {
-  if(NULL == m_pvecConsoleKey)
-  {
-    return false;
-  }
+	if(NULL == m_pvecConsoleKey)
+	{
+		return false;
+	}
 
-  for(int i = 0; i < (int)m_pvecConsoleKey->size(); i++)
-  {
-    if(ACE_OS::strcmp((*m_pvecConsoleKey)[i].m_szKey, pKey) == 0)
-    {
-      //key值对上了
-      return true;
-    }
-  }
+	for(int i = 0; i < (int)m_pvecConsoleKey->size(); i++)
+	{
+		if(ACE_OS::strcmp((*m_pvecConsoleKey)[i].m_szKey, pKey) == 0)
+		{
+			//key值对上了
+			return true;
+		}
+	}
 
-  return false;
+	return false;
 }
 

@@ -107,6 +107,7 @@ public:
 	uint16 GetForbiddenTime();
 	uint8 GetCommandAccount();
 	uint32 GetConnectServerTimeout();
+	uint16 GetConnectServerCheck();
 
 private:
 	CXmlOpeation m_MainConfig;
@@ -155,7 +156,8 @@ private:
 	int        m_nConsolePort;                     //Console服务器的端口
 
 	uint32     m_u4ReactorCount;                   //系统中遇到的反应器的个数
-	uint32     m_u4ConnectServerTimerout;          //连接远程服务器间隔时间         
+	uint32     m_u4ConnectServerTimerout;          //连接远程服务器间隔时间  
+	uint16     m_u2ConnectServerCheck;             //服务器间连接单位检查时间
 
 	typedef vector<_ServerInfo> vecServerInfo;
 	vecServerInfo m_vecServerInfo;

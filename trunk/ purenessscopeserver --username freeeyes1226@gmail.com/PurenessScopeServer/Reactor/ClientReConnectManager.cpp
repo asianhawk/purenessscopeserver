@@ -591,3 +591,36 @@ bool CClientReConnectManager::GetConnectState( int nServerID )
 		return true;
 	}
 }
+
+bool CClientReConnectManager::ReConnect( int nServerID )
+{
+	ACE_Guard<ACE_Recursive_Thread_Mutex> guard(m_ThreadWritrLock);
+	mapReactorConnectInfo::iterator f = m_mapConnectInfo.find(nServerID);
+	if(f == m_mapConnectInfo.end())
+	{
+		//如果这个链接已经存在，则不创建新的链接
+		OUR_DEBUG((LM_ERROR, "[CClientReConnectManager::Close]nServerID =(%d) is exist.\n", nServerID));
+		return false;
+	}
+
+	CReactorClientInfo* pClientInfo = (CReactorClientInfo* )f->second;
+	if(NULL == pClientInfo)
+	{
+		OUR_DEBUG((LM_ERROR, "[CClientReConnectManager::Close]nServerID =(%d) pClientInfo is NULL.\n", nServerID));
+		return false;
+	}
+
+	if(NULL == pClientInfo->GetConnectClient())
+	{
+		//如果连接不存在，则重新建立连接
+		pClientInfo->Run(m_blReactorFinish);
+
+		//自动休眠0.1秒
+		ACE_Time_Value tvSleep(0, m_u4ConnectServerTimeout);
+		ACE_OS::sleep(tvSleep);
+	}
+	else
+	{
+		return true;
+	}
+}

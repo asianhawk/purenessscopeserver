@@ -56,6 +56,7 @@ public:
 	bool Init(ACE_Proactor* pProactor);                                                                //初始化链接器
 	bool Connect(int nServerID, const char* pIP, int nPort, IClientMessage* pClientMessage);           //链接指定的服务器（TCP）
 	bool ConnectUDP(int nServerID, const char* pIP, int nPort, IClientUDPMessage* pClientUDPMessage);  //建立一个指向UDP的链接（UDP）
+	bool ReConnect(int nServerID);                                                                     //重新连接一个指定的服务器(TCP)  
 	bool CloseByClient(int nServerID);                                                                 //远程被动关闭(TCP)
 	bool Close(int nServerID);                                                                         //关闭连接（TCP）
 	bool CloseUDP(int nServerID);                                                                      //关闭链接（UDP）
