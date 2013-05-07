@@ -295,7 +295,7 @@ bool CProServerManager::Start()
 
 	//启动中间服务器链接管理器
 	App_ClientProConnectManager::instance()->Init(App_ProactorManager::instance()->GetAce_Proactor(REACTOR_POSTDEFINE));
-	App_ClientProConnectManager::instance()->StartConnectTask(CONNECT_LIMIT_RETRY);
+	App_ClientProConnectManager::instance()->StartConnectTask(App_MainConfig::instance()->GetConnectServerCheck());
 
 	//初始化模块加载，因为这里可能包含了中间服务器连接加载
 	blState = App_ModuleLoader::instance()->LoadModule(App_MainConfig::instance()->GetModulePath(), App_MainConfig::instance()->GetModuleString());

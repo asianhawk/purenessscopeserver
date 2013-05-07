@@ -276,7 +276,7 @@ bool CServerManager::Start()
 
 	//启动中间服务器链接管理器
 	App_ClientReConnectManager::instance()->Init(App_ReactorManager::instance()->GetAce_Reactor(REACTOR_POSTDEFINE));
-	App_ClientReConnectManager::instance()->StartConnectTask(CONNECT_LIMIT_RETRY);
+	App_ClientReConnectManager::instance()->StartConnectTask(App_MainConfig::instance()->GetConnectServerCheck());
 
 	//初始化模块加载，因为这里可能包含了中间服务器连接加载
 	bool blState = App_ModuleLoader::instance()->LoadModule(App_MainConfig::instance()->GetModulePath(), App_MainConfig::instance()->GetModuleString());

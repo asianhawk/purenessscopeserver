@@ -25,6 +25,7 @@ CMainConfig::CMainConfig(void)
 	m_u1ConsoleSupport        = 0;
 	m_nConsolePort            = 0;
 	m_u4ConnectServerTimerout = 0;
+	m_u2ConnectServerCheck    = CONNECT_LIMIT_RETRY;
 
 	m_u2ValidConnectCount   = MAX_CONNECT_COUNT;
 	m_u1Valid               = 1;
@@ -348,6 +349,11 @@ bool CMainConfig::Init(const char* szConfigPath)
 	{
 		m_u4ConnectServerTimerout = (uint32)ACE_OS::atoi(pData);
 	}
+	pData = m_MainConfig.GetData("ConnectServer", "TimeCheck");
+	if(pData != NULL)
+	{
+		m_u2ConnectServerCheck = (uint32)ACE_OS::atoi(pData);
+	}
 	return true;
 }
 
@@ -403,6 +409,7 @@ void CMainConfig::Display()
 	OUR_DEBUG((LM_INFO, "[CMainConfig::Display]m_u4ValidRecvSize = %d.\n", m_u4ValidRecvSize));
 	OUR_DEBUG((LM_INFO, "[CMainConfig::Display]m_u2ForbiddenTime = %d.\n", m_u2ForbiddenTime));
 	OUR_DEBUG((LM_INFO, "[CMainConfig::Display]m_u4ConnectServerTimerout = %d.\n", m_u4ConnectServerTimerout));
+	OUR_DEBUG((LM_INFO, "[CMainConfig::Display]m_u2ConnectServerCheck = %d.\n", m_u2ConnectServerCheck));
 }
 
 const char* CMainConfig::GetServerName()
@@ -644,3 +651,7 @@ uint32 CMainConfig::GetConnectServerTimeout()
 	return m_u4ConnectServerTimerout;
 }
 
+uint16 CMainConfig::GetConnectServerCheck()
+{
+	return m_u2ConnectServerCheck;
+}

@@ -4,6 +4,7 @@
 #include "TcpClientConnect.h"
 
 #include <vector>
+#include "afxwin.h"
 
 using namespace std;
 
@@ -35,4 +36,6 @@ public:
   CListCtrl m_lcServerConnect;
   afx_msg void OnBnClickedButton2();
   virtual BOOL OnInitDialog();
+  CEdit m_txtServerID;
+  afx_msg void OnBnClickedButton1();
 };
