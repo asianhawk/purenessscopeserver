@@ -75,11 +75,13 @@ public:
   CEdit m_txtServerInfo;
   CEdit m_txtModuleName;
   CListCtrl m_lcModuleList;
+  CEdit m_txtKey;
+  CEdit m_txtModuleFile;
   afx_msg void OnBnClickedButton1();
   afx_msg void OnBnClickedButton2();
   virtual BOOL OnInitDialog();
   afx_msg void OnBnClickedButton3();
   afx_msg void OnBnClickedButton4();
   afx_msg void OnBnClickedButton5();
-  CEdit m_txtKey;
+  afx_msg void OnBnClickedButton7();
 };

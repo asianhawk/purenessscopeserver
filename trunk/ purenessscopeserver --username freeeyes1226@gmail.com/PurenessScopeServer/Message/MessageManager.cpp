@@ -151,6 +151,7 @@ bool CMessageManager::AddClientCommand(uint16 u2CommandID, CClientCommand* pClie
 						pModuleClient->m_vecClientCommandInfo.push_back(pClientCommandInfo);
 					}
 				}
+				OUR_DEBUG((LM_ERROR, "[CMessageManager::AddClientCommand] u2CommandID = %d Add OK***.\n", u2CommandID));
 				return true;
 			}
 			else
