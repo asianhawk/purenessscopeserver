@@ -62,6 +62,8 @@ void CMessageService::Init(uint32 u4ThreadCount, uint32 u4MaxQueue, uint32 u4Low
 	m_u4MaxQueue    = u4MaxQueue;
 	m_u4HighMask    = u4HighMask;
 	m_u4LowMask     = u4LowMask;
+
+	m_u4WorkQueuePutTime = App_MainConfig::instance()->GetWorkQueuePutTime() * 1000;
 }
 
 bool CMessageService::Start()
@@ -92,7 +94,7 @@ int CMessageService::open(void* args)
 	{
 		OUR_DEBUG((LM_INFO,"[CMessageService::open]args is not NULL.\n"));
 	}
-	
+
 	m_blRun = true;
 	msg_queue()->high_water_mark(m_u4HighMask);
 	msg_queue()->low_water_mark(m_u4LowMask);
@@ -119,7 +121,7 @@ int CMessageService::svc(void)
 	m_rwMutex.acquire_write();
 	uint32 u4ThreadID = (uint32)m_ThreadInfo.GetThreadCount();
 	m_ThreadInfo.AddThreadInfo(u4ThreadID);
-	
+
 	OUR_DEBUG((LM_INFO,"[CMessageService::svc] Create WorkThread=[%d] ...\n", m_ThreadInfo.GetThreadCount()));
 
 	//获取线程的系统ID
@@ -203,7 +205,7 @@ bool CMessageService::PutMessage(CMessage* pMessage)
 			return false;
 		}
 
-		ACE_Time_Value xtime = ACE_OS::gettimeofday();
+		ACE_Time_Value xtime = ACE_OS::gettimeofday() + ACE_Time_Value(0, m_u4WorkQueuePutTime);
 		if(this->putq(mb, &xtime) == -1)
 		{
 			OUR_DEBUG((LM_ERROR,"[CMessageService::PutMessage] Queue putq  error nQueueCount = [%d] errno = [%d].\n", nQueueCount, errno));
@@ -271,7 +273,7 @@ bool CMessageService::ProcessMessage(CMessage* pMessage, uint32 u4ThreadID)
 	{
 		u2CommandID = pMessageBase->m_u2Cmd;
 	}
-	
+
 	DisposeTime.Start();
 	App_MessageManager::instance()->DoMessage(pMessage, u2CommandID);
 	pThreadInfo->m_u4State = THREAD_RUNEND;
@@ -282,26 +284,26 @@ bool CMessageService::ProcessMessage(CMessage* pMessage, uint32 u4ThreadID)
 	}
 
 	//如果是windows服务器，默认用App_ProConnectManager，否则这里需要手动修改一下
-  //暂时无用，先注释掉
-  /*
-#ifdef WIN32
+	//暂时无用，先注释掉
+	/*
+	#ifdef WIN32
 	{
-		if(pMessage->GetMessageBase()->m_u2Cmd != CLIENT_LINK_CONNECT && pMessage->GetMessageBase()->m_u2Cmd != CLIENT_LINK_CDISCONNET && pMessage->GetMessageBase()->m_u2Cmd != CLIENT_LINK_SDISCONNET)
-		{
-			//其实感觉这里意义不大，因为在windows下的时钟精度到不了微秒，所以这个值很有可能没有意义。
-			App_ProConnectManager::instance()->SetRecvQueueTimeCost(pMessage->GetMessageBase()->m_u4ConnectID, u4Cost);
-		}
-	}
-#else
+	if(pMessage->GetMessageBase()->m_u2Cmd != CLIENT_LINK_CONNECT && pMessage->GetMessageBase()->m_u2Cmd != CLIENT_LINK_CDISCONNET && pMessage->GetMessageBase()->m_u2Cmd != CLIENT_LINK_SDISCONNET)
 	{
-		if(pMessage->GetMessageBase()->m_u2Cmd != CLIENT_LINK_CONNECT && pMessage->GetMessageBase()->m_u2Cmd != CLIENT_LINK_CDISCONNET && pMessage->GetMessageBase()->m_u2Cmd != CLIENT_LINK_SDISCONNET)
-		{
-			//linux可以精确到微秒，这个值就变的有意义了
-			App_ConnectManager::instance()->SetRecvQueueTimeCost(pMessage->GetMessageBase()->m_u4ConnectID, u4Cost);
-		}
+	//其实感觉这里意义不大，因为在windows下的时钟精度到不了微秒，所以这个值很有可能没有意义。
+	App_ProConnectManager::instance()->SetRecvQueueTimeCost(pMessage->GetMessageBase()->m_u4ConnectID, u4Cost);
 	}
-#endif
-  */
+	}
+	#else
+	{
+	if(pMessage->GetMessageBase()->m_u2Cmd != CLIENT_LINK_CONNECT && pMessage->GetMessageBase()->m_u2Cmd != CLIENT_LINK_CDISCONNET && pMessage->GetMessageBase()->m_u2Cmd != CLIENT_LINK_SDISCONNET)
+	{
+	//linux可以精确到微秒，这个值就变的有意义了
+	App_ConnectManager::instance()->SetRecvQueueTimeCost(pMessage->GetMessageBase()->m_u4ConnectID, u4Cost);
+	}
+	}
+	#endif
+	*/
 
 	//开始测算数据包处理的时间
 	uint64 u8DisposeCost = DisposeTime.Stop();
@@ -343,7 +345,7 @@ int CMessageService::handle_timeout(const ACE_Time_Value &tv, const void *arg)
 	{
 		OUR_DEBUG((LM_ERROR,"[CMessageService::handle_timeout] arg is not NULL, time is (%d).\n", tv.sec()));
 	}
-	
+
 	return SaveThreadInfoData();
 }
 
@@ -379,11 +381,11 @@ int CMessageService::SaveThreadInfoData()
 					App_BuffPacketManager::instance()->GetBuffPacketUsedCount(),
 					App_BuffPacketManager::instance()->GetBuffPacketFreeCount());
 
-				  //发现阻塞线程，重启相应的线程
-				  //ACE_OS::thr_kill(pThreadInfo->m_u4ThreadIndex, SIGALRM);
-				  AppLogManager::instance()->WriteLog(LOG_SYSTEM_WORKTHREAD, "[CMessageService::handle_timeout]  pThreadInfo = [%d] ThreadID = [%d] Thread is reset.", pThreadInfo->m_u4ThreadID, pThreadInfo->m_u4ThreadIndex);
-				  //m_ThreadInfo.CloseThread(pThreadInfo->m_u4ThreadID);
-				  //ResumeThread(1);
+				//发现阻塞线程，重启相应的线程
+				//ACE_OS::thr_kill(pThreadInfo->m_u4ThreadIndex, SIGALRM);
+				AppLogManager::instance()->WriteLog(LOG_SYSTEM_WORKTHREAD, "[CMessageService::handle_timeout]  pThreadInfo = [%d] ThreadID = [%d] Thread is reset.", pThreadInfo->m_u4ThreadID, pThreadInfo->m_u4ThreadIndex);
+				//m_ThreadInfo.CloseThread(pThreadInfo->m_u4ThreadID);
+				//ResumeThread(1);
 			}
 			else
 			{

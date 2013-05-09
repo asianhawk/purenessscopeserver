@@ -53,7 +53,7 @@ public:
 
 	bool SetRecvQueueTimeCost(uint32 u4TimeCost);                            //记录当前接收数据到模块处理完成的具体时间消耗
 	bool SetSendQueueTimeCost(uint32 u4TimeCost);                            //记录当前从发送队列到数据发送完成的具体时间消耗
-	
+
 	bool Close(int nIOCount = 1);
 	bool ServerClose();                                                      //服务器关闭客户端链接方法
 
@@ -97,7 +97,7 @@ private:
 	uint64                     m_u8SendQueueTimeCost;          //成功发送数据到数据处理完成（只发送）花费的时间总和
 	uint64                     m_u8SendQueueTimeout;           //发送超时时间，超过这个时间的都会被记录到日志中
 	uint64                     m_u8RecvQueueTimeout;           //接受超时时间，超过这个时间的都会被记录到日志中
-	
+
 	ACE_Recursive_Thread_Mutex m_ThreadLock;
 
 	uint32                     m_u4SendThresHold;              //发送阀值(消息包的个数)
@@ -136,8 +136,8 @@ public:
 	bool AddConnect(uint32 u4ConnectID, CConnectHandler* pConnectHandler);
 	bool SendMessage(uint32 u4ConnectID, IBuffPacket* pBuffPacket,  uint16 u2CommandID, bool blSendState, uint8 u1SendType, ACE_hrtime_t& tvSendBegin);              //同步发送                                                                     //发送缓冲数据
 	bool PostMessage(uint32 u4ConnectID, IBuffPacket* pBuffPacket, uint8 u1SendType = SENDMESSAGE_NOMAL, uint16 u2CommandID = 0, bool blSendState = true);           //异步发送
-  bool PostMessageAll(IBuffPacket* pBuffPacket, uint8 u1SendType = SENDMESSAGE_NOMAL, uint16 u2CommandID = 0, bool blSendState = true);                            //异步群发
-  bool Close(uint32 u4ConnectID);                                                                          //客户单关闭
+	bool PostMessageAll(IBuffPacket* pBuffPacket, uint8 u1SendType = SENDMESSAGE_NOMAL, uint16 u2CommandID = 0, bool blSendState = true);                            //异步群发
+	bool Close(uint32 u4ConnectID);                                                                          //客户单关闭
 	bool CloseConnect(uint32 u4ConnectID);                                                                   //服务器关闭
 	void GetConnectInfo(vecClientConnectInfo& VecClientConnectInfo);                                         //返回当前存活链接的信息
 	void SetRecvQueueTimeCost(uint32 u4ConnectID, uint32 u4TimeCost);                                        //记录指定链接数据处理时间
@@ -153,7 +153,7 @@ public:
 private:
 	bool IsRun();
 	void CloseQueue();
-	
+
 private:
 	typedef map<uint32, CConnectHandler*> mapConnectManager;
 	typedef vector<uint32> vecConnectManager;
@@ -166,6 +166,7 @@ private:
 	ACE_Time_Value              m_tvCheckConnect;        //定时器下一次检测链接时间
 	bool                        m_blRun;                 //线程是否在运行
 	CSendMessagePool            m_SendMessagePool;       //发送消息体
+	uint32                      m_u4SendQueuePutTime;    //发送队列入队超时时间
 };
 
 //链接ConnectHandler内存池
@@ -198,31 +199,31 @@ class CConnectManagerGroup : public IConnectManager
 public:
 	CConnectManagerGroup();
 	~CConnectManagerGroup();
-	
+
 	void Init(uint16 u2SendQueueCount);
-	
+
 	bool AddConnect(CConnectHandler* pConnectHandler);
 	bool PostMessage(uint32 u4ConnectID, IBuffPacket* pBuffPacket, uint8 u1SendType = SENDMESSAGE_NOMAL, uint16 u2CommandID = 0, bool blSendState = true);                      //异步发送
 	bool PostMessage(uint32 u4ConnectID, const char* pData, uint32 nDataLen, uint8 u1SendType = SENDMESSAGE_NOMAL, uint16 u2CommandID = 0, bool blSendState = true);            //异步发送
-  bool PostMessage(vector<uint32> vecConnectID, IBuffPacket* pBuffPacket, uint8 u1SendType = SENDMESSAGE_NOMAL, uint16 u2CommandID = 0, bool blSendState = true);             //异步群发指定的ID
-  bool PostMessage(vector<uint32> vecConnectID, const char* pData, uint32 nDataLen, uint8 u1SendType = SENDMESSAGE_NOMAL, uint16 u2CommandID = 0, bool blSendState = true);   //异步群发指定的ID
-  bool PostMessageAll(IBuffPacket* pBuffPacket, uint8 u1SendType = SENDMESSAGE_NOMAL, uint16 u2CommandID = 0, bool blSendState = true);
-  bool PostMessageAll(const char* pData, uint32 nDataLen, uint8 u1SendType = SENDMESSAGE_NOMAL, uint16 u2CommandID = 0, bool blSendState = true);
-  bool CloseConnect(uint32 u4ConnectID);                                                                   //服务器关闭
+	bool PostMessage(vector<uint32> vecConnectID, IBuffPacket* pBuffPacket, uint8 u1SendType = SENDMESSAGE_NOMAL, uint16 u2CommandID = 0, bool blSendState = true);             //异步群发指定的ID
+	bool PostMessage(vector<uint32> vecConnectID, const char* pData, uint32 nDataLen, uint8 u1SendType = SENDMESSAGE_NOMAL, uint16 u2CommandID = 0, bool blSendState = true);   //异步群发指定的ID
+	bool PostMessageAll(IBuffPacket* pBuffPacket, uint8 u1SendType = SENDMESSAGE_NOMAL, uint16 u2CommandID = 0, bool blSendState = true);
+	bool PostMessageAll(const char* pData, uint32 nDataLen, uint8 u1SendType = SENDMESSAGE_NOMAL, uint16 u2CommandID = 0, bool blSendState = true);
+	bool CloseConnect(uint32 u4ConnectID);                                                                   //服务器关闭
 	_ClientIPInfo GetClientIPInfo(uint32 u4ConnectID);                                                       //得到指定链接信息
 	void GetConnectInfo(vecClientConnectInfo& VecClientConnectInfo);                                         //返回当前存活链接的信息
 	void SetRecvQueueTimeCost(uint32 u4ConnectID, uint32 u4TimeCost);                                        //记录指定链接数据处理时间
-	
+
 	int  GetCount();
 	void CloseAll();
 	bool Close(uint32 u4ConnectID);                                                                          //客户单关闭
-	
+
 	bool StartTimer();                                                                                       //开启定时器
 	const char* GetError();                                                                                      
 
 private:
 	uint32 GetGroupIndex();                                                                                  //得到当前链接的ID自增量
-	
+
 private:
 	ACE_Recursive_Thread_Mutex  m_ThreadWriteLock;                                                           //控制多线程锁
 	typedef map<int, CConnectManager*> mapConnectManager;                                                    //所有链接管理者

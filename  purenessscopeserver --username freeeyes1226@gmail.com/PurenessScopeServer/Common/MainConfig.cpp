@@ -35,6 +35,8 @@ CMainConfig::CMainConfig(void)
 	m_u2RecvQueueTimeout    = MAX_QUEUE_TIMEOUT;
 	m_u2SendQueueTimeout    = MAX_QUEUE_TIMEOUT;
 	m_u2SendQueueCount      = SENDQUEUECOUNT;
+	m_u2SendQueuePutTime    = (uint16)MAX_MSG_PUTTIMEOUT;
+	m_u2WorkQueuePutTime    = (uint16)MAX_MSG_PUTTIMEOUT;
 
 	m_szServerName[0]       = '\0';
 	m_szServerVersion[0]    = '\0';
@@ -222,6 +224,16 @@ bool CMainConfig::Init(const char* szConfigPath)
 	{
 		m_u2SendAliveTime = (uint16)ACE_OS::atoi(pData);
 	}
+	pData = m_MainConfig.GetData("SendInfo", "PutQueueTimeout");
+	if(pData != NULL)
+	{
+		m_u2SendQueuePutTime = (uint16)ACE_OS::atoi(pData);
+	}
+	pData = m_MainConfig.GetData("ThreadInfo", "PutQueueTimeout");
+	if(pData != NULL)
+	{
+		m_u2WorkQueuePutTime = (uint16)ACE_OS::atoi(pData);
+	}
 	pData = m_MainConfig.GetData("ClientInfo", "HandlerCount");
 	if(pData != NULL)
 	{
@@ -392,6 +404,8 @@ void CMainConfig::Display()
 	OUR_DEBUG((LM_INFO, "[CMainConfig::Display]m_u2SendQueueTimeout = %d.\n", m_u2SendQueueTimeout));
 	OUR_DEBUG((LM_INFO, "[CMainConfig::Display]m_u2SendQueueCount = %d.\n", m_u2SendQueueCount));
 	OUR_DEBUG((LM_INFO, "[CMainConfig::Display]m_u1CommandAccount = %d.\n", m_u1CommandAccount));
+	OUR_DEBUG((LM_INFO, "[CMainConfig::Display]m_u2SendQueuePutTime = %d.\n", m_u2SendQueuePutTime));
+	OUR_DEBUG((LM_INFO, "[CMainConfig::Display]m_u2WorkQueuePutTime = %d.\n", m_u2WorkQueuePutTime));
 
 	for(int i = 0; i < (int)m_vecUDPServerInfo.size(); i++)
 	{
@@ -655,3 +669,14 @@ uint16 CMainConfig::GetConnectServerCheck()
 {
 	return m_u2ConnectServerCheck;
 }
+
+uint16 CMainConfig::GetSendQueuePutTime()
+{
+	return m_u2SendQueuePutTime;
+}
+
+uint16 CMainConfig::GetWorkQueuePutTime()
+{
+	return m_u2WorkQueuePutTime;
+}
+

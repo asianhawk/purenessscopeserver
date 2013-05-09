@@ -66,6 +66,7 @@ private:
 	uint16                         m_u2PacketTimeOut;     //处理数据包超时判定阀值
 	uint64                         m_u8TimeCost;          //Put到队列信息的数据处理时间
 	uint32                         m_u4Count;             //消息队列接受个数
+	uint32                         m_u4WorkQueuePutTime;  //入队超时时间
 
 	CThreadInfo                    m_ThreadInfo;
 };

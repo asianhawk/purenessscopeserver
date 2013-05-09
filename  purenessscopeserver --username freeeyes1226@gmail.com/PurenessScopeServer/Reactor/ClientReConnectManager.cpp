@@ -618,6 +618,8 @@ bool CClientReConnectManager::ReConnect( int nServerID )
 		//×Ô¶¯ÐÝÃß0.1Ãë
 		ACE_Time_Value tvSleep(0, m_u4ConnectServerTimeout);
 		ACE_OS::sleep(tvSleep);
+
+		return true;
 	}
 	else
 	{
