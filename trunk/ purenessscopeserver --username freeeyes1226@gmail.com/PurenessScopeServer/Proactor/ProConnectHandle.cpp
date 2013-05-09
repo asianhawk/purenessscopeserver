@@ -175,12 +175,12 @@ void CProConnectHandle::open(ACE_HANDLE h, ACE_Message_Block&)
 	ACE_Time_Value tvOpenEnd(ACE_OS::gettimeofday());
 	ACE_Time_Value tvOpen(tvOpenEnd - tvOpenBegin);
 
-  if(App_ForbiddenIP::instance()->CheckIP(m_addrRemote.get_host_addr()) == false)
-  {
-    //在禁止列表中，不允许访问
-    OUR_DEBUG((LM_ERROR, "[CConnectHandler::open]IP Forbidden(%s).\n", m_addrRemote.get_host_addr()));
-    return;
-  }
+	if(App_ForbiddenIP::instance()->CheckIP(m_addrRemote.get_host_addr()) == false)
+	{
+		//在禁止列表中，不允许访问
+		OUR_DEBUG((LM_ERROR, "[CConnectHandler::open]IP Forbidden(%s).\n", m_addrRemote.get_host_addr()));
+		return;
+	}
 
 	//检查单位时间链接次数是否达到上限
 	if(false == App_IPAccount::instance()->AddIP((string)m_addrRemote.get_host_addr()))
@@ -459,7 +459,7 @@ bool CProConnectHandle::SetRecvQueueTimeCost(uint32 u4TimeCost)
 
 	//OUR_DEBUG((LM_ERROR, "[CProConnectHandle::SetRecvQueueTimeCost]m_u4RecvQueueCount=%d.\n", m_u4RecvQueueCount));
 	m_u4RecvQueueCount++;
-	
+
 	//测试了几天，感觉这个时间意义，因为获取队列的处理时间片可能很耗时，导致一批数据的阶段性时间增长
 	//只要记录超时的数据即可
 	//m_u8RecvQueueTimeCost += u4TimeCost;
@@ -509,7 +509,7 @@ bool CProConnectHandle::SendMessage(IBuffPacket* pBuffPacket, bool blState, uint
 	//OUR_DEBUG((LM_DEBUG,"[CConnectHandler::SendMessage]Connectid=%d,m_nIOCount=%d.\n", GetConnectID(), m_nIOCount));
 
 	CPacketParse PacketParse;
-  ACE_Message_Block* pMbData = NULL;
+	ACE_Message_Block* pMbData = NULL;
 
 	if(NULL == pBuffPacket)
 	{
@@ -518,114 +518,114 @@ bool CProConnectHandle::SendMessage(IBuffPacket* pBuffPacket, bool blState, uint
 		return false;
 	}
 
-  //如果不是直接发送数据，则拼接数据包
-  if(u1SendType == SENDMESSAGE_NOMAL)
-  {
-    //先判断要发送的数据长度，看看是否可以放入缓冲，缓冲是否已经放满。
-    uint32 u4SendPacketSize = 0;
-    if(u1SendType == SENDMESSAGE_NOMAL)
-    {
-      u4SendPacketSize = PacketParse.MakePacketLength(pBuffPacket->GetPacketLen());
-    }
-    else
-    {
-      u4SendPacketSize = (uint32)m_pBlockMessage->length();
-    }
+	//如果不是直接发送数据，则拼接数据包
+	if(u1SendType == SENDMESSAGE_NOMAL)
+	{
+		//先判断要发送的数据长度，看看是否可以放入缓冲，缓冲是否已经放满。
+		uint32 u4SendPacketSize = 0;
+		if(u1SendType == SENDMESSAGE_NOMAL)
+		{
+			u4SendPacketSize = PacketParse.MakePacketLength(pBuffPacket->GetPacketLen());
+		}
+		else
+		{
+			u4SendPacketSize = (uint32)m_pBlockMessage->length();
+		}
 
-	  if(u4SendPacketSize + (uint32)m_pBlockMessage->length() >= m_u4MaxPacketSize)
-	  {
-		  OUR_DEBUG((LM_DEBUG,"[CConnectHandler::SendMessage] Connectid=[%d] m_pBlockMessage is not enougth.\n", GetConnectID()));
-		  App_BuffPacketManager::instance()->Delete(pBuffPacket);
-		  Close();
-		  return false;
-	  }
-	  else
-	  {
-		  //添加进缓冲区
-		  ACE_Message_Block* pMbBufferData = NULL;
+		if(u4SendPacketSize + (uint32)m_pBlockMessage->length() >= m_u4MaxPacketSize)
+		{
+			OUR_DEBUG((LM_DEBUG,"[CConnectHandler::SendMessage] Connectid=[%d] m_pBlockMessage is not enougth.\n", GetConnectID()));
+			App_BuffPacketManager::instance()->Delete(pBuffPacket);
+			Close();
+			return false;
+		}
+		else
+		{
+			//添加进缓冲区
+			ACE_Message_Block* pMbBufferData = NULL;
 
-		  //SENDMESSAGE_NOMAL是需要包头的时候，否则，不组包直接发送
-		  if(u1SendType == SENDMESSAGE_NOMAL)
-		  {
-			  //这里组成返回数据包
-			  PacketParse.MakePacket(pBuffPacket->GetData(), pBuffPacket->GetPacketLen(), m_pBlockMessage);
-		  }
-		  else
-		  {
-			  //如果不是SENDMESSAGE_NOMAL，则直接组包
-			  ACE_OS::memcpy(m_pBlockMessage->wr_ptr(), pBuffPacket->GetData(), pBuffPacket->GetPacketLen());
-			  m_pBlockMessage->wr_ptr(pBuffPacket->GetPacketLen());
-		  }
-	  }
+			//SENDMESSAGE_NOMAL是需要包头的时候，否则，不组包直接发送
+			if(u1SendType == SENDMESSAGE_NOMAL)
+			{
+				//这里组成返回数据包
+				PacketParse.MakePacket(pBuffPacket->GetData(), pBuffPacket->GetPacketLen(), m_pBlockMessage);
+			}
+			else
+			{
+				//如果不是SENDMESSAGE_NOMAL，则直接组包
+				ACE_OS::memcpy(m_pBlockMessage->wr_ptr(), pBuffPacket->GetData(), pBuffPacket->GetPacketLen());
+				m_pBlockMessage->wr_ptr(pBuffPacket->GetPacketLen());
+			}
+		}
 
-    //如果不是立刻发送，则把数据拷贝到缓冲数据中去
-    if(false == blState)
-    {
-      //删除发送数据包 
-      App_BuffPacketManager::instance()->Delete(pBuffPacket);
-      Close();
-      return true;
-    }
+		//如果不是立刻发送，则把数据拷贝到缓冲数据中去
+		if(false == blState)
+		{
+			//删除发送数据包 
+			App_BuffPacketManager::instance()->Delete(pBuffPacket);
+			Close();
+			return true;
+		}
 
-    //因为是异步发送，发送的数据指针不可以立刻释放，所以需要在这里创建一个新的发送数据块，将数据考入
-    pMbData = App_MessageBlockManager::instance()->Create((uint32)m_pBlockMessage->length());
-    if(NULL == pMbData)
-    {
-      OUR_DEBUG((LM_DEBUG,"[CConnectHandler::SendMessage] Connectid=[%d] pMbData is NULL.\n", GetConnectID()));
-      App_BuffPacketManager::instance()->Delete(pBuffPacket);
-      Close();
-      return false;
-    }
+		//因为是异步发送，发送的数据指针不可以立刻释放，所以需要在这里创建一个新的发送数据块，将数据考入
+		pMbData = App_MessageBlockManager::instance()->Create((uint32)m_pBlockMessage->length());
+		if(NULL == pMbData)
+		{
+			OUR_DEBUG((LM_DEBUG,"[CConnectHandler::SendMessage] Connectid=[%d] pMbData is NULL.\n", GetConnectID()));
+			App_BuffPacketManager::instance()->Delete(pBuffPacket);
+			Close();
+			return false;
+		}
 
-    ACE_OS::memcpy(pMbData->wr_ptr(), m_pBlockMessage->rd_ptr(), m_pBlockMessage->length());
-    pMbData->wr_ptr(m_pBlockMessage->length());
-    //放入完成，则清空缓存数据，使命完成
-    m_pBlockMessage->reset();
+		ACE_OS::memcpy(pMbData->wr_ptr(), m_pBlockMessage->rd_ptr(), m_pBlockMessage->length());
+		pMbData->wr_ptr(m_pBlockMessage->length());
+		//放入完成，则清空缓存数据，使命完成
+		m_pBlockMessage->reset();
 
-    //删除发送数据包 
-    App_BuffPacketManager::instance()->Delete(pBuffPacket);
-  }
-  else
-  {
-    //如果之前有缓冲数据，则和缓冲数据一起发送
-    if(m_pBlockMessage->length() > 0)
-    {
-      ACE_OS::memcpy(m_pBlockMessage->wr_ptr(), pBuffPacket->GetData(), pBuffPacket->GetPacketLen());
-      m_pBlockMessage->wr_ptr(pBuffPacket->GetPacketLen());
+		//删除发送数据包 
+		App_BuffPacketManager::instance()->Delete(pBuffPacket);
+	}
+	else
+	{
+		//如果之前有缓冲数据，则和缓冲数据一起发送
+		if(m_pBlockMessage->length() > 0)
+		{
+			ACE_OS::memcpy(m_pBlockMessage->wr_ptr(), pBuffPacket->GetData(), pBuffPacket->GetPacketLen());
+			m_pBlockMessage->wr_ptr(pBuffPacket->GetPacketLen());
 
-      //因为是异步发送，发送的数据指针不可以立刻释放，所以需要在这里创建一个新的发送数据块，将数据考入
-      pMbData = App_MessageBlockManager::instance()->Create((uint32)m_pBlockMessage->length());
-      if(NULL == pMbData)
-      {
-        OUR_DEBUG((LM_DEBUG,"[CConnectHandler::SendMessage] Connectid=[%d] pMbData is NULL.\n", GetConnectID()));
-        App_BuffPacketManager::instance()->Delete(pBuffPacket);
-        Close();
-        return false;
-      }
+			//因为是异步发送，发送的数据指针不可以立刻释放，所以需要在这里创建一个新的发送数据块，将数据考入
+			pMbData = App_MessageBlockManager::instance()->Create((uint32)m_pBlockMessage->length());
+			if(NULL == pMbData)
+			{
+				OUR_DEBUG((LM_DEBUG,"[CConnectHandler::SendMessage] Connectid=[%d] pMbData is NULL.\n", GetConnectID()));
+				App_BuffPacketManager::instance()->Delete(pBuffPacket);
+				Close();
+				return false;
+			}
 
-      ACE_OS::memcpy(pMbData->wr_ptr(), m_pBlockMessage->rd_ptr(), m_pBlockMessage->length());
-      pMbData->wr_ptr(m_pBlockMessage->length());
-      //放入完成，则清空缓存数据，使命完成
-      m_pBlockMessage->reset();
-    }
-    else
-    {
-      pMbData = App_MessageBlockManager::instance()->Create((uint32)m_pBlockMessage->length());
-      if(NULL == pMbData)
-      {
-        OUR_DEBUG((LM_DEBUG,"[CConnectHandler::SendMessage] Connectid=[%d] pMbData is NULL.\n", GetConnectID()));
-        App_BuffPacketManager::instance()->Delete(pBuffPacket);
-        Close();
-        return false;
-      }
+			ACE_OS::memcpy(pMbData->wr_ptr(), m_pBlockMessage->rd_ptr(), m_pBlockMessage->length());
+			pMbData->wr_ptr(m_pBlockMessage->length());
+			//放入完成，则清空缓存数据，使命完成
+			m_pBlockMessage->reset();
+		}
+		else
+		{
+			pMbData = App_MessageBlockManager::instance()->Create((uint32)m_pBlockMessage->length());
+			if(NULL == pMbData)
+			{
+				OUR_DEBUG((LM_DEBUG,"[CConnectHandler::SendMessage] Connectid=[%d] pMbData is NULL.\n", GetConnectID()));
+				App_BuffPacketManager::instance()->Delete(pBuffPacket);
+				Close();
+				return false;
+			}
 
-      ACE_OS::memcpy(pMbData->wr_ptr(), pBuffPacket->GetData(), pBuffPacket->GetPacketLen());
-      pMbData->wr_ptr(pBuffPacket->GetPacketLen());
-    }
+			ACE_OS::memcpy(pMbData->wr_ptr(), pBuffPacket->GetData(), pBuffPacket->GetPacketLen());
+			pMbData->wr_ptr(pBuffPacket->GetPacketLen());
+		}
 
-    //删除发送数据包 
-    App_BuffPacketManager::instance()->Delete(pBuffPacket);
-  }
+		//删除发送数据包 
+		App_BuffPacketManager::instance()->Delete(pBuffPacket);
+	}
 
 	return PutSendPacket(pMbData);
 }
@@ -660,7 +660,7 @@ bool CProConnectHandle::PutSendPacket(ACE_Message_Block* pMbData)
 		{
 			OUR_DEBUG ((LM_ERROR, "[CConnectHandler::PutSendPacket] Connectid=%d mb=%d m_writer.write error(%d)!\n", GetConnectID(),  pMbData->length(), errno));
 			pMbData->release();
-		  Close();
+			Close();
 			return false;
 		}
 		else
@@ -921,7 +921,7 @@ bool CProConnectManager::SendMessage(uint32 u4ConnectID, IBuffPacket* pBuffPacke
 
 			//记录消息发送消耗时间
 			//uint32 u4SendCost = (uint32)(ACE_OS::gethrtime() - tvSendBegin);
-      uint32 u4SendCost = 0;
+			uint32 u4SendCost = 0;
 			//pConnectHandler->SetSendQueueTimeCost(u4SendCost);
 			AppCommandAccount::instance()->SaveCommandData(u2CommandID, (uint8)u4SendCost, PACKET_TCP, u4PacketSize, u4CommandSize, COMMAND_TYPE_OUT);
 			return true;
@@ -979,7 +979,7 @@ bool CProConnectManager::PostMessage(uint32 u4ConnectID, IBuffPacket* pBuffPacke
 		if(NULL == pSendMessage)
 		{
 			OUR_DEBUG((LM_ERROR,"[CProConnectManager::PutMessage] new _SendMessage is error.\n"));
-      App_BuffPacketManager::instance()->Delete(pBuffPacket);
+			App_BuffPacketManager::instance()->Delete(pBuffPacket);
 			return false;
 		}
 
@@ -998,24 +998,24 @@ bool CProConnectManager::PostMessage(uint32 u4ConnectID, IBuffPacket* pBuffPacke
 		if(nQueueCount >= (int)MAX_MSG_THREADQUEUE)
 		{
 			OUR_DEBUG((LM_ERROR,"[CProConnectManager::PutMessage] Queue is Full nQueueCount = [%d].\n", nQueueCount));
-      App_BuffPacketManager::instance()->Delete(pBuffPacket);
+			App_BuffPacketManager::instance()->Delete(pBuffPacket);
 			mb->release();
 			return false;
 		}
 
-		ACE_Time_Value xtime = ACE_OS::gettimeofday() + ACE_Time_Value(0, MAX_MSG_PUTTIMEOUT);
+		ACE_Time_Value xtime = ACE_OS::gettimeofday() + ACE_Time_Value(0, m_u4SendQueuePutTime);
 		if(this->putq(mb, &xtime) == -1)
 		{
 			OUR_DEBUG((LM_ERROR,"[CProConnectManager::PutMessage] Queue putq  error nQueueCount = [%d] errno = [%d].\n", nQueueCount, errno));
 			App_BuffPacketManager::instance()->Delete(pBuffPacket);
-      mb->release();
+			mb->release();
 			return false;
 		}
 	}
 	else
 	{
 		OUR_DEBUG((LM_ERROR,"[CMessageService::PutMessage] mb new error.\n"));
-    App_BuffPacketManager::instance()->Delete(pBuffPacket);
+		App_BuffPacketManager::instance()->Delete(pBuffPacket);
 		return false;
 	}
 
@@ -1068,9 +1068,9 @@ bool CProConnectManager::KillTimer()
 
 int CProConnectManager::handle_timeout(const ACE_Time_Value &tv, const void *arg)
 {
-  ACE_Guard<ACE_Recursive_Thread_Mutex> WGrard(m_ThreadWriteLock);
+	ACE_Guard<ACE_Recursive_Thread_Mutex> WGrard(m_ThreadWriteLock);
 
-  //为了防止多线程下的链接删除问题，先把所有的链接ID读出来，再做遍历操作，减少线程竞争的机会。
+	//为了防止多线程下的链接删除问题，先把所有的链接ID读出来，再做遍历操作，减少线程竞争的机会。
 	if(m_mapConnectManager.size() != 0)
 	{
 		for(mapConnectManager::iterator b = m_mapConnectManager.begin(); b != m_mapConnectManager.end();)
@@ -1126,6 +1126,8 @@ int CProConnectManager::open(void* args)
 		m_blRun = false;
 		return -1;
 	}
+
+	m_u4SendQueuePutTime = App_MainConfig::instance()->GetSendQueuePutTime() * 1000;
 
 	resume();
 
@@ -1239,96 +1241,96 @@ _ClientIPInfo CProConnectManager::GetClientIPInfo(uint32 u4ConnectID)
 
 bool CProConnectManager::PostMessageAll( IBuffPacket* pBuffPacket, uint8 u1SendType /*= SENDMESSAGE_NOMAL*/, uint16 u2CommandID /*= 0*/, bool blSendState /*= true*/ )
 {
-  m_ThreadWriteLock.acquire();
-  vecConnectManager objveCProConnectManager;
-  for(mapConnectManager::iterator b = m_mapConnectManager.begin(); b != m_mapConnectManager.end(); b++)
-  {
-    objveCProConnectManager.push_back((uint32)b->first);
-  }
-  m_ThreadWriteLock.release();
+	m_ThreadWriteLock.acquire();
+	vecConnectManager objveCProConnectManager;
+	for(mapConnectManager::iterator b = m_mapConnectManager.begin(); b != m_mapConnectManager.end(); b++)
+	{
+		objveCProConnectManager.push_back((uint32)b->first);
+	}
+	m_ThreadWriteLock.release();
 
-  uint32 u4ConnectID = 0;
-  for(uint32 i = 0; i < (uint32)objveCProConnectManager.size(); i++)
-  {
-    IBuffPacket* pCurrBuffPacket = App_BuffPacketManager::instance()->Create();
-    if(NULL == pCurrBuffPacket)
-    {
-      OUR_DEBUG((LM_INFO, "[CProConnectManager::PostMessage]pCurrBuffPacket is NULL.\n"));
-      App_BuffPacketManager::instance()->Delete(pBuffPacket);
-      return false;
-    }
+	uint32 u4ConnectID = 0;
+	for(uint32 i = 0; i < (uint32)objveCProConnectManager.size(); i++)
+	{
+		IBuffPacket* pCurrBuffPacket = App_BuffPacketManager::instance()->Create();
+		if(NULL == pCurrBuffPacket)
+		{
+			OUR_DEBUG((LM_INFO, "[CProConnectManager::PostMessage]pCurrBuffPacket is NULL.\n"));
+			App_BuffPacketManager::instance()->Delete(pBuffPacket);
+			return false;
+		}
 
-    pCurrBuffPacket->WriteStream(pBuffPacket->GetData(), pBuffPacket->GetPacketLen());
+		pCurrBuffPacket->WriteStream(pBuffPacket->GetData(), pBuffPacket->GetPacketLen());
 
-    u4ConnectID = objveCProConnectManager[i];
-    ACE_Message_Block* mb = NULL;
+		u4ConnectID = objveCProConnectManager[i];
+		ACE_Message_Block* mb = NULL;
 
-    ACE_NEW_MALLOC_NORETURN(mb, 
-      static_cast<ACE_Message_Block*>(_msg_prosend_mb_allocator.malloc(sizeof(ACE_Message_Block))),
-      ACE_Message_Block(sizeof(_SendMessage*), // size
-      ACE_Message_Block::MB_DATA, // type
-      0,
-      0,
-      &_msg_prosend_mb_allocator, // allocator_strategy
-      0, // locking strategy
-      ACE_DEFAULT_MESSAGE_BLOCK_PRIORITY, // priority
-      ACE_Time_Value::zero,
-      ACE_Time_Value::max_time,
-      &_msg_prosend_mb_allocator,
-      &_msg_prosend_mb_allocator
-      ));
+		ACE_NEW_MALLOC_NORETURN(mb, 
+			static_cast<ACE_Message_Block*>(_msg_prosend_mb_allocator.malloc(sizeof(ACE_Message_Block))),
+			ACE_Message_Block(sizeof(_SendMessage*), // size
+			ACE_Message_Block::MB_DATA, // type
+			0,
+			0,
+			&_msg_prosend_mb_allocator, // allocator_strategy
+			0, // locking strategy
+			ACE_DEFAULT_MESSAGE_BLOCK_PRIORITY, // priority
+			ACE_Time_Value::zero,
+			ACE_Time_Value::max_time,
+			&_msg_prosend_mb_allocator,
+			&_msg_prosend_mb_allocator
+			));
 
-    if(NULL != mb)
-    {
-      //放入发送队列
-      _SendMessage* pSendMessage = m_SendMessagePool.Create();
+		if(NULL != mb)
+		{
+			//放入发送队列
+			_SendMessage* pSendMessage = m_SendMessagePool.Create();
 
-      if(NULL == pSendMessage)
-      {
-        OUR_DEBUG((LM_ERROR,"[CProConnectManager::PutMessage] new _SendMessage is error.\n"));
-        App_BuffPacketManager::instance()->Delete(pBuffPacket);
-        return false;
-      }
+			if(NULL == pSendMessage)
+			{
+				OUR_DEBUG((LM_ERROR,"[CProConnectManager::PutMessage] new _SendMessage is error.\n"));
+				App_BuffPacketManager::instance()->Delete(pBuffPacket);
+				return false;
+			}
 
-      pSendMessage->m_u4ConnectID = u4ConnectID;
-      pSendMessage->m_pBuffPacket = pCurrBuffPacket;
-      pSendMessage->m_nEvents     = u1SendType;
-      pSendMessage->m_u2CommandID = u2CommandID;
-      pSendMessage->m_blSendState = blSendState;
-      pSendMessage->m_tvSend      = ACE_OS::gethrtime();
+			pSendMessage->m_u4ConnectID = u4ConnectID;
+			pSendMessage->m_pBuffPacket = pCurrBuffPacket;
+			pSendMessage->m_nEvents     = u1SendType;
+			pSendMessage->m_u2CommandID = u2CommandID;
+			pSendMessage->m_blSendState = blSendState;
+			pSendMessage->m_tvSend      = ACE_OS::gethrtime();
 
-      _SendMessage** ppSendMessage = (_SendMessage **)mb->base();
-      *ppSendMessage = pSendMessage;
+			_SendMessage** ppSendMessage = (_SendMessage **)mb->base();
+			*ppSendMessage = pSendMessage;
 
-      //判断队列是否是已经最大
-      int nQueueCount = (int)msg_queue()->message_count();
-      if(nQueueCount >= (int)MAX_MSG_THREADQUEUE)
-      {
-        OUR_DEBUG((LM_ERROR,"[CProConnectManager::PutMessage] Queue is Full nQueueCount = [%d].\n", nQueueCount));
-        App_BuffPacketManager::instance()->Delete(pBuffPacket);
-        m_SendMessagePool.Delete(pSendMessage);
-        mb->release();
-        return false;
-      }
+			//判断队列是否是已经最大
+			int nQueueCount = (int)msg_queue()->message_count();
+			if(nQueueCount >= (int)MAX_MSG_THREADQUEUE)
+			{
+				OUR_DEBUG((LM_ERROR,"[CProConnectManager::PutMessage] Queue is Full nQueueCount = [%d].\n", nQueueCount));
+				App_BuffPacketManager::instance()->Delete(pBuffPacket);
+				m_SendMessagePool.Delete(pSendMessage);
+				mb->release();
+				return false;
+			}
 
-      ACE_Time_Value xtime = ACE_OS::gettimeofday() + ACE_Time_Value(0, MAX_MSG_PUTTIMEOUT);
-      if(this->putq(mb, &xtime) == -1)
-      {
-        OUR_DEBUG((LM_ERROR,"[CProConnectManager::PutMessage] Queue putq  error nQueueCount = [%d] errno = [%d].\n", nQueueCount, errno));
-        App_BuffPacketManager::instance()->Delete(pBuffPacket);
-        m_SendMessagePool.Delete(pSendMessage);
-        mb->release();
-        return false;
-      }
-    }
-    else
-    {
-      OUR_DEBUG((LM_ERROR,"[CProConnectManager::PutMessage] mb new error.\n"));
-      return false;
-    }
-  }
+			ACE_Time_Value xtime = ACE_OS::gettimeofday() + ACE_Time_Value(0, MAX_MSG_PUTTIMEOUT);
+			if(this->putq(mb, &xtime) == -1)
+			{
+				OUR_DEBUG((LM_ERROR,"[CProConnectManager::PutMessage] Queue putq  error nQueueCount = [%d] errno = [%d].\n", nQueueCount, errno));
+				App_BuffPacketManager::instance()->Delete(pBuffPacket);
+				m_SendMessagePool.Delete(pSendMessage);
+				mb->release();
+				return false;
+			}
+		}
+		else
+		{
+			OUR_DEBUG((LM_ERROR,"[CProConnectManager::PutMessage] mb new error.\n"));
+			return false;
+		}
+	}
 
-  return true;
+	return true;
 }
 
 //*********************************************************************************
@@ -1487,7 +1489,7 @@ CProConnectManagerGroup::~CProConnectManagerGroup()
 		CProConnectManager* pConnectManager = (CProConnectManager* )b->second;
 		SAFE_DELETE(pConnectManager);
 	}
-	
+
 	m_mapConnectManager.clear();
 }
 
@@ -1503,7 +1505,7 @@ void CProConnectManagerGroup::Init(uint16 u2SendQueueCount)
 			OUR_DEBUG((LM_INFO, "[CProConnectManagerGroup::Init]Creat %d SendQueue OK.\n", i));
 		}
 	}
-	
+
 	m_u2ThreadQueueCount = (uint16)m_mapConnectManager.size();
 }
 
@@ -1518,26 +1520,26 @@ uint32 CProConnectManagerGroup::GetGroupIndex()
 bool CProConnectManagerGroup::AddConnect(CProConnectHandle* pConnectHandler)
 {
 	uint32 u4ConnectID = GetGroupIndex();
-	
+
 	//判断命中到哪一个线程组里面去
 	uint16 u2ThreadIndex = u4ConnectID % m_u2ThreadQueueCount;
-	
+
 	mapConnectManager::iterator f = m_mapConnectManager.find(u2ThreadIndex);
 	if(f == m_mapConnectManager.end())
 	{
 		OUR_DEBUG((LM_INFO, "[CProConnectManagerGroup::AddConnect]Out of range Queue ID.\n"));
 		return false;
 	}
-	
+
 	CProConnectManager* pConnectManager = (CProConnectManager* )f->second;
 	if(NULL == pConnectManager)
 	{
 		OUR_DEBUG((LM_INFO, "[CProConnectManagerGroup::AddConnect]No find send Queue object.\n"));
 		return false;		
 	}
-	
+
 	//OUR_DEBUG((LM_INFO, "[CProConnectManagerGroup::Init]u4ConnectID=%d, u2ThreadIndex=%d.\n", u4ConnectID, u2ThreadIndex));
-	
+
 	return pConnectManager->AddConnect(u4ConnectID, pConnectHandler);
 }
 
@@ -1545,146 +1547,146 @@ bool CProConnectManagerGroup::PostMessage(uint32 u4ConnectID, IBuffPacket* pBuff
 {
 	//判断命中到哪一个线程组里面去
 	uint16 u2ThreadIndex = u4ConnectID % m_u2ThreadQueueCount;
-	
+
 	mapConnectManager::iterator f = m_mapConnectManager.find(u2ThreadIndex);
 	if(f == m_mapConnectManager.end())
 	{
 		OUR_DEBUG((LM_INFO, "[CProConnectManagerGroup::PostMessage]Out of range Queue ID.\n"));
 		return false;
 	}
-	
+
 	CProConnectManager* pConnectManager = (CProConnectManager* )f->second;
 	if(NULL == pConnectManager)
 	{
 		OUR_DEBUG((LM_INFO, "[CProConnectManagerGroup::PostMessage]No find send Queue object.\n"));
 		return false;		
 	}
-	
+
 	//OUR_DEBUG((LM_INFO, "[CProConnectManagerGroup::PostMessage]u4ConnectID=%d, u2ThreadIndex=%d.\n", u4ConnectID, u2ThreadIndex));
-	
+
 	return pConnectManager->PostMessage(u4ConnectID, pBuffPacket, u1SendType, u2CommandID, blSendState);
 }
 
 bool CProConnectManagerGroup::PostMessage( uint32 u4ConnectID, const char* pData, uint32 nDataLen, uint8 u1SendType /*= SENDMESSAGE_NOMAL*/, uint16 u2CommandID /*= 0*/, bool blSendState /*= true*/ )
 {
-  //判断命中到哪一个线程组里面去
-  uint16 u2ThreadIndex = u4ConnectID % m_u2ThreadQueueCount;
+	//判断命中到哪一个线程组里面去
+	uint16 u2ThreadIndex = u4ConnectID % m_u2ThreadQueueCount;
 
-  mapConnectManager::iterator f = m_mapConnectManager.find(u2ThreadIndex);
-  if(f == m_mapConnectManager.end())
-  {
-    OUR_DEBUG((LM_INFO, "[CProConnectManagerGroup::PostMessage]Out of range Queue ID.\n"));
-    return false;
-  }
+	mapConnectManager::iterator f = m_mapConnectManager.find(u2ThreadIndex);
+	if(f == m_mapConnectManager.end())
+	{
+		OUR_DEBUG((LM_INFO, "[CProConnectManagerGroup::PostMessage]Out of range Queue ID.\n"));
+		return false;
+	}
 
-  CProConnectManager* pConnectManager = (CProConnectManager* )f->second;
-  if(NULL == pConnectManager)
-  {
-    OUR_DEBUG((LM_INFO, "[CProConnectManagerGroup::PostMessage]No find send Queue object.\n"));
-    return false;		
-  }
+	CProConnectManager* pConnectManager = (CProConnectManager* )f->second;
+	if(NULL == pConnectManager)
+	{
+		OUR_DEBUG((LM_INFO, "[CProConnectManagerGroup::PostMessage]No find send Queue object.\n"));
+		return false;		
+	}
 
-  //OUR_DEBUG((LM_INFO, "[CProConnectManagerGroup::PostMessage]u4ConnectID=%d, u2ThreadIndex=%d.\n", u4ConnectID, u2ThreadIndex));
-  IBuffPacket* pBuffPacket = App_BuffPacketManager::instance()->Create();
-  if(NULL != pBuffPacket)
-  {
-    pBuffPacket->WriteStream(pData, nDataLen);
-    return pConnectManager->PostMessage(u4ConnectID, pBuffPacket, u1SendType, u2CommandID, blSendState);
-  }
-  else
-  {
-    OUR_DEBUG((LM_INFO, "[CProConnectManagerGroup::PostMessage]pBuffPacket is NULL.\n"));
-    return false;
-  }
-  
+	//OUR_DEBUG((LM_INFO, "[CProConnectManagerGroup::PostMessage]u4ConnectID=%d, u2ThreadIndex=%d.\n", u4ConnectID, u2ThreadIndex));
+	IBuffPacket* pBuffPacket = App_BuffPacketManager::instance()->Create();
+	if(NULL != pBuffPacket)
+	{
+		pBuffPacket->WriteStream(pData, nDataLen);
+		return pConnectManager->PostMessage(u4ConnectID, pBuffPacket, u1SendType, u2CommandID, blSendState);
+	}
+	else
+	{
+		OUR_DEBUG((LM_INFO, "[CProConnectManagerGroup::PostMessage]pBuffPacket is NULL.\n"));
+		return false;
+	}
+
 }
 
 bool CProConnectManagerGroup::PostMessage( vector<uint32> vecConnectID, IBuffPacket* pBuffPacket, uint8 u1SendType /*= SENDMESSAGE_NOMAL*/, uint16 u2CommandID /*= 0*/, bool blSendState /*= true*/ )
 {
-  uint32 u4ConnectID = 0;
-  for(uint32 i = 0; i < (uint32)vecConnectID.size(); i++)
-  {
-    //判断命中到哪一个线程组里面去
-    uint16 u2ThreadIndex = u4ConnectID % m_u2ThreadQueueCount;
+	uint32 u4ConnectID = 0;
+	for(uint32 i = 0; i < (uint32)vecConnectID.size(); i++)
+	{
+		//判断命中到哪一个线程组里面去
+		uint16 u2ThreadIndex = u4ConnectID % m_u2ThreadQueueCount;
 
-    mapConnectManager::iterator f = m_mapConnectManager.find(u2ThreadIndex);
-    if(f == m_mapConnectManager.end())
-    {
-      OUR_DEBUG((LM_INFO, "[CProConnectManagerGroup::PostMessage]Out of range Queue ID.\n"));
-      return false;
-    }
+		mapConnectManager::iterator f = m_mapConnectManager.find(u2ThreadIndex);
+		if(f == m_mapConnectManager.end())
+		{
+			OUR_DEBUG((LM_INFO, "[CProConnectManagerGroup::PostMessage]Out of range Queue ID.\n"));
+			return false;
+		}
 
-    CProConnectManager* pConnectManager = (CProConnectManager* )f->second;
-    if(NULL == pConnectManager)
-    {
-      OUR_DEBUG((LM_INFO, "[CProConnectManagerGroup::PostMessage]No find send Queue object.\n"));
-      return false;		
-    }
+		CProConnectManager* pConnectManager = (CProConnectManager* )f->second;
+		if(NULL == pConnectManager)
+		{
+			OUR_DEBUG((LM_INFO, "[CProConnectManagerGroup::PostMessage]No find send Queue object.\n"));
+			return false;		
+		}
 
-    pConnectManager->PostMessage(u4ConnectID, pBuffPacket, u1SendType, u2CommandID, blSendState);
-  }
+		pConnectManager->PostMessage(u4ConnectID, pBuffPacket, u1SendType, u2CommandID, blSendState);
+	}
 
-  return true;
+	return true;
 }
 
 bool CProConnectManagerGroup::PostMessage( vector<uint32> vecConnectID, const char* pData, uint32 nDataLen, uint8 u1SendType /*= SENDMESSAGE_NOMAL*/, uint16 u2CommandID /*= 0*/, bool blSendState /*= true*/ )
 {
-  uint32 u4ConnectID = 0;
-  for(uint32 i = 0; i < (uint32)vecConnectID.size(); i++)
-  {
-    //判断命中到哪一个线程组里面去
-    uint16 u2ThreadIndex = u4ConnectID % m_u2ThreadQueueCount;
+	uint32 u4ConnectID = 0;
+	for(uint32 i = 0; i < (uint32)vecConnectID.size(); i++)
+	{
+		//判断命中到哪一个线程组里面去
+		uint16 u2ThreadIndex = u4ConnectID % m_u2ThreadQueueCount;
 
-    mapConnectManager::iterator f = m_mapConnectManager.find(u2ThreadIndex);
-    if(f == m_mapConnectManager.end())
-    {
-      OUR_DEBUG((LM_INFO, "[CProConnectManagerGroup::PostMessage]Out of range Queue ID.\n"));
-      return false;
-    }
+		mapConnectManager::iterator f = m_mapConnectManager.find(u2ThreadIndex);
+		if(f == m_mapConnectManager.end())
+		{
+			OUR_DEBUG((LM_INFO, "[CProConnectManagerGroup::PostMessage]Out of range Queue ID.\n"));
+			return false;
+		}
 
-    CProConnectManager* pConnectManager = (CProConnectManager* )f->second;
-    if(NULL == pConnectManager)
-    {
-      OUR_DEBUG((LM_INFO, "[CProConnectManagerGroup::PostMessage]No find send Queue object.\n"));
-      return false;		
-    }
+		CProConnectManager* pConnectManager = (CProConnectManager* )f->second;
+		if(NULL == pConnectManager)
+		{
+			OUR_DEBUG((LM_INFO, "[CProConnectManagerGroup::PostMessage]No find send Queue object.\n"));
+			return false;		
+		}
 
-    //OUR_DEBUG((LM_INFO, "[CProConnectManagerGroup::PostMessage]u4ConnectID=%d, u2ThreadIndex=%d.\n", u4ConnectID, u2ThreadIndex));
-    IBuffPacket* pBuffPacket = App_BuffPacketManager::instance()->Create();
-    if(NULL != pBuffPacket)
-    {
-      pBuffPacket->WriteStream(pData, nDataLen);
-      pConnectManager->PostMessage(u4ConnectID, pBuffPacket, u1SendType, u2CommandID, blSendState);
-    } 
-    else
-    {
-      OUR_DEBUG((LM_INFO, "[CProConnectManagerGroup::PostMessage]pBuffPacket is NULL.\n"));
-      return false;
-    }
-  }
+		//OUR_DEBUG((LM_INFO, "[CProConnectManagerGroup::PostMessage]u4ConnectID=%d, u2ThreadIndex=%d.\n", u4ConnectID, u2ThreadIndex));
+		IBuffPacket* pBuffPacket = App_BuffPacketManager::instance()->Create();
+		if(NULL != pBuffPacket)
+		{
+			pBuffPacket->WriteStream(pData, nDataLen);
+			pConnectManager->PostMessage(u4ConnectID, pBuffPacket, u1SendType, u2CommandID, blSendState);
+		} 
+		else
+		{
+			OUR_DEBUG((LM_INFO, "[CProConnectManagerGroup::PostMessage]pBuffPacket is NULL.\n"));
+			return false;
+		}
+	}
 
-  return true;
+	return true;
 }
 
 bool CProConnectManagerGroup::CloseConnect(uint32 u4ConnectID)
 {
 	//判断命中到哪一个线程组里面去
 	uint16 u2ThreadIndex = u4ConnectID % m_u2ThreadQueueCount;
-	
+
 	mapConnectManager::iterator f = m_mapConnectManager.find(u2ThreadIndex);
 	if(f == m_mapConnectManager.end())
 	{
 		OUR_DEBUG((LM_INFO, "[CProConnectManagerGroup::CloseConnect]Out of range Queue ID.\n"));
 		return false;
 	}
-	
+
 	CProConnectManager* pConnectManager = (CProConnectManager* )f->second;
 	if(NULL == pConnectManager)
 	{
 		OUR_DEBUG((LM_INFO, "[CProConnectManagerGroup::CloseConnect]No find send Queue object.\n"));
 		return false;		
 	}	
-	
+
 	return pConnectManager->CloseConnect(u4ConnectID);
 }
 
@@ -1693,21 +1695,21 @@ _ClientIPInfo CProConnectManagerGroup::GetClientIPInfo(uint32 u4ConnectID)
 	_ClientIPInfo objClientIPInfo;
 	//判断命中到哪一个线程组里面去
 	uint16 u2ThreadIndex = u4ConnectID % m_u2ThreadQueueCount;
-	
+
 	mapConnectManager::iterator f = m_mapConnectManager.find(u2ThreadIndex);
 	if(f == m_mapConnectManager.end())
 	{
 		OUR_DEBUG((LM_INFO, "[CProConnectManagerGroup::GetClientIPInfo]Out of range Queue ID.\n"));
 		return objClientIPInfo;
 	}
-	
+
 	CProConnectManager* pConnectManager = (CProConnectManager* )f->second;
 	if(NULL == pConnectManager)
 	{
 		OUR_DEBUG((LM_INFO, "[CProConnectManagerGroup::GetClientIPInfo]No find send Queue object.\n"));
 		return objClientIPInfo;		
 	}	
-	
+
 	return pConnectManager->GetClientIPInfo(u4ConnectID);	
 }
 
@@ -1767,7 +1769,7 @@ bool CProConnectManagerGroup::StartTimer()
 	uint32 u4Count = 0;
 	mapConnectManager::iterator b = m_mapConnectManager.begin();
 	mapConnectManager::iterator e = m_mapConnectManager.end();	
-	
+
 	for(b; b != e;b++)
 	{
 		CProConnectManager* pConnectManager = (CProConnectManager* )b->second;
@@ -1776,7 +1778,7 @@ bool CProConnectManagerGroup::StartTimer()
 			pConnectManager->StartTimer();
 		}
 	}
-	
+
 	return true;	
 }
 
@@ -1784,21 +1786,21 @@ bool CProConnectManagerGroup::Close(uint32 u4ConnectID)
 {
 	//判断命中到哪一个线程组里面去
 	uint16 u2ThreadIndex = u4ConnectID % m_u2ThreadQueueCount;
-	
+
 	mapConnectManager::iterator f = m_mapConnectManager.find(u2ThreadIndex);
 	if(f == m_mapConnectManager.end())
 	{
 		OUR_DEBUG((LM_INFO, "[CProConnectManagerGroup::GetClientIPInfo]Out of range Queue ID.\n"));
 		return false;
 	}
-	
+
 	CProConnectManager* pConnectManager = (CProConnectManager* )f->second;
 	if(NULL == pConnectManager)
 	{
 		OUR_DEBUG((LM_INFO, "[CProConnectManagerGroup::GetClientIPInfo]No find send Queue object.\n"));
 		return false;		
 	}	
-	
+
 	return pConnectManager->Close(u4ConnectID);
 }
 
@@ -1811,76 +1813,76 @@ void CProConnectManagerGroup::SetRecvQueueTimeCost(uint32 u4ConnectID, uint32 u4
 {
 	//判断命中到哪一个线程组里面去
 	uint16 u2ThreadIndex = u4ConnectID % m_u2ThreadQueueCount;
-	
+
 	mapConnectManager::iterator f = m_mapConnectManager.find(u2ThreadIndex);
 	if(f == m_mapConnectManager.end())
 	{
 		OUR_DEBUG((LM_INFO, "[CProConnectManagerGroup::GetClientIPInfo]Out of range Queue ID.\n"));
 		return;
 	}
-	
+
 	CProConnectManager* pConnectManager = (CProConnectManager* )f->second;
 	if(NULL == pConnectManager)
 	{
 		OUR_DEBUG((LM_INFO, "[CProConnectManagerGroup::GetClientIPInfo]No find send Queue object.\n"));
 		return;		
 	}		
-	
+
 	pConnectManager->SetRecvQueueTimeCost(u4ConnectID, u4TimeCost);
 }
 
 bool CProConnectManagerGroup::PostMessageAll( IBuffPacket* pBuffPacket, uint8 u1SendType /*= SENDMESSAGE_NOMAL*/, uint16 u2CommandID /*= 0*/, bool blSendState /*= true*/ )
 {
-  //全部群发
-  for(mapConnectManager::iterator b = m_mapConnectManager.begin(); b != m_mapConnectManager.end(); b++)
-  {
-    CProConnectManager* pConnectManager = (CProConnectManager* )b->second;
-    if(NULL == pConnectManager)
-    {
-      OUR_DEBUG((LM_INFO, "[CProConnectManagerGroup::PostMessage]No find send Queue object.\n"));
-      return false;		
-    }
+	//全部群发
+	for(mapConnectManager::iterator b = m_mapConnectManager.begin(); b != m_mapConnectManager.end(); b++)
+	{
+		CProConnectManager* pConnectManager = (CProConnectManager* )b->second;
+		if(NULL == pConnectManager)
+		{
+			OUR_DEBUG((LM_INFO, "[CProConnectManagerGroup::PostMessage]No find send Queue object.\n"));
+			return false;		
+		}
 
-    pConnectManager->PostMessageAll(pBuffPacket, u1SendType, u2CommandID, blSendState);
-  }
+		pConnectManager->PostMessageAll(pBuffPacket, u1SendType, u2CommandID, blSendState);
+	}
 
-  //用完了就删除
-  App_BuffPacketManager::instance()->Delete(pBuffPacket);
+	//用完了就删除
+	App_BuffPacketManager::instance()->Delete(pBuffPacket);
 
-  return true;
+	return true;
 }
 
 bool CProConnectManagerGroup::PostMessageAll( const char* pData, uint32 nDataLen, uint8 u1SendType /*= SENDMESSAGE_NOMAL*/, uint16 u2CommandID /*= 0*/, bool blSendState /*= true*/ )
 {
-  IBuffPacket* pBuffPacket = App_BuffPacketManager::instance()->Create();
-  if(NULL == pBuffPacket)
-  {
-    OUR_DEBUG((LM_INFO, "[CProConnectManagerGroup::PostMessageAll]pBuffPacket is NULL.\n"));
-    //SAFE_DELETE(pData);
-    return false;
-  }
-  else
-  {
-    pBuffPacket->WriteStream(pData, nDataLen);
-  }
+	IBuffPacket* pBuffPacket = App_BuffPacketManager::instance()->Create();
+	if(NULL == pBuffPacket)
+	{
+		OUR_DEBUG((LM_INFO, "[CProConnectManagerGroup::PostMessageAll]pBuffPacket is NULL.\n"));
+		//SAFE_DELETE(pData);
+		return false;
+	}
+	else
+	{
+		pBuffPacket->WriteStream(pData, nDataLen);
+	}
 
-  //全部群发
-  for(mapConnectManager::iterator b = m_mapConnectManager.begin(); b != m_mapConnectManager.end(); b++)
-  {
-    CProConnectManager* pConnectManager = (CProConnectManager* )b->second;
-    if(NULL == pConnectManager)
-    {
-      OUR_DEBUG((LM_INFO, "[CProConnectManagerGroup::PostMessage]No find send Queue object.\n"));
-      return false;		
-    }
+	//全部群发
+	for(mapConnectManager::iterator b = m_mapConnectManager.begin(); b != m_mapConnectManager.end(); b++)
+	{
+		CProConnectManager* pConnectManager = (CProConnectManager* )b->second;
+		if(NULL == pConnectManager)
+		{
+			OUR_DEBUG((LM_INFO, "[CProConnectManagerGroup::PostMessage]No find send Queue object.\n"));
+			return false;		
+		}
 
-    pConnectManager->PostMessageAll(pBuffPacket, u1SendType, u2CommandID, blSendState);
-  }
+		pConnectManager->PostMessageAll(pBuffPacket, u1SendType, u2CommandID, blSendState);
+	}
 
-  //用完了就删除
-  App_BuffPacketManager::instance()->Delete(pBuffPacket);
+	//用完了就删除
+	App_BuffPacketManager::instance()->Delete(pBuffPacket);
 
-  return true;
+	return true;
 }
 
 

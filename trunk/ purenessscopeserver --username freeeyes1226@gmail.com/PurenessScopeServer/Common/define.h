@@ -40,7 +40,7 @@ using namespace std;
 
 //根据不同的操作系统，定义不同的recv接收参数类型
 #ifdef WIN32
-	#define MSG_NOSIGNAL          0            //信号量参数（WINDOWS）
+#define MSG_NOSIGNAL          0            //信号量参数（WINDOWS）
 #endif
 
 #define SERVER_ACTOR_REACTOR  0
@@ -60,7 +60,7 @@ using namespace std;
 #define MAX_MSG_TIMEDELAYTIME 60           //逻辑线程自检时间间隔
 #define MAX_MSG_STARTTIME     1            //逻辑线程处理开始时间
 #define MAX_MSG_MASK          64000        //逻辑Mark的线程数
-#define MAX_MSG_PUTTIMEOUT    1000         //放入逻辑的延迟
+#define MAX_MSG_PUTTIMEOUT    100          //放入逻辑的延迟
 #define MAX_MSG_SENDPACKET    10           //最多缓冲发送包的个数,多于这个数字报警并丢弃下一个发送数据包
 #define MAX_MSG_SNEDTHRESHOLD 10           //发送阀值(消息包的个数)
 #define MAX_MSG_SENDCHECKTIME 100          //每隔多少毫秒进行一次发送的阀值
@@ -441,48 +441,48 @@ inline void sprintf_safe(char* szText, int nLen, const char* fmt ...)
 //定义一个函数，可支持字符串替换，目前先不考虑支持中文
 inline bool Replace_String(char* pText, uint32 u4Len, const char* pOld, const char* pNew)
 {
-  char* pTempSrc = new char(u4Len);
+	char* pTempSrc = new char(u4Len);
 
-  ACE_OS::memcpy(pTempSrc, pText, u4Len);
-  pTempSrc[u4Len - 1] = '\0';
+	ACE_OS::memcpy(pTempSrc, pText, u4Len);
+	pTempSrc[u4Len - 1] = '\0';
 
-  uint16 u2NewLen = (uint16)ACE_OS::strlen(pNew);
+	uint16 u2NewLen = (uint16)ACE_OS::strlen(pNew);
 
-  char* pPos = ACE_OS::strstr(pTempSrc, pOld); 
+	char* pPos = ACE_OS::strstr(pTempSrc, pOld); 
 
-  while(pPos)
-  {
-    //计算出需要覆盖的字符串长度
-    uint32 u4PosLen = (uint32)(pPos - pTempSrc);
+	while(pPos)
+	{
+		//计算出需要覆盖的字符串长度
+		uint32 u4PosLen = (uint32)(pPos - pTempSrc);
 
-    //黏贴最前面的
-    ACE_OS::memcpy(pText, pTempSrc, u4PosLen);
-    pText[u4PosLen] = '\0';
+		//黏贴最前面的
+		ACE_OS::memcpy(pText, pTempSrc, u4PosLen);
+		pText[u4PosLen] = '\0';
 
-    if(u4PosLen + u2NewLen >= (uint32)u4Len)
-    {
-      //清理中间变量
-      delete[] pTempSrc;
-      return false;		
-    }
-    else
-    {
-      //黏贴新字符
-      ACE_OS::memcpy(&pText[u4PosLen], pNew, u2NewLen);
-      pText[u4PosLen + u2NewLen] = '\0';
+		if(u4PosLen + u2NewLen >= (uint32)u4Len)
+		{
+			//清理中间变量
+			delete[] pTempSrc;
+			return false;		
+		}
+		else
+		{
+			//黏贴新字符
+			ACE_OS::memcpy(&pText[u4PosLen], pNew, u2NewLen);
+			pText[u4PosLen + u2NewLen] = '\0';
 
-      //指针向后移动	
-      pTempSrc = 	pTempSrc + u4PosLen;
+			//指针向后移动	
+			pTempSrc = 	pTempSrc + u4PosLen;
 
-      //寻找下一个透汗的字符串
-      pPos = ACE_OS::strstr(pTempSrc, pOld); 
-    }
+			//寻找下一个透汗的字符串
+			pPos = ACE_OS::strstr(pTempSrc, pOld); 
+		}
 
-  }
+	}
 
-  //清理中间变量
-  delete[] pTempSrc;
-  return true;
+	//清理中间变量
+	delete[] pTempSrc;
+	return true;
 }
 
 //客户端IP信息
