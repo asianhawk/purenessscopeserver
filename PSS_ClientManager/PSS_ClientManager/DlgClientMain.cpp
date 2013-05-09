@@ -22,13 +22,14 @@ CDlgClientMain::~CDlgClientMain()
 
 void CDlgClientMain::DoDataExchange(CDataExchange* pDX)
 {
-  CDialog::DoDataExchange(pDX);
-  DDX_Control(pDX, IDC_EDIT1, m_txtServerIP);
-  DDX_Control(pDX, IDC_EDIT2, m_txtServerPort);
-  DDX_Control(pDX, IDC_EDIT3, m_txtServerInfo);
-  DDX_Control(pDX, IDC_EDIT4, m_txtModuleName);
-  DDX_Control(pDX, IDC_LIST1, m_lcModuleList);
-  DDX_Control(pDX, IDC_EDIT6, m_txtKey);
+	CDialog::DoDataExchange(pDX);
+	DDX_Control(pDX, IDC_EDIT1, m_txtServerIP);
+	DDX_Control(pDX, IDC_EDIT2, m_txtServerPort);
+	DDX_Control(pDX, IDC_EDIT3, m_txtServerInfo);
+	DDX_Control(pDX, IDC_EDIT4, m_txtModuleName);
+	DDX_Control(pDX, IDC_LIST1, m_lcModuleList);
+	DDX_Control(pDX, IDC_EDIT6, m_txtKey);
+	DDX_Control(pDX, IDC_EDIT8, m_txtModuleFile);
 }
 
 
@@ -38,6 +39,7 @@ BEGIN_MESSAGE_MAP(CDlgClientMain, CDialog)
   ON_BN_CLICKED(IDC_BUTTON3, &CDlgClientMain::OnBnClickedButton3)
   ON_BN_CLICKED(IDC_BUTTON4, &CDlgClientMain::OnBnClickedButton4)
   ON_BN_CLICKED(IDC_BUTTON5, &CDlgClientMain::OnBnClickedButton5)
+  ON_BN_CLICKED(IDC_BUTTON7, &CDlgClientMain::OnBnClickedButton7)
 END_MESSAGE_MAP()
 
 CString CDlgClientMain::GetPageTitle()
@@ -370,4 +372,54 @@ void CDlgClientMain::OnBnClickedButton5()
   }
 
   OnBnClickedButton3();
+}
+
+void CDlgClientMain::OnBnClickedButton7()
+{
+	//加载指定模块
+	CString strModuleFile;
+
+	char szModuleFile[100]        = {'\0'};
+
+	m_txtModuleFile.GetWindowText(strModuleFile);
+
+	int nSrcLen = WideCharToMultiByte(CP_ACP, 0, strModuleFile, strModuleFile.GetLength(), NULL, 0, NULL, NULL);
+	int nDecLen = WideCharToMultiByte(CP_ACP, 0, strModuleFile, nSrcLen, szModuleFile, 100, NULL,NULL);
+	szModuleFile[nDecLen] = '\0';
+
+	char szSendMessage[200] = {'\0'};
+	char szCommand[100]     = {'\0'};
+	sprintf_s(szCommand, 100, "%s LoadModule %s", m_pTcpClientConnect->GetKey(), szModuleFile);
+	int nSendLen = (int)strlen(szCommand); 
+
+	memcpy_s(szSendMessage, 200, &nSendLen, sizeof(int));
+	memcpy_s(&szSendMessage[4], 200, &szCommand, nSendLen);
+
+	char szRecvBuff[10 * 1024] = {'\0'};
+	int nRecvLen = 10 * 1024;
+	bool blState = m_pTcpClientConnect->SendConsoleMessage(szSendMessage, nSendLen + sizeof(int), (char*)szRecvBuff, nRecvLen);
+	if(blState == false)
+	{
+		MessageBox(_T(MESSAGE_SENDERROR) , _T(MESSAGE_TITLE_ERROR), MB_OK);
+		return;
+	}
+	else
+	{
+		int nStrLen      = 0;
+		int nPos         = 4;
+		int nResult      = 0;
+		memcpy_s(&nResult, sizeof(int), &szRecvBuff[nPos], sizeof(char));
+		nPos += sizeof(int);
+
+		if(nResult == 0)
+		{
+			MessageBox(_T(MESSAGE_RESULT_SUCCESS) , _T(MESSAGE_TITLE_ERROR), MB_OK);
+		}
+		else
+		{
+			MessageBox(_T(MESSAGE_RESULT_FAIL) , _T(MESSAGE_TITLE_SUCCESS), MB_OK);
+		}
+	}
+
+	OnBnClickedButton3();
 }
