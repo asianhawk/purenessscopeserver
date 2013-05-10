@@ -57,6 +57,27 @@ PurenessScopeServer由4部分组成，其中两部分来协助完成。他们分别是：
 否则会提示找不到ssl的库
 或者 ../configure --disable-ssl
 如果你用不到SSL的话
+或者，如果你想手动编译
+
+配置环境变量：
+# vi /etc/profile
+增加如下的内容
+ACE_ROOT=/Software/ACE_wrappers      ------就是上面存放ACE源文件的目录
+export ACE_ROOT
+
+LD_LIBARY_PATH=$ACE_ROOT/ace:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH
+# source /etc/profile
+
+你可以先在ace目录下创建一个config.h
+添加如下代码
+#include "ace/config-linux.h"
+然后进入$ACE_ROOT/include/makeinclude
+新建 platform_macros.GNU，在platform_macros.GNU中加入一行如 下：
+include platform_linux.GNU
+然后回到ace目录
+make
+编译完成后，检查上一层lib文件夹下的libace.so是否存在，存在则编译成功。
 
 LD_LIBRARY_PATH=/usr/local/lib/:/home/freeeyes/PurenessScopeServer/PurenessScopeServer/Linux_Bin/
 export LD_LIBRARY_PATH
