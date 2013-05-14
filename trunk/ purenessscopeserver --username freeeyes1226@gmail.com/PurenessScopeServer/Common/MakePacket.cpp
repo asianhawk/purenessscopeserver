@@ -270,7 +270,7 @@ CMessage* CMakePacket::SetMessage(CPacketParse* pPacketParse, uint32 u4ConnectID
 		pMessage->GetMessageBase()->m_u4MsgTime     = (uint32)ACE_OS::gettimeofday().sec();
 		pMessage->GetMessageBase()->m_u4HeadSrcSize = pPacketParse->GetPacketHeadSrcLen();
 		pMessage->GetMessageBase()->m_u4BodySrcSize = pPacketParse->GetPacketBodySrcLen();
-		pMessage->GetMessageBase()->m_ProfileTime.Start();
+		//pMessage->GetMessageBase()->m_ProfileTime.Start();
 
 		//将接受的数据缓冲放入CMessage对象
 		pMessage->SetPacketHead(pPacketParse->GetMessageHead());
@@ -307,7 +307,7 @@ CMessage* CMakePacket::SetMessage(CPacketParse* pPacketParse, const ACE_INET_Add
 		pMessage->GetMessageBase()->m_u4HeadSrcSize = pPacketParse->GetPacketHeadSrcLen();
 		pMessage->GetMessageBase()->m_u4BodySrcSize = pPacketParse->GetPacketBodySrcLen();
 		sprintf_safe(pMessage->GetMessageBase()->m_szIP, MAX_BUFF_20, "%s", AddrRemote.get_host_addr());
-		pMessage->GetMessageBase()->m_ProfileTime.Start();
+		//pMessage->GetMessageBase()->m_ProfileTime.Start();
 
 		//将接受的数据缓冲放入CMessage对象
 		pMessage->SetPacketHead(pPacketParse->GetMessageHead());
@@ -341,7 +341,7 @@ CMessage* CMakePacket::SetMessageConnect(uint32 u4ConnectID)
 		pMessage->GetMessageBase()->m_u4MsgTime     = (uint32)ACE_OS::gettimeofday().sec();
 		pMessage->GetMessageBase()->m_u4HeadSrcSize = 0;
 		pMessage->GetMessageBase()->m_u4BodySrcSize = 0;
-		pMessage->GetMessageBase()->m_ProfileTime.Start();
+		//pMessage->GetMessageBase()->m_ProfileTime.Start();
 
 		//将接受的数据缓冲放入CMessage对象
 		pMessage->SetPacketHead(NULL);
@@ -375,7 +375,7 @@ CMessage* CMakePacket::SetMessageCDisConnect(uint32 u4ConnectID)
 		pMessage->GetMessageBase()->m_u4MsgTime     = (uint32)ACE_OS::gettimeofday().sec();
 		pMessage->GetMessageBase()->m_u4HeadSrcSize = 0;
 		pMessage->GetMessageBase()->m_u4BodySrcSize = 0;
-		pMessage->GetMessageBase()->m_ProfileTime.Start();
+		//pMessage->GetMessageBase()->m_ProfileTime.Start();
 
 		//将接受的数据缓冲放入CMessage对象
 		pMessage->SetPacketHead(NULL);
@@ -409,7 +409,7 @@ CMessage* CMakePacket::SetMessageSDisConnect(uint32 u4ConnectID)
 		pMessage->GetMessageBase()->m_u4MsgTime     = (uint32)ACE_OS::gettimeofday().sec();
 		pMessage->GetMessageBase()->m_u4HeadSrcSize = 0;
 		pMessage->GetMessageBase()->m_u4BodySrcSize = 0;
-		pMessage->GetMessageBase()->m_ProfileTime.Start();
+		//pMessage->GetMessageBase()->m_ProfileTime.Start();
 
 		//将接受的数据缓冲放入CMessage对象
 		pMessage->SetPacketHead(NULL);

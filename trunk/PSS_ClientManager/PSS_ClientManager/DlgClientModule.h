@@ -24,6 +24,20 @@ struct _CommandInfo
   }
 };
 
+struct _CommandTimeOut
+{
+	short          nCommandID;                  //命令的ID
+	int            nTime;                       //发生时间
+	int            nTimeOutTime;                //超时时间
+
+	_CommandTimeOut()
+	{
+		nCommandID   = 0;
+		nTime        = 0;
+		nTimeOutTime = 0;
+	}
+};
+
 typedef vector<_CommandInfo> vecCommandInfo;
 
 class CDlgClientModule : public CDialog
@@ -51,7 +65,10 @@ protected:
 public:
   CEdit m_txtModuleID;
   CListCtrl m_lcModuleInfo;
+  CListCtrl m_lcCommandTimeout;
   afx_msg void OnBnClickedButton2();
   afx_msg void OnBnClickedButton1();
   virtual BOOL OnInitDialog();
+  afx_msg void OnBnClickedButton8();
+  afx_msg void OnBnClickedButton9();
 };

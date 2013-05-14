@@ -39,16 +39,6 @@ CMessageService::CMessageService(void)
 	{
 		m_u2ThreadTimeCheck = u2ThreadTimeCheck;
 	}
-
-	uint16 u2PacketTimeOut = App_MainConfig::instance()->GetPacketTimeOut();
-	if(u2PacketTimeOut <= 0)
-	{
-		m_u2PacketTimeOut = MAX_MSG_PACKETTIMEOUT;
-	}
-	else
-	{
-		m_u2PacketTimeOut = u2PacketTimeOut;
-	}
 }
 
 CMessageService::~CMessageService(void)
@@ -317,13 +307,6 @@ bool CMessageService::ProcessMessage(CMessage* pMessage, uint32 u4ThreadID)
 	{
 		//计算数据包的平均处理时间
 		pThreadInfo->m_u2PacketTime = (uint16)((pThreadInfo->m_u2PacketTime + u2DisposeTime)/2);
-	}
-
-
-	//查看数据包处理是否超时
-	if(u2DisposeTime > m_u2PacketTimeOut)
-	{
-		AppLogManager::instance()->WriteLog(LOG_SYSTEM_PACKETTIME, "[PacketTimeout]CommandID = [0x%x] CheckTime = [%d] < DisposeTime = [%d].", u2CommandID, m_u2PacketTimeOut, u2DisposeTime);
 	}
 
 	return true;

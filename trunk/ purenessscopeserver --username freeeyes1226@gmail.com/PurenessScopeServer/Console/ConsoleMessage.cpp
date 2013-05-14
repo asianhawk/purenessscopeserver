@@ -248,6 +248,16 @@ int CConsoleMessage::ParseCommand(const char* pCommand, IBuffPacket* pBuffPacket
 		DoMessage_ReConnectServer(CommandInfo, pBuffPacket);
 		return CONSOLE_MESSAGE_SUCCESS;
 	}
+	else if(ACE_OS::strcmp(CommandInfo.m_szCommandTitle, CONSOLEMESSAHE_COMMANDTIMEOUT) == 0)
+	{
+		DoMessage_CommandTimeout(CommandInfo, pBuffPacket);
+		return CONSOLE_MESSAGE_SUCCESS;
+	}
+	else if(ACE_OS::strcmp(CommandInfo.m_szCommandTitle, CONSOLEMESSAHE_COMMANDTIMEOUTCLR) == 0)
+	{
+		DoMessage_CommandTimeoutclr(CommandInfo, pBuffPacket);
+		return CONSOLE_MESSAGE_SUCCESS;
+	}
 	else
 	{
 		return CONSOLE_MESSAGE_FAIL;
@@ -1159,6 +1169,39 @@ bool CConsoleMessage::DoMessage_ReConnectServer( _CommandInfo& CommandInfo, IBuf
 	return true;
 }
 
+bool CConsoleMessage::DoMessage_CommandTimeout(_CommandInfo& CommandInfo, IBuffPacket* pBuffPacket)
+{
+	if(ACE_OS::strcmp(CommandInfo.m_szCommandExp, "-a") == 0)
+	{
+		uint32 u4Count = App_CommandAccount::instance()->GetTimeoutCount();
+		(*pBuffPacket) << u4Count;
+
+		for(uint32 i = 0; i < u4Count; i++)
+		{
+			_CommandTimeOut* pCommandTimeOut = App_CommandAccount::instance()->GetTimeoutInfo(i);
+			if(NULL != pCommandTimeOut)
+			{
+				(*pBuffPacket) << pCommandTimeOut->m_u2CommandID;
+				(*pBuffPacket) << (uint32)pCommandTimeOut->m_tvTime.sec();
+				(*pBuffPacket) << (uint32)pCommandTimeOut->m_u4TimeOutTime;
+			}
+		}
+	}
+
+	return true;
+}
+
+bool CConsoleMessage::DoMessage_CommandTimeoutclr(_CommandInfo& CommandInfo, IBuffPacket* pBuffPacket)
+{
+	if(ACE_OS::strcmp(CommandInfo.m_szCommandExp, "-a") == 0)
+	{
+		App_CommandAccount::instance()->ClearTimeOut();
+		(*pBuffPacket) << (uint8)0;	
+	}
+
+	return true;
+}
+
 bool CConsoleMessage::SetConsoleKey(vecConsoleKey* pvecConsoleKey)
 {
 	m_pvecConsoleKey = pvecConsoleKey;
@@ -1183,4 +1226,5 @@ bool CConsoleMessage::CheckConsoleKey( const char* pKey )
 
 	return false;
 }
+
 

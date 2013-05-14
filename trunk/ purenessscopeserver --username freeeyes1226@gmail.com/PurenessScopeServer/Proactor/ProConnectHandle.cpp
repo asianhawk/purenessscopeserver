@@ -923,7 +923,7 @@ bool CProConnectManager::SendMessage(uint32 u4ConnectID, IBuffPacket* pBuffPacke
 			//uint32 u4SendCost = (uint32)(ACE_OS::gethrtime() - tvSendBegin);
 			uint32 u4SendCost = 0;
 			//pConnectHandler->SetSendQueueTimeCost(u4SendCost);
-			AppCommandAccount::instance()->SaveCommandData(u2CommandID, (uint8)u4SendCost, PACKET_TCP, u4PacketSize, u4CommandSize, COMMAND_TYPE_OUT);
+			App_CommandAccount::instance()->SaveCommandData(u2CommandID, (uint8)u4SendCost, PACKET_TCP, u4PacketSize, u4CommandSize, COMMAND_TYPE_OUT);
 			return true;
 		}
 		else

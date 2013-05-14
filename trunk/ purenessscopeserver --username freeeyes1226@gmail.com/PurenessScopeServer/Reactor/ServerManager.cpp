@@ -112,7 +112,7 @@ bool CServerManager::Init()
 	}
 	
 	//初始化统计模块功能
-	AppCommandAccount::instance()->Init(App_MainConfig::instance()->GetCommandAccount());
+	App_CommandAccount::instance()->Init(App_MainConfig::instance()->GetCommandAccount(), App_MainConfig::instance()->GetPacketTimeOut());
 
 	//初始化链接管理器
 	App_ConnectManager::instance()->Init(App_MainConfig::instance()->GetSendQueueCount());
@@ -324,8 +324,8 @@ bool CServerManager::Close()
 	OUR_DEBUG((LM_INFO, "[CServerManager::Close]Close App_ConnectManager OK.\n"));
 	App_ClientReConnectManager::instance()->Close();
 	OUR_DEBUG((LM_INFO, "[CServerManager::Close]Close App_ClientReConnectManager OK.\n"));
-	AppCommandAccount::instance()->SaveCommandDataLog();
-	OUR_DEBUG((LM_INFO, "[CServerManager::Close]Save AppCommandAccount OK.\n"));
+	App_CommandAccount::instance()->SaveCommandDataLog();
+	OUR_DEBUG((LM_INFO, "[CServerManager::Close]Save App_CommandAccount OK.\n"));
 	AppLogManager::instance()->Close();
 	OUR_DEBUG((LM_INFO, "[CServerManager::Close]AppLogManager OK\n"));
 	App_BuffPacketManager::instance()->Close();

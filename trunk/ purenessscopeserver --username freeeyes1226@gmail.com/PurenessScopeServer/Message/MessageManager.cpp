@@ -58,14 +58,14 @@ bool CMessageManager::DoMessage(IMessage* pMessage, uint16& u2CommandID)
 				pMessage->GetPacketHead(PacketInfoHead);
 				pMessage->GetPacketBody(PacketInfoBody);
 
+				pMessage->GetMessageBase()->m_ProfileTime.Start();
 				//OUR_DEBUG((LM_ERROR, "[CMessageManager::DoMessage]u2CommandID = %d Begin.\n", u2CommandID));
 				pClientCommandInfo->m_pClientCommand->DoMessage(pMessage, bDeleteFlag);
 				//OUR_DEBUG((LM_ERROR, "[CMessageManager::DoMessage]u2CommandID = %d End.\n", u2CommandID));
 				m_ThreadWriteLock.acquire();
-				uint32 u4Cost = (uint32)pMessage->GetMessageBase()->m_ProfileTime.Stop();
 
 				//添加统计信息
-				AppCommandAccount::instance()->SaveCommandData(u2CommandID, (uint64)u4Cost, 
+				App_CommandAccount::instance()->SaveCommandData(u2CommandID, pMessage->GetMessageBase()->m_ProfileTime.Stop(), 
 					                                           pMessage->GetMessageBase()->m_u1PacketType, 
 															   pMessage->GetMessageBase()->m_u4HeadSrcSize + pMessage->GetMessageBase()->m_u4BodySrcSize, 
 															   (uint32)(PacketInfoHead.m_nDataLen + PacketInfoBody.m_nDataLen), 

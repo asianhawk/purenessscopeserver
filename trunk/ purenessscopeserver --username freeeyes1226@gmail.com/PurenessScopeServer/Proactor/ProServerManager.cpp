@@ -109,7 +109,7 @@ bool CProServerManager::Init()
 	}
 
 	//初始化统计模块功能
-	AppCommandAccount::instance()->Init(App_MainConfig::instance()->GetCommandAccount());
+	App_CommandAccount::instance()->Init(App_MainConfig::instance()->GetCommandAccount(), App_MainConfig::instance()->GetPacketTimeOut());
 	
 	//初始化链接管理器
 	App_ProConnectManager::instance()->Init(App_MainConfig::instance()->GetSendQueueCount());
@@ -342,8 +342,8 @@ bool CProServerManager::Close()
 	OUR_DEBUG((LM_INFO, "[CProServerManager::Close]Close App_ConnectManager OK.\n"));
 	App_ClientProConnectManager::instance()->Close();
 	OUR_DEBUG((LM_INFO, "[CProServerManager::Close]Close App_ClientReConnectManager OK.\n"));
-	AppCommandAccount::instance()->SaveCommandDataLog();
-	OUR_DEBUG((LM_INFO, "[CProServerManager::Close]Save AppCommandAccount OK.\n"));
+	App_CommandAccount::instance()->SaveCommandDataLog();
+	OUR_DEBUG((LM_INFO, "[CProServerManager::Close]Save App_CommandAccount OK.\n"));
 	AppLogManager::instance()->Close();
 	OUR_DEBUG((LM_INFO, "[CProServerManager::Close]AppLogManager OK\n"));
 	App_BuffPacketManager::instance()->Close();
