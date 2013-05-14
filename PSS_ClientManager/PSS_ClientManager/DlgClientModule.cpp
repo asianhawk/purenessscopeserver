@@ -19,15 +19,18 @@ CDlgClientModule::~CDlgClientModule()
 
 void CDlgClientModule::DoDataExchange(CDataExchange* pDX)
 {
-  CDialog::DoDataExchange(pDX);
-  DDX_Control(pDX, IDC_EDIT1, m_txtModuleID);
-  DDX_Control(pDX, IDC_LIST1, m_lcModuleInfo);
+	CDialog::DoDataExchange(pDX);
+	DDX_Control(pDX, IDC_EDIT1, m_txtModuleID);
+	DDX_Control(pDX, IDC_LIST1, m_lcModuleInfo);
+	DDX_Control(pDX, IDC_LIST2, m_lcCommandTimeout);
 }
 
 
 BEGIN_MESSAGE_MAP(CDlgClientModule, CDialog)
   ON_BN_CLICKED(IDC_BUTTON2, &CDlgClientModule::OnBnClickedButton2)
   ON_BN_CLICKED(IDC_BUTTON1, &CDlgClientModule::OnBnClickedButton1)
+  ON_BN_CLICKED(IDC_BUTTON8, &CDlgClientModule::OnBnClickedButton8)
+  ON_BN_CLICKED(IDC_BUTTON9, &CDlgClientModule::OnBnClickedButton9)
 END_MESSAGE_MAP()
 
 CString CDlgClientModule::GetPageTitle()
@@ -237,5 +240,116 @@ BOOL CDlgClientModule::OnInitDialog()
   m_lcModuleInfo.InsertColumn(2, _T("调用次数"), LVCFMT_CENTER, 100);
   m_lcModuleInfo.InsertColumn(3, _T("时间消耗"), LVCFMT_CENTER, 200);
 
+  m_lcCommandTimeout.InsertColumn(0, _T("命令ID"), LVCFMT_CENTER, 100);
+  m_lcCommandTimeout.InsertColumn(1, _T("发生时间"), LVCFMT_CENTER, 200);
+  m_lcCommandTimeout.InsertColumn(2, _T("超时时间"), LVCFMT_CENTER, 100);
+
   return TRUE;
+}
+
+void CDlgClientModule::OnBnClickedButton8()
+{
+	//查看全部
+	m_lcCommandTimeout.DeleteAllItems();
+
+	char szSendMessage[200] = {'\0'};
+	char szCommand[100]     = {'\0'};
+	char szCommandID[100]   = {'\0'};
+	sprintf_s(szCommand, 100, "%s CommandTimeout -a", m_pTcpClientConnect->GetKey());
+	int nSendLen = (int)strlen(szCommand); 
+
+	memcpy_s(szSendMessage, 200, &nSendLen, sizeof(int));
+	memcpy_s(&szSendMessage[4], 200, &szCommand, nSendLen);
+
+	char szRecvBuff[10 * 1024] = {'\0'};
+	int nRecvLen = 10 * 1024;
+	bool blState = m_pTcpClientConnect->SendConsoleMessage(szSendMessage, nSendLen + sizeof(int), (char*)szRecvBuff, nRecvLen);
+	if(blState == false)
+	{
+		MessageBox(_T(MESSAGE_SENDERROR) , _T(MESSAGE_TITLE_ERROR), MB_OK);
+		return;
+	}
+	else
+	{
+		int nIndex        = 0;
+		int nStrLen       = 0;
+		int nPos          = 4;
+		int nModuleCount  = 0;
+		
+		memcpy_s(&nModuleCount, sizeof(int), &szRecvBuff[nPos], sizeof(int));
+		nPos += sizeof(int);
+
+		for(int i = 0; i < nModuleCount; i++)
+		{
+			//开始还原数据结构
+			_CommandTimeOut objCommandTimeOut;
+			memcpy_s(&objCommandTimeOut.nCommandID, sizeof(short), &szRecvBuff[nPos], sizeof(short));
+			nPos += sizeof(short);
+			sprintf_s(szCommandID, 100, "0x%04x", objCommandTimeOut.nCommandID);
+
+			char szUpdateTime[30] = {'\0'};
+			memcpy_s(&objCommandTimeOut.nTime, sizeof(int), &szRecvBuff[nPos], sizeof(int));
+			nPos += sizeof(int);
+			struct tm tmDate;
+			time_t newRawTime = objCommandTimeOut.nTime;
+			localtime_s(&tmDate, &newRawTime);
+			sprintf_s(szUpdateTime, 30, "%04d-%02d-%02d %02d:%02d:%02d", tmDate.tm_year + 1900, 
+				tmDate.tm_mon + 1,
+				tmDate.tm_mday,
+				tmDate.tm_hour,
+				tmDate.tm_min,
+				tmDate.tm_sec);
+
+
+			memcpy_s(&objCommandTimeOut.nTimeOutTime, sizeof(int), &szRecvBuff[nPos], sizeof(int));
+			nPos += sizeof(int);
+
+			wchar_t szzCommandID[200] = {'\0'};
+			wchar_t szzUpdateTime[200] = {'\0'};
+			CString strTimeout;
+
+			int nSrcLen = MultiByteToWideChar(CP_ACP, 0, szCommandID, -1, NULL, 0);
+			int nDecLen = MultiByteToWideChar(CP_ACP, 0, szCommandID, -1, szzCommandID, 200);
+
+			nSrcLen = MultiByteToWideChar(CP_ACP, 0, szUpdateTime, -1, NULL, 0);
+			nDecLen = MultiByteToWideChar(CP_ACP, 0, szUpdateTime, -1, szzUpdateTime, 50);
+
+			strTimeout.Format(_T("%d") ,objCommandTimeOut.nTimeOutTime);
+
+			m_lcCommandTimeout.InsertItem(nIndex, szzCommandID);
+			m_lcCommandTimeout.SetItemText(nIndex, 1, szzCommandID);
+			m_lcCommandTimeout.SetItemText(nIndex, 2, strTimeout);
+
+			nIndex++;
+		}
+	}
+}
+
+void CDlgClientModule::OnBnClickedButton9()
+{
+	//查看全部
+	m_lcCommandTimeout.DeleteAllItems();
+
+	char szSendMessage[200] = {'\0'};
+	char szCommand[100]     = {'\0'};
+	char szCommandID[100]   = {'\0'};
+	sprintf_s(szCommand, 100, "%s CommandTimeoutclr -a", m_pTcpClientConnect->GetKey());
+	int nSendLen = (int)strlen(szCommand); 
+
+	memcpy_s(szSendMessage, 200, &nSendLen, sizeof(int));
+	memcpy_s(&szSendMessage[4], 200, &szCommand, nSendLen);
+
+	char szRecvBuff[10 * 1024] = {'\0'};
+	int nRecvLen = 10 * 1024;
+	bool blState = m_pTcpClientConnect->SendConsoleMessage(szSendMessage, nSendLen + sizeof(int), (char*)szRecvBuff, nRecvLen);
+	if(blState == false)
+	{
+		MessageBox(_T(MESSAGE_SENDERROR) , _T(MESSAGE_TITLE_ERROR), MB_OK);
+		return;
+	}
+	else
+	{
+		MessageBox(_T(MESSAGE_RESULT_SUCCESS) , _T(MESSAGE_TITLE_SUCCESS), MB_OK);
+		return;
+	}
 }
