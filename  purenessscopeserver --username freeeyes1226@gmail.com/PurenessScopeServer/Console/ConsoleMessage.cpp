@@ -258,6 +258,11 @@ int CConsoleMessage::ParseCommand(const char* pCommand, IBuffPacket* pBuffPacket
 		DoMessage_CommandTimeoutclr(CommandInfo, pBuffPacket);
 		return CONSOLE_MESSAGE_SUCCESS;
 	}
+	else if(ACE_OS::strcmp(CommandInfo.m_szCommandTitle, CONSOLEMESSAGE_COMMANDDATALOG) == 0)
+	{
+		DoMessage_CommandDataLog(CommandInfo, pBuffPacket);
+		return CONSOLE_MESSAGE_SUCCESS;
+	}
 	else
 	{
 		return CONSOLE_MESSAGE_FAIL;
@@ -1202,6 +1207,24 @@ bool CConsoleMessage::DoMessage_CommandTimeoutclr(_CommandInfo& CommandInfo, IBu
 	return true;
 }
 
+bool CConsoleMessage::DoMessage_CommandDataLog(_CommandInfo& CommandInfo, IBuffPacket* pBuffPacket)
+{
+	if(ACE_OS::strcmp(CommandInfo.m_szCommandExp, "-a") == 0)
+	{
+		bool blState = App_CommandAccount::instance()->SaveCommandDataLog();
+		if(blState == false)
+		{
+			(*pBuffPacket) << (uint8)1;	
+		}
+		else
+		{
+			(*pBuffPacket) << (uint8)0;	
+		}
+	}
+
+	return true;
+}
+
 bool CConsoleMessage::SetConsoleKey(vecConsoleKey* pvecConsoleKey)
 {
 	m_pvecConsoleKey = pvecConsoleKey;
@@ -1226,5 +1249,4 @@ bool CConsoleMessage::CheckConsoleKey( const char* pKey )
 
 	return false;
 }
-
 

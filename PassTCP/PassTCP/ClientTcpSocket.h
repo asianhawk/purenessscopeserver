@@ -193,6 +193,7 @@ struct _Socket_Info
   bool  m_blIsBroken;                //是否断线重连
   bool  m_blIsSendCount;             //是否随机数据包数
   bool  m_blIsWriteFile;             //是否写入文件
+  bool  m_blIsSendOne;               //是否只发一次
 
   _Socket_Info()
   {
@@ -210,6 +211,7 @@ struct _Socket_Info
     m_blIsBroken       = true;
     m_blIsSendCount    = false;
     m_blIsWriteFile    = false;
+	m_blIsSendOne      = false;
   }
 
   ~_Socket_Info()
