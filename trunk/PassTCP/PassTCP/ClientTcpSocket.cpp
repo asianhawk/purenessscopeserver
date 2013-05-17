@@ -227,6 +227,12 @@ void CClientTcpSocket::Run()
         blIsConnect = false;
       }
     }
+
+	//如果只发送一次，在这里退出
+	if(m_pSocket_Info->m_blIsSendOne == true)
+	{
+		m_blRun = false;
+	}
   }
 
   //如果连接没断，则断开

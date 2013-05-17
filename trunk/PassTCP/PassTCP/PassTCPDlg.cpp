@@ -65,27 +65,28 @@ CPassTCPDlg::CPassTCPDlg(CWnd* pParent /*=NULL*/)
 
 void CPassTCPDlg::DoDataExchange(CDataExchange* pDX)
 {
-  CDialog::DoDataExchange(pDX);
-  DDX_Control(pDX, IDC_EDIT1, m_txtServerIP);
-  DDX_Control(pDX, IDC_EDIT2, m_txtPort);
-  DDX_Control(pDX, IDC_EDIT3, m_txtThreadCount);
-  DDX_Control(pDX, IDC_EDIT13, m_txtRecvTimeout);
-  DDX_Control(pDX, IDC_EDIT4, m_txtSocketInterval);
-  DDX_Control(pDX, IDC_EDIT5, m_txtSendData);
-  DDX_Control(pDX, IDC_CHECK1, m_chkIsAlwayConnect);
-  DDX_Control(pDX, IDC_CHECK3, m_chkRadomaDelay);
-  DDX_Control(pDX, IDC_CHECK2, m_chkIsRecv);
-  DDX_Control(pDX, IDC_CHECK4, m_ChkIsBroken);
-  DDX_Control(pDX, IDC_EDIT6, m_txtSuccessConnect);
-  DDX_Control(pDX, IDC_EDIT7, m_txtSuccessSend);
-  DDX_Control(pDX, IDC_EDIT8, m_txtSuccessRecv);
-  DDX_Control(pDX, IDC_EDIT9, m_txtCurrConnect);
-  DDX_Control(pDX, IDC_EDIT10, m_txtFailConnect);
-  DDX_Control(pDX, IDC_EDIT11, m_txtFailSend);
-  DDX_Control(pDX, IDC_EDIT12, m_txtFailRecv);
-  DDX_Control(pDX, IDC_EDIT14, m_txtRecvLength);
-  DDX_Control(pDX, IDC_CHECK5, m_chkRadomSendCount);
-  DDX_Control(pDX, IDC_CHECK6, m_chkIsWriteLog);
+	CDialog::DoDataExchange(pDX);
+	DDX_Control(pDX, IDC_EDIT1, m_txtServerIP);
+	DDX_Control(pDX, IDC_EDIT2, m_txtPort);
+	DDX_Control(pDX, IDC_EDIT3, m_txtThreadCount);
+	DDX_Control(pDX, IDC_EDIT13, m_txtRecvTimeout);
+	DDX_Control(pDX, IDC_EDIT4, m_txtSocketInterval);
+	DDX_Control(pDX, IDC_EDIT5, m_txtSendData);
+	DDX_Control(pDX, IDC_CHECK1, m_chkIsAlwayConnect);
+	DDX_Control(pDX, IDC_CHECK3, m_chkRadomaDelay);
+	DDX_Control(pDX, IDC_CHECK2, m_chkIsRecv);
+	DDX_Control(pDX, IDC_CHECK4, m_ChkIsBroken);
+	DDX_Control(pDX, IDC_EDIT6, m_txtSuccessConnect);
+	DDX_Control(pDX, IDC_EDIT7, m_txtSuccessSend);
+	DDX_Control(pDX, IDC_EDIT8, m_txtSuccessRecv);
+	DDX_Control(pDX, IDC_EDIT9, m_txtCurrConnect);
+	DDX_Control(pDX, IDC_EDIT10, m_txtFailConnect);
+	DDX_Control(pDX, IDC_EDIT11, m_txtFailSend);
+	DDX_Control(pDX, IDC_EDIT12, m_txtFailRecv);
+	DDX_Control(pDX, IDC_EDIT14, m_txtRecvLength);
+	DDX_Control(pDX, IDC_CHECK5, m_chkRadomSendCount);
+	DDX_Control(pDX, IDC_CHECK6, m_chkIsWriteLog);
+	DDX_Control(pDX, IDC_CHECK7, m_chkSendOne);
 }
 
 BEGIN_MESSAGE_MAP(CPassTCPDlg, CDialog)
@@ -290,6 +291,15 @@ void CPassTCPDlg::OnBnClickedButton1()
     {
       pSocket_Info->m_blIsWriteFile = false;
     }
+
+	if(m_chkSendOne.GetCheck() == BST_CHECKED)
+	{
+		pSocket_Info->m_blIsSendOne = true;
+	}
+	else
+	{
+		pSocket_Info->m_blIsSendOne = false;
+	}
 
     CClientTcpSocket* pClientTcpSocket = new CClientTcpSocket();
     pClientTcpSocket->SetSocketThread(pSocket_Info, pSocket_State_Info);

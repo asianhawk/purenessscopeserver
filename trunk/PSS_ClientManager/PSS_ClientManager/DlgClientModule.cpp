@@ -31,6 +31,7 @@ BEGIN_MESSAGE_MAP(CDlgClientModule, CDialog)
   ON_BN_CLICKED(IDC_BUTTON1, &CDlgClientModule::OnBnClickedButton1)
   ON_BN_CLICKED(IDC_BUTTON8, &CDlgClientModule::OnBnClickedButton8)
   ON_BN_CLICKED(IDC_BUTTON9, &CDlgClientModule::OnBnClickedButton9)
+  ON_BN_CLICKED(IDC_BUTTON10, &CDlgClientModule::OnBnClickedButton10)
 END_MESSAGE_MAP()
 
 CString CDlgClientModule::GetPageTitle()
@@ -327,13 +328,39 @@ void CDlgClientModule::OnBnClickedButton8()
 
 void CDlgClientModule::OnBnClickedButton9()
 {
-	//查看全部
+	//清除所有超时记录
 	m_lcCommandTimeout.DeleteAllItems();
 
 	char szSendMessage[200] = {'\0'};
 	char szCommand[100]     = {'\0'};
 	char szCommandID[100]   = {'\0'};
 	sprintf_s(szCommand, 100, "%s CommandTimeoutclr -a", m_pTcpClientConnect->GetKey());
+	int nSendLen = (int)strlen(szCommand); 
+
+	memcpy_s(szSendMessage, 200, &nSendLen, sizeof(int));
+	memcpy_s(&szSendMessage[4], 200, &szCommand, nSendLen);
+
+	char szRecvBuff[10 * 1024] = {'\0'};
+	int nRecvLen = 10 * 1024;
+	bool blState = m_pTcpClientConnect->SendConsoleMessage(szSendMessage, nSendLen + sizeof(int), (char*)szRecvBuff, nRecvLen);
+	if(blState == false)
+	{
+		MessageBox(_T(MESSAGE_SENDERROR) , _T(MESSAGE_TITLE_ERROR), MB_OK);
+		return;
+	}
+	else
+	{
+		MessageBox(_T(MESSAGE_RESULT_SUCCESS) , _T(MESSAGE_TITLE_SUCCESS), MB_OK);
+		return;
+	}
+}
+
+void CDlgClientModule::OnBnClickedButton10()
+{
+	char szSendMessage[200] = {'\0'};
+	char szCommand[100]     = {'\0'};
+	char szCommandID[100]   = {'\0'};
+	sprintf_s(szCommand, 100, "%s CommandDataLog -a", m_pTcpClientConnect->GetKey());
 	int nSendLen = (int)strlen(szCommand); 
 
 	memcpy_s(szSendMessage, 200, &nSendLen, sizeof(int));

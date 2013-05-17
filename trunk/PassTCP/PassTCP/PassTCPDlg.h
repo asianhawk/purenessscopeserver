@@ -59,6 +59,7 @@ public:
   CButton m_ChkIsBroken;
   CButton m_chkRadomSendCount;
   CButton m_chkIsWriteLog;
+  CButton m_chkSendOne;
   CEdit m_txtSuccessConnect;
   CEdit m_txtSuccessSend;
   CEdit m_txtSuccessRecv;
