@@ -7,24 +7,26 @@ CProactorClientInfo::CProactorClientInfo()
 	m_pClientMessage    = NULL;
 	m_szServerIP[0]     = '\0';
 	m_nPort             = 0;
+	m_nServerID         = 0;
 }
 
 CProactorClientInfo::~CProactorClientInfo()
 {
 }
 
-bool CProactorClientInfo::Init(const char* pIP, int nPort, CProAsynchConnect* pProAsynchConnect, IClientMessage* pClientMessage)
+bool CProactorClientInfo::Init(const char* pIP, int nPort, int nServerID, CProAsynchConnect* pProAsynchConnect, IClientMessage* pClientMessage)
 {
 	ACE_DEBUG((LM_ERROR, "[CProactorClientInfo::Init]SetAddrServer(%s:%d) Begin.\n", pIP, nPort));
 	int nRet = m_AddrServer.set(nPort, pIP);
 	if(-1 == nRet)
 	{
-		ACE_DEBUG((LM_ERROR, "[CProactorClientInfo::Init]adrClient(%s:%d) error.\n", pIP, nPort));
+		ACE_DEBUG((LM_ERROR, "[CProactorClientInfo::Init]nServerID = %d, adrClient(%s:%d) error.\n", nServerID, pIP, nPort));
 		return false;
 	}
 
 	m_pProAsynchConnect = pProAsynchConnect;
 	m_pClientMessage    = pClientMessage;
+	m_nServerID         = nServerID;
 
 	sprintf_safe(m_szServerIP, MAX_BUFF_20, "%s", pIP);
 	m_nPort = nPort;
@@ -59,7 +61,7 @@ bool CProactorClientInfo::Run(bool blIsReadly)
 	{
 		m_pProAsynchConnect->SetConnectState(true);
 		OUR_DEBUG((LM_ERROR, "[CProactorClientInfo::Run]Connect IP=%s,Port=%d.\n", m_AddrServer.get_host_addr(), m_AddrServer.get_port_number()));
-		if(m_pProAsynchConnect->connect(m_AddrServer) == -1)
+		if(m_pProAsynchConnect->connect(m_AddrServer, (const ACE_INET_Addr &)ACE_Addr::sap_any, 1, (const void*)m_nServerID) == -1)
 		{
 			OUR_DEBUG((LM_ERROR, "[CProactorClientInfo::Run]m_pAsynchConnect open error(%d).\n", ACE_OS::last_error()));
 			return false;
@@ -93,20 +95,6 @@ bool CProactorClientInfo::SendData(ACE_Message_Block* pmblk)
 	{
 		//发送数据
 		return m_pProConnectClient->SendData(pmblk);
-	}
-}
-
-bool CProactorClientInfo::SetServerID(int nServerID)
-{
-	if(NULL == m_pProAsynchConnect)
-	{
-		OUR_DEBUG((LM_ERROR, "[CProactorClientInfo::SetServerID]m_pProAsynchConnect is NULL.\n"));
-		return false;
-	}
-	else
-	{
-		m_pProAsynchConnect->SetServerID(nServerID);
-		return true;
 	}
 }
 
@@ -213,7 +201,7 @@ bool CClientProConnectManager::Connect(int nServerID, const char* pIP, int nPort
 
 	//初始化链接信息
 	CProactorClientInfo* pClientInfo = new CProactorClientInfo();
-	if(false == pClientInfo->Init(pIP, nPort, &m_ProAsynchConnect, pClientMessage))
+	if(false == pClientInfo->Init(pIP, nPort, nServerID, &m_ProAsynchConnect, pClientMessage))
 	{
 		delete pClientInfo;
 		pClientInfo = NULL;
@@ -227,8 +215,6 @@ bool CClientProConnectManager::Connect(int nServerID, const char* pIP, int nPort
 		pClientInfo = NULL;
 		return false;
 	}
-
-	pClientInfo->SetServerID(nServerID);
 
 	//链接已经建立，添加进map
 	m_mapClientInfo[nServerID] = pClientInfo;
@@ -548,9 +534,6 @@ int CClientProConnectManager::handle_timeout(const ACE_Time_Value &tv, const voi
 		CProactorClientInfo* pClientInfo = (CProactorClientInfo* )b->second;
 		if(NULL == pClientInfo->GetProConnectClient())
 		{
-			//设置当前nServerID
-			pClientInfo->SetServerID(nServerID);
-
 			//如果连接不存在，则重新建立连接
 			pClientInfo->Run(m_blProactorFinish);
 
@@ -688,9 +671,6 @@ bool CClientProConnectManager::ReConnect( int nServerID )
 
 	if(NULL == pClientInfo->GetProConnectClient())
 	{
-		//设置当前nServerID
-		pClientInfo->SetServerID(nServerID);
-
 		//如果连接不存在，则重新建立连接
 		pClientInfo->Run(m_blProactorFinish);
 

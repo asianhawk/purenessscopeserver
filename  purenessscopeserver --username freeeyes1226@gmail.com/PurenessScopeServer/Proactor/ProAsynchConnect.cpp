@@ -36,8 +36,10 @@ int CProAsynchConnect::validate_connection(const ACE_Asynch_Connect::Result& res
 		SetConnectState(false);
 		return 1;
 	}
+
+	m_nServerID = (int )result.act();
 	
-	OUR_DEBUG((LM_ERROR, "[CProactorClientInfo::Run]Connect IP=%s,Port=%d OK.\n", remote.get_host_addr(), remote.get_port_number()));
+	OUR_DEBUG((LM_ERROR, "[CProactorClientInfo::Run]Connect m_nServerID=%d, IP=%s,Port=%d OK.\n", m_nServerID, remote.get_host_addr(), remote.get_port_number()));
 	return 0;
 }
 
@@ -50,9 +52,3 @@ bool CProAsynchConnect::GetConnectState()
 {
 	return m_blConnectState;
 }
-
-void CProAsynchConnect::SetServerID(int nServerID)
-{
-	m_nServerID = nServerID;
-}
-

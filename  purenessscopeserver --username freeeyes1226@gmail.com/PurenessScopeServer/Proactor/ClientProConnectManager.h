@@ -25,11 +25,10 @@ public:
 	CProactorClientInfo();
 	~CProactorClientInfo();
 
-	bool Init(const char* pIP, int nPort, CProAsynchConnect* pProAsynchConnect, IClientMessage* pClientMessage);  //初始化链接地址和端口
+	bool Init(const char* pIP, int nPort, int nServerID, CProAsynchConnect* pProAsynchConnect, IClientMessage* pClientMessage);  //初始化链接地址和端口
 	bool Run(bool blIsReadly);                                      //开始链接
 	bool SendData(ACE_Message_Block* pmblk);                        //发送数据
 	bool ConnectError(int nError);                                  //链接错误，报错
-	bool SetServerID(int nServerID);                                //设置服务器ID
 	int  GetServerID();                                             //得到服务器ID
 	bool Close();                                                   //关闭服务器链接
 	void SetProConnectClient(CProConnectClient* pProConnectClient); //设置ProConnectClient指针
@@ -44,6 +43,7 @@ private:
 	IClientMessage*    m_pClientMessage;           //回调函数类，回调返回错误和返回数据方法
 	char               m_szServerIP[MAX_BUFF_20];  //远端服务器地址
 	int                m_nPort;                    //远端服务器端口
+	int                m_nServerID;                //服务器ID，由用户起名，用于区别连接
 };
 
 //管理所有连接到其他服务器的管理类
