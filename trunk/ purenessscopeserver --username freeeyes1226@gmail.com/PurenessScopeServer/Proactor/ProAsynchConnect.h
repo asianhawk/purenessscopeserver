@@ -16,7 +16,6 @@ public:
 
 	void SetConnectState(bool blConnectState = false);
 	bool GetConnectState();
-	void SetServerID(int nServerID);
 
 private:
 	bool               m_blConnectState;

@@ -44,4 +44,16 @@ public:
 	uint32 MakePacketLength(uint32 u4DataLen);                                      //获得加密后包的长度
 
 	void Close();
+
+private:
+  uint32 m_u4PacketHead;
+  uint32 m_u4PacketData;
+  uint32 m_u4HeadSrcSize;
+  uint32 m_u4BodySrcSize;
+  uint16 m_u2PacketCommandID;
+  bool   m_blIsHead;
+  char   m_szPacketVersion[MAX_BUFF_20];   //包解析器版本
+
+  ACE_Message_Block* m_pmbHead;   //包头部分
+  ACE_Message_Block* m_pmbBody;   //包体部分
 };
