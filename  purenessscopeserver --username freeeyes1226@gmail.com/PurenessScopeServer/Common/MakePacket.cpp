@@ -224,9 +224,9 @@ bool CMakePacket::ProcessMessageBlock(_MakePacket* pMakePacket)
 	if(NULL != pMessage)
 	{
 		//将要处理的消息放入消息处理线程
-		if(false == App_MessageService::instance()->PutMessage(pMessage))
+		if(false == App_MessageServiceGroup::instance()->PutMessage(pMessage))
 		{
-			OUR_DEBUG((LM_ERROR, "[CMakePacket::ProcessMessageBlock] App_MessageService::instance()->PutMessage Error.\n"));
+			OUR_DEBUG((LM_ERROR, "[CMakePacket::ProcessMessageBlock] App_MessageServiceGroup::instance()->PutMessage Error.\n"));
 			App_MessagePool::instance()->Delete(pMessage);
 			App_PacketParsePool::instance()->Delete(pMakePacket->m_pPacketParse);
 			m_MakePacketPool.Delete(pMakePacket);

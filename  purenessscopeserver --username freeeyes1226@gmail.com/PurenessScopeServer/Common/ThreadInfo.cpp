@@ -40,6 +40,29 @@ bool CThreadInfo::AddThreadInfo(uint32 u4ThreadID)
 	return true;
 }
 
+bool CThreadInfo::AddThreadInfo(uint32 u4ThreadID, _ThreadInfo* pOrcThreadInfo)
+{
+	_ThreadInfo* pThreadInfo = new _ThreadInfo();
+
+	if(NULL == pThreadInfo)
+	{
+		OUR_DEBUG((LM_ERROR, "[CThreadInfo::AddThreadInfo] pThreadInfo is NULL.\n"));
+		return false;
+	}
+
+	(*pThreadInfo) = (*pOrcThreadInfo);
+	pThreadInfo->m_u4ThreadID = u4ThreadID;
+
+	mapThreadInfo::iterator f = m_mapThreadInfo.find(u4ThreadID);
+	if(f != m_mapThreadInfo.end())
+	{
+		OUR_DEBUG((LM_ERROR, "[CThreadInfo::AddThreadInfo] u4ThreadID = %d is exist.\n", u4ThreadID));
+		return false;
+	}
+
+	m_mapThreadInfo.insert(mapThreadInfo::value_type(u4ThreadID, pThreadInfo));
+	return true;
+}
 void CThreadInfo::Close()
 {
 	for(mapThreadInfo::iterator b = m_mapThreadInfo.begin(); b != m_mapThreadInfo.end(); b++)

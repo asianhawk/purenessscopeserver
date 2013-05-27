@@ -552,7 +552,7 @@ bool CConsoleMessage::DoMessage_WorkThreadState(_CommandInfo& CommandInfo, IBuff
 		CThreadInfo* pThreadInfo = NULL;
 
 		//获得当前工作线程状态
-		pThreadInfo = App_MessageService::instance()->GetThreadInfo();
+		pThreadInfo = App_MessageServiceGroup::instance()->GetThreadInfo();
 		if(NULL != pThreadInfo)
 		{
 			int nThreadCount = pThreadInfo->GetThreadCount();
@@ -1074,7 +1074,7 @@ bool CConsoleMessage::DoMessage_ShowServerInfo(_CommandInfo& CommandInfo, IBuffP
 		(*pBuffPacket) << (uint16)App_ModuleLoader::instance()->GetCurrModuleCount();
 
 		//返回工作线程个数
-		(*pBuffPacket) << (uint16)App_MessageService::instance()->GetThreadInfo()->GetThreadCount();
+		(*pBuffPacket) << (uint16)App_MessageServiceGroup::instance()->GetThreadInfo()->GetThreadCount();
 
 		//返回当前协议包的版本号
 		strSTemp.text  = App_MainConfig::instance()->GetServerVersion();
