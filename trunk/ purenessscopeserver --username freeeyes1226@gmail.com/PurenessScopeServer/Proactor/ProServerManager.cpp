@@ -115,7 +115,7 @@ bool CProServerManager::Init()
 	App_ProConnectManager::instance()->Init(App_MainConfig::instance()->GetSendQueueCount());
 
 	//初始化消息处理线程
-	App_MessageService::instance()->Init(App_MainConfig::instance()->GetThreadCount(), App_MainConfig::instance()->GetMsgMaxQueue(), App_MainConfig::instance()->GetMgsHighMark(), App_MainConfig::instance()->GetMsgLowMark());
+	App_MessageServiceGroup::instance()->Init(App_MainConfig::instance()->GetThreadCount(), App_MainConfig::instance()->GetMsgMaxQueue(), App_MainConfig::instance()->GetMgsHighMark(), App_MainConfig::instance()->GetMsgLowMark());
 
 	//初始化给DLL的对象接口
 	App_ServerObject::instance()->SetMessageManager((IMessageManager* )App_MessageManager::instance());
@@ -306,7 +306,7 @@ bool CProServerManager::Start()
 	}
 
 	//开始消息处理线程
-	App_MessageService::instance()->Start();
+	App_MessageServiceGroup::instance()->Start();
 
 	//开始启动链接发送定时器
 	App_ProConnectManager::instance()->StartTimer();
@@ -336,8 +336,8 @@ bool CProServerManager::Close()
 	OUR_DEBUG((LM_INFO, "[CProServerManager::Close]Close App_MessageManager OK.\n"));
 	App_MessageManager::instance()->Close();
 	OUR_DEBUG((LM_INFO, "[CProServerManager::Close]Close App_ConnectManager OK.\n"));
-	App_MessageService::instance()->Close();
-	OUR_DEBUG((LM_INFO, "[CProServerManager::Close]Close App_MessageService OK.\n"));
+	App_MessageServiceGroup::instance()->Close();
+	OUR_DEBUG((LM_INFO, "[CProServerManager::Close]Close App_MessageServiceGroup OK.\n"));
 	App_ProConnectManager::instance()->CloseAll();
 	OUR_DEBUG((LM_INFO, "[CProServerManager::Close]Close App_ConnectManager OK.\n"));
 	App_ClientProConnectManager::instance()->Close();

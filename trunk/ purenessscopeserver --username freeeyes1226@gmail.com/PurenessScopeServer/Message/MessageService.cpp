@@ -13,7 +13,6 @@ CMessageService::CMessageService(void)
 	m_u4ThreadNo      = 0;
 	m_u4ThreadCount   = MAX_MSG_THREADCOUNT;
 	m_u4MaxQueue      = MAX_MSG_THREADQUEUE;
-	m_u4TimerID       = 0;
 	m_blRun           = false;
 	m_u4HighMask      = 0;
 	m_u4LowMask       = 0;
@@ -28,16 +27,6 @@ CMessageService::CMessageService(void)
 	else
 	{
 		m_u2ThreadTimeOut = u2ThreadTimeOut;
-	}
-
-	uint16 u2ThreadTimeCheck = App_MainConfig::instance()->GetThreadTimeCheck();
-	if(u2ThreadTimeCheck <= 0)
-	{
-		m_u2ThreadTimeCheck = MAX_MSG_TIMEDELAYTIME;
-	}
-	else
-	{
-		m_u2ThreadTimeCheck = u2ThreadTimeCheck;
 	}
 }
 
@@ -58,11 +47,6 @@ void CMessageService::Init(uint32 u4ThreadCount, uint32 u4MaxQueue, uint32 u4Low
 
 bool CMessageService::Start()
 {
-	if(false == StartTimer())
-	{
-		return false;
-	}
-
 	if(0 != open())
 	{
 		return false;
@@ -73,7 +57,7 @@ bool CMessageService::Start()
 
 bool CMessageService::IsRun()
 {
-	ACE_Guard<ACE_Recursive_Thread_Mutex> guard(m_RunMutex);
+	//ACE_Guard<ACE_Recursive_Thread_Mutex> guard(m_RunMutex);
 
 	return m_blRun;
 }
@@ -108,7 +92,6 @@ int CMessageService::svc(void)
 	ACE_Message_Block* mb = NULL;
 	ACE_Time_Value xtime;
 
-	m_rwMutex.acquire_write();
 	uint32 u4ThreadID = (uint32)m_ThreadInfo.GetThreadCount();
 	m_ThreadInfo.AddThreadInfo(u4ThreadID);
 
@@ -119,7 +102,6 @@ int CMessageService::svc(void)
 	if(NULL == pThreadInfo)
 	{
 		OUR_DEBUG((LM_ERROR,"[CMessageService::svc] pThreadInfo[%d] is not find.\n", u4ThreadID));
-		m_rwMutex.release();
 		return true;
 	}
 
@@ -127,8 +109,6 @@ int CMessageService::svc(void)
 	{
 		pThreadInfo->m_u4ThreadIndex = ACE_OS::thr_self();
 	}
-
-	m_rwMutex.release();
 
 	ACE_OS::sleep(1);
 
@@ -238,7 +218,6 @@ bool CMessageService::ProcessMessage(CMessage* pMessage, uint32 u4ThreadID)
 		App_MessagePool::instance()->Delete(pMessage);
 		return false;
 	}
-
 	pThreadInfo->m_tvUpdateTime = ACE_OS::gettimeofday();
 	pThreadInfo->m_u4State = THREAD_RUNBEGIN;
 
@@ -314,7 +293,6 @@ bool CMessageService::ProcessMessage(CMessage* pMessage, uint32 u4ThreadID)
 
 int CMessageService::Close()
 {
-	KillTimer();
 	m_blRun = false;
 	msg_queue()->deactivate();
 	msg_queue()->flush();
@@ -322,17 +300,12 @@ int CMessageService::Close()
 	return 0;
 }
 
-int CMessageService::handle_timeout(const ACE_Time_Value &tv, const void *arg)
+bool CMessageService::SaveThreadInfo()
 {
-	if(arg != NULL)
-	{
-		OUR_DEBUG((LM_ERROR,"[CMessageService::handle_timeout] arg is not NULL, time is (%d).\n", tv.sec()));
-	}
-
 	return SaveThreadInfoData();
 }
 
-int CMessageService::SaveThreadInfoData()
+bool CMessageService::SaveThreadInfoData()
 {
 	//这里进行线程自检
 	for(uint32 i = 0; i < m_u4ThreadCount; i++)
@@ -364,11 +337,9 @@ int CMessageService::SaveThreadInfoData()
 					App_BuffPacketManager::instance()->GetBuffPacketUsedCount(),
 					App_BuffPacketManager::instance()->GetBuffPacketFreeCount());
 
-				//发现阻塞线程，重启相应的线程
-				//ACE_OS::thr_kill(pThreadInfo->m_u4ThreadIndex, SIGALRM);
+				//发现阻塞线程，需要重启相应的线程
 				AppLogManager::instance()->WriteLog(LOG_SYSTEM_WORKTHREAD, "[CMessageService::handle_timeout]  pThreadInfo = [%d] ThreadID = [%d] Thread is reset.", pThreadInfo->m_u4ThreadID, pThreadInfo->m_u4ThreadIndex);
-				//m_ThreadInfo.CloseThread(pThreadInfo->m_u4ThreadID);
-				//ResumeThread(1);
+				return false;
 			}
 			else
 			{
@@ -383,8 +354,11 @@ int CMessageService::SaveThreadInfoData()
 					(int)msg_queue()->message_count(),
 					App_BuffPacketManager::instance()->GetBuffPacketUsedCount(),
 					App_BuffPacketManager::instance()->GetBuffPacketFreeCount());
+
+				pThreadInfo->m_u4CurrPacketCount = 0;
+				return true;
 			}
-			pThreadInfo->m_u4CurrPacketCount = 0;
+			//
 		}
 		else
 		{
@@ -392,37 +366,6 @@ int CMessageService::SaveThreadInfoData()
 		}
 	}
 
-	return 0;
-}
-
-bool CMessageService::ResumeThread(int nThreadCount)
-{
-	OUR_DEBUG((LM_INFO,"[CMessageService::ResumeThread] nThreadCount = [%d].\n", nThreadCount));
-	ACE_Thread::spawn_n(1, &ACE_Task_Base::svc_run, (void *)this);
-
-	return true;
-}
-
-bool CMessageService::StartTimer()
-{
-	OUR_DEBUG((LM_ERROR, "CMessageService::StartTimer()-->begin....\n"));
-
-	m_u4TimerID = App_TimerManager::instance()->schedule(this, NULL, ACE_OS::gettimeofday() + ACE_Time_Value(MAX_MSG_STARTTIME), ACE_Time_Value(m_u2ThreadTimeCheck));
-	if(0 == m_u4TimerID)
-	{
-		OUR_DEBUG((LM_ERROR, "CMessageService::StartTimer()--> Start thread time error.\n"));
-		return false;
-	}
-
-	return true;
-}
-
-bool CMessageService::KillTimer()
-{
-	if(m_u4TimerID > 0)
-	{
-		App_TimerManager::instance()->cancel(m_u4TimerID);
-	}
 	return true;
 }
 
@@ -431,3 +374,182 @@ CThreadInfo* CMessageService::GetThreadInfo()
 	return &m_ThreadInfo;
 }
 
+
+CMessageServiceGroup::CMessageServiceGroup( void )
+{
+	m_u4TimerID = 0;
+
+	uint16 u2ThreadTimeCheck = App_MainConfig::instance()->GetThreadTimeCheck();
+	if(u2ThreadTimeCheck <= 0)
+	{
+		m_u2ThreadTimeCheck = MAX_MSG_TIMEDELAYTIME;
+	}
+	else
+	{
+		m_u2ThreadTimeCheck = u2ThreadTimeCheck;
+	}
+}
+
+CMessageServiceGroup::~CMessageServiceGroup( void )
+{
+
+}
+
+int CMessageServiceGroup::handle_timeout(const ACE_Time_Value &tv, const void *arg)
+{
+	if(arg != NULL)
+	{
+		OUR_DEBUG((LM_ERROR,"[CMessageServiceGroup::handle_timeout] arg is not NULL, time is (%d).\n", tv.sec()));
+	}
+
+	for(uint32 i = 0; i < (uint32)m_vecMessageService.size(); i++)
+	{
+		CMessageService* pMessageService = (CMessageService* )m_vecMessageService[i];
+		if(NULL != pMessageService)
+		{
+			bool blFlag = pMessageService->SaveThreadInfo();
+			if(false == blFlag)
+			{
+				//需要重启工作线程，先关闭当前的工作线程
+				pMessageService->Close();
+				delete pMessageService;
+
+				//创建一个新的工作线程，并赋值进去
+				pMessageService = new CMessageService();
+				if(NULL != pMessageService)
+				{
+					pMessageService->Init(1, m_u4MaxQueue, m_u4LowMask, m_u4HighMask);
+					pMessageService->Start();
+
+					m_vecMessageService[i] = pMessageService;
+
+				}
+				else
+				{
+					OUR_DEBUG((LM_ERROR,"[CMessageServiceGroup::handle_timeout] reset workthread is NULL (%d).\n", i));
+				}
+			}
+		}
+	}
+
+	return 0;
+}
+
+bool CMessageServiceGroup::Init(uint32 u4ThreadCount, uint32 u4MaxQueue, uint32 u4LowMask, uint32 u4HighMask)
+{
+	//删除以前的所有CMessageService对象
+	Close();
+
+	//记录当前设置
+	m_u4MaxQueue = u4MaxQueue;
+	m_u4HighMask = u4HighMask;
+	m_u4LowMask  = u4LowMask;
+
+	//初始化所有的Message对象
+	for(uint32 i = 0; i < u4ThreadCount; i++)
+	{
+		CMessageService* pMessageService = new CMessageService();
+		if(NULL == pMessageService)
+		{
+			OUR_DEBUG((LM_ERROR, "[CMessageServiceGroup::Init](%d)pMessageService is NULL.\n", i));
+			return false;
+		}
+		pMessageService->Init(1, u4MaxQueue, u4LowMask, u4HighMask);
+		m_vecMessageService.push_back(pMessageService);
+	}
+
+	return true;
+}
+
+bool CMessageServiceGroup::PutMessage(CMessage* pMessage)
+{
+	uint32 u4ThreadID = pMessage->GetMessageBase()->m_u4ConnectID % (uint32)m_vecMessageService.size();
+	CMessageService* pMessageService = (CMessageService* )m_vecMessageService[u4ThreadID];
+	if(NULL != pMessageService)
+	{
+		pMessageService->PutMessage(pMessage);
+	}
+
+	return true;
+}
+
+void CMessageServiceGroup::Close()
+{
+	KillTimer();
+
+	for(uint32 i = 0; i < (uint32)m_vecMessageService.size(); i++)
+	{
+		CMessageService* pMessageService = (CMessageService* )m_vecMessageService[i];
+		if(NULL != pMessageService)
+		{
+			pMessageService->Close();
+		}
+	}
+
+	m_vecMessageService.clear();
+}
+
+bool CMessageServiceGroup::Start()
+{
+	if(StartTimer() == false)
+	{
+		return false;
+	}
+
+	for(uint32 i = 0; i < (uint32)m_vecMessageService.size(); i++)
+	{
+		CMessageService* pMessageService = (CMessageService* )m_vecMessageService[i];
+		if(NULL != pMessageService)
+		{
+			pMessageService->Start();
+		}
+
+		OUR_DEBUG((LM_INFO,"[CMessageServiceGroup::Start](%d)WorkThread is OK.\n", i));
+	}
+
+	return true;
+}
+
+bool CMessageServiceGroup::StartTimer()
+{
+	OUR_DEBUG((LM_ERROR, "[CMessageService::StartTimer] begin....\n"));
+
+	m_u4TimerID = App_TimerManager::instance()->schedule(this, NULL, ACE_OS::gettimeofday() + ACE_Time_Value(MAX_MSG_STARTTIME), ACE_Time_Value(m_u2ThreadTimeCheck));
+	if(0 == m_u4TimerID)
+	{
+		OUR_DEBUG((LM_ERROR, "[CMessageService::StartTimer] Start thread time error.\n"));
+		return false;
+	}
+
+	return true;
+}
+
+bool CMessageServiceGroup::KillTimer()
+{
+	if(m_u4TimerID > 0)
+	{
+		App_TimerManager::instance()->cancel(m_u4TimerID);
+	}
+	return true;
+}
+
+CThreadInfo* CMessageServiceGroup::GetThreadInfo()
+{
+	m_objAllThreadInfo.Close();
+
+	for(uint32 i = 0; i < (uint32)m_vecMessageService.size(); i++)
+	{
+		CMessageService* pMessageService = (CMessageService* )m_vecMessageService[i];
+		if(NULL != pMessageService)
+		{
+			CThreadInfo* pThreadInfo = pMessageService->GetThreadInfo();
+			if(NULL == pThreadInfo)
+			{
+				_ThreadInfo* pThreadInfoData = pThreadInfo->GetThreadInfo(1);
+				m_objAllThreadInfo.AddThreadInfo(i, pThreadInfoData);
+			}
+		}
+	}
+
+	return &m_objAllThreadInfo;
+}

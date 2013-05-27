@@ -33,7 +33,7 @@ public:
 	virtual int svc (void);
 	int Close ();
 
-	virtual int handle_timeout(const ACE_Time_Value &tv, const void *arg);
+	bool SaveThreadInfo();
 
 	void Init(uint32 u4ThreadCount = MAX_MSG_THREADCOUNT, uint32 u4MaxQueue = MAX_MSG_THREADQUEUE, uint32 u4LowMask = MAX_MSG_MASK, uint32 u4HighMask = MAX_MSG_MASK);
 
@@ -44,20 +44,14 @@ public:
 	CThreadInfo* GetThreadInfo();
 
 private:
-	bool StartTimer();
-	bool KillTimer();
-	bool ResumeThread(int nThreadCount);
 	bool IsRun();
 	bool ProcessMessage(CMessage* pMessage, uint32 u4ThreadID);
-	int  SaveThreadInfoData(); 
+	bool SaveThreadInfoData(); 
 
 private:
-	ACE_Recursive_Thread_Mutex     m_RunMutex;            //线程锁级别
-	ACE_RW_Thread_Mutex            m_rwMutex;
 	uint32                         m_u4ThreadCount;       //处理的线程总数
 	uint32                         m_u4ThreadNo;          //当前线程ID
 	uint32                         m_u4MaxQueue;          //线程中最大消息对象个数
-	uint32                         m_u4TimerID;           //定时器对象
 	bool                           m_blRun;               //线程是否在运行
 	uint32                         m_u4HighMask;
 	uint32                         m_u4LowMask;
@@ -70,5 +64,40 @@ private:
 	CThreadInfo                    m_ThreadInfo;
 };
 
-typedef ACE_Singleton<CMessageService,ACE_Null_Mutex> App_MessageService; 
+//add by freeeyes
+//添加线程管理，用户可以创建若干个ACE_Task，每个Task对应一个线程，一个Connectid只对应一个线程。
+class CMessageServiceGroup : public ACE_Task<ACE_MT_SYNCH>
+{
+public:
+	CMessageServiceGroup(void);
+	~CMessageServiceGroup(void);
+
+	virtual int handle_timeout(const ACE_Time_Value &tv, const void *arg);
+
+	bool Init(uint32 u4ThreadCount = MAX_MSG_THREADCOUNT, uint32 u4MaxQueue = MAX_MSG_THREADQUEUE, uint32 u4LowMask = MAX_MSG_MASK, uint32 u4HighMask = MAX_MSG_MASK);
+	bool PutMessage(CMessage* pMessage);
+	void Close();
+
+	bool Start();
+	CThreadInfo* GetThreadInfo();
+
+private:
+	bool StartTimer();
+	bool KillTimer();
+
+private:
+	typedef vector<CMessageService*> vecMessageService;
+	vecMessageService m_vecMessageService;
+
+public:
+	CThreadInfo       m_objAllThreadInfo;
+	uint32            m_u4TimerID;           //定时器ID
+	uint16            m_u2ThreadTimeCheck;   //线程自检时间
+	uint32            m_u4MaxQueue;          //线程中最大消息对象个数
+	uint32            m_u4HighMask;          //线程高水位
+	uint32            m_u4LowMask;           //线程低水位 
+};
+
+
+typedef ACE_Singleton<CMessageServiceGroup,ACE_Null_Mutex> App_MessageServiceGroup; 
 #endif
