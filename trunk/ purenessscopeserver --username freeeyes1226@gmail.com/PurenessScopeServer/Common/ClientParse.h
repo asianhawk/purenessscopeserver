@@ -4,11 +4,11 @@
 //客户端数据包解析类
 //中间服务器协议架构为 (<包长 unit32>):包头 (<命令ID uint16> + <包自增量ID uint32> + 数据体 XXX):包体
 //add by freeeyes 2010-12-24
-#include "define.h"
+#include "IClientParse.h"
 
 #define MAX_PACKET_HEAD sizeof(uint32)
 
-class CClientParse
+class CClientParse : public IClientParse
 {
 public:
 	CClientParse(void);
@@ -19,7 +19,6 @@ public:
 	uint32 GetPacketHeadLen();
 	uint32 GetPacketDataLen();
 	uint16 GetPacketCommandID();
-	uint32 GetPacketSerialNo();
 
 	bool GetIsHead();
 
