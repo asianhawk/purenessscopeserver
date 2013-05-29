@@ -231,17 +231,7 @@ bool CMessageService::ProcessMessage(CMessage* pMessage, uint32 u4ThreadID)
 	//将要处理的数据放到逻辑处理的地方去
 	uint16 u2CommandID = 0;          //数据包的CommandID
 
-	_MessageBase* pMessageBase = pMessage->GetMessageBase();
-	if(NULL == pMessageBase)
-	{
-		OUR_DEBUG((LM_ERROR,"[CMessageService::ProcessMessage] pMessageBase is NULL.\n", u4ThreadID));
-		App_MessagePool::instance()->Delete(pMessage);
-		return false;
-	}
-	else
-	{
-		u2CommandID = pMessageBase->m_u2Cmd;
-	}
+	u2CommandID = pMessage->GetMessageBase()->m_u2Cmd;
 
 	DisposeTime.Start();
 	App_MessageManager::instance()->DoMessage(pMessage, u2CommandID);

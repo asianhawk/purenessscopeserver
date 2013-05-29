@@ -262,6 +262,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\IObject\IClientParse.h"
+				>
+			</File>
+			<File
 				RelativePath=".\IObject\IConnectManager.h"
 				>
 			</File>

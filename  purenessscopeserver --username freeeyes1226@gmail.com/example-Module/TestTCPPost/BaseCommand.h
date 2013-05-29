@@ -2,6 +2,7 @@
 
 #include "IBuffPacket.h"
 #include "ClientCommand.h"
+#include "IClientParse.h"
 #include "IObject.h"
 
 #include <string>
@@ -18,9 +19,10 @@ public:
 	CPostServerData() {};
 	~CPostServerData() {};
 
-	bool RecvData(CClientParse* pClientParse)
+	bool RecvData(IClientParse* pClientParse)
 	{
-		OUR_DEBUG((LM_INFO, "[CPostServerData::RecvData]Get Data.\n"));
+		OUR_DEBUG((LM_INFO, "[CPostServerData::RecvData]Get Data(%d).\n", pClientParse->GetPacketDataLen()));
+		
 		return true;
 	};
 

@@ -363,7 +363,7 @@ bool CConnectClient::CheckMessage()
 	//处理接收到的数据
 	if(NULL != m_pClientMessage)
 	{
-		m_pClientMessage->RecvData(m_pClientParse);
+		m_pClientMessage->RecvData((IClientParse* )m_pClientParse);
 	}
 	ACE_Time_Value tvEnd = ACE_OS::gettimeofday();
 	m_u4CostTime += (uint32)(tvEnd.msec() - tvBegin.msec());

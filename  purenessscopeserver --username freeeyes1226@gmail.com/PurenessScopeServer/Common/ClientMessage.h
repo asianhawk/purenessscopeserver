@@ -13,7 +13,7 @@ class IClientMessage
 public:
 	virtual ~IClientMessage() {};
 	
-	virtual bool RecvData(CClientParse* pClientParse) = 0;    //接收数据的函数
+	virtual bool RecvData(IClientParse* pClientParse) = 0;    //接收数据的函数
 	virtual bool ConnectError(int nError)             = 0;    //当出错的时候，调用此接口返回错误信息  
 };
 
