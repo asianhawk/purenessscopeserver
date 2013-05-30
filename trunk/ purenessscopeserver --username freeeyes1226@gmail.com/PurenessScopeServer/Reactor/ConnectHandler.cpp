@@ -1364,8 +1364,7 @@ void CConnectManager::SetRecvQueueTimeCost(uint32 u4ConnectID, uint32 u4TimeCost
 void CConnectManager::GetConnectInfo(vecClientConnectInfo& VecClientConnectInfo)
 {
 	//ACE_Guard<ACE_Recursive_Thread_Mutex> WGuard(m_ThreadWriteLock);
-	VecClientConnectInfo.clear();
-
+	
 	for(mapConnectManager::iterator b = m_mapConnectManager.begin(); b != m_mapConnectManager.end(); b++)
 	{
 		CConnectHandler* pConnectHandler = (CConnectHandler* )b->second;
