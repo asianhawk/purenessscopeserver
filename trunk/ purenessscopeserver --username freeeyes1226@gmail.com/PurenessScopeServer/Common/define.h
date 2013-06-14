@@ -32,6 +32,7 @@ using namespace std;
 
 #define MAX_BUFF_9    9
 #define MAX_BUFF_20   20
+#define MAX_BUFF_50   50
 #define MAX_BUFF_100  100
 #define MAX_BUFF_200  200
 #define MAX_BUFF_500  500

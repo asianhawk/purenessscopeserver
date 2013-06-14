@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="UTF-8"?>
 <config>
-	<ServerType Type="0" desc = "设置为0为当前启动，1为Linux后台执行，windows启动系统服务" />
+	<ServerType Type="0" name="Pss Service" displayname="PssService" desc = "设置为0为当前启动，1为Linux后台执行，windows启动系统服务" />
 	<ServerID id="1" desc="当前服务器的ID编号" />
 	<ServerName name="Freeeyes" desc="当前服务器的名称" />
 	<ServerVersion Version="0.90" desc="当前服务器版本" />

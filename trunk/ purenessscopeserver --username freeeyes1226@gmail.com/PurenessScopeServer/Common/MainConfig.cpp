@@ -39,12 +39,15 @@ CMainConfig::CMainConfig(void)
 	m_u2SendQueuePutTime    = (uint16)MAX_MSG_PUTTIMEOUT;
 	m_u2WorkQueuePutTime    = (uint16)MAX_MSG_PUTTIMEOUT;
 
-	m_szServerName[0]       = '\0';
-	m_szServerVersion[0]    = '\0';
-	m_szPacketVersion[0]    = '\0';
-	m_szModulePath[0]       = '\0';
-	m_szResourceName[0]     = '\0';
-	m_szEncryptPass[0]      = '\0';
+	m_szServerName[0]         = '\0';
+	m_szServerVersion[0]      = '\0';
+	m_szPacketVersion[0]      = '\0';
+	m_szModulePath[0]         = '\0';
+	m_szResourceName[0]       = '\0';
+	m_szEncryptPass[0]        = '\0';
+
+	m_szWindowsServiceName[0] = '\0';
+	m_szDisplayServiceName[0] = '\0';
 }
 
 CMainConfig::~CMainConfig(void)
@@ -79,6 +82,18 @@ bool CMainConfig::Init(const char* szConfigPath)
 	if(NULL != pData)
 	{
 		m_u1ServerType = (uint8)ACE_OS::atoi(pData);
+	}
+
+	pData = m_MainConfig.GetData("ServerType", "name");
+	if(NULL != pData)
+	{
+		sprintf_safe(m_szWindowsServiceName, MAX_BUFF_50, "%s", pData);
+	}
+
+	pData = m_MainConfig.GetData("ServerType", "displayname");
+	if(NULL != pData)
+	{
+		sprintf_safe(m_szDisplayServiceName, MAX_BUFF_50, "%s", pData);
 	}
 
 	pData = m_MainConfig.GetData("ServerID", "id");
@@ -693,3 +708,15 @@ uint8 CMainConfig::GetServerType()
 {
 	return m_u1ServerType;
 }
+
+const char* CMainConfig::GetWindowsServiceName()
+{
+	return m_szWindowsServiceName;
+}
+
+const char* CMainConfig::GetDisplayServiceName()
+{
+	return m_szDisplayServiceName;
+}
+
+

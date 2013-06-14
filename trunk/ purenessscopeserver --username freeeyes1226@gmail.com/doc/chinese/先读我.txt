@@ -110,3 +110,14 @@ ACE_ROOT是你的ACE安装路径。
 PSClient工程编译需要依赖duilib，请去http://www.duilib.com/下载duilib的源代码并编译，把编译后的duilib.lib放在PSClient的lib文件夹下。
 并把duilib.dll放在PSClient的bin目录下。
 
+附注：
+目前Pss支持加载为windows服务，如果要想Pss以windows服务启动
+首先确保自己在管理员权限下。
+然后打开main.xml
+修改<ServerType Type="1" name="Pss Service" displayname="PssService">
+这里Type=1为程序以windows服务的形式启动
+启动方法，需要在命令行模式下(cmd)，到当前目录，然后运行框架 PurenessScopeServer_D.exe -i
+注册windows服务。
+然后在windows服务管理器下（或者在命令行下，使用PurenessScopeServer_D.exe -s）启动和停止服务。
+如果要删除服务，则需要在命令行下PurenessScopeServer_D.exe -r
+注意，如果要以服务形式启动，必须框架依赖的dll都在当前路径下，或者在环境变量path指定的路径下。否则会启动失败。
