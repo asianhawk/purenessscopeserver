@@ -10,7 +10,7 @@
 //如果是Linux
 #include "ServerManager.h"
 
-int main(int argc, char* argv[])
+int ACE_TMAIN(int argc, ACE_TCHAR* argv[])
 {
 	if(argc > 0)
 	{
@@ -20,8 +20,6 @@ int main(int argc, char* argv[])
 			OUR_DEBUG((LM_INFO, "[main]argc(%d) = %s.\n", argc, argv[i]));
 		}
 	}
-	
-	ACE::init();
 
 	//第一步，读取配置文件
 	if(!App_MainConfig::instance()->Init(MAINCONFIG))
@@ -31,6 +29,12 @@ int main(int argc, char* argv[])
 	else
 	{
 		App_MainConfig::instance()->Display();
+	}
+
+	//判断是否是需要以服务的状态启动
+	if(App_MainConfig::instance()->GetServerType() == 1)
+	{
+		ACE::daemonize();
 	}
 
 	//第二步，启动主服务器监控
@@ -51,8 +55,6 @@ int main(int argc, char* argv[])
 	ACE_Time_Value tvSleep(2, 0);
 	ACE_OS::sleep(tvSleep);
 
-	ACE::fini();
-
 	OUR_DEBUG((LM_INFO, "[main]Server Exit.\n"));
 
 	return 0;
@@ -60,12 +62,10 @@ int main(int argc, char* argv[])
 
 #else
 //如果是windows
-
-#include "ProServerManager.h"
+#include "WindowsProcess.h"
 #include "WindowsDump.h"
-#include <tchar.h>
 
-int main(int argc, char* argv[])
+int ACE_TMAIN(int argc, ACE_TCHAR* argv[])
 {
 	//指定当前目录，防止访问文件失败
 	TCHAR szFileName[MAX_PATH] = {0};
@@ -78,9 +78,6 @@ int main(int argc, char* argv[])
 		*pszEnd = 0;
 	}
 	SetCurrentDirectory(szFileName);
-
-	ACE::init();
-	int nServerType = SERVER_ACTOR_PROACTOR;
 
 	//添加Dump文件
 	SetUnhandledExceptionFilter((LPTOP_LEVEL_EXCEPTION_FILTER)ApplicationCrashHandler);   
@@ -95,22 +92,19 @@ int main(int argc, char* argv[])
 		App_MainConfig::instance()->Display();
 	}
 
-	//第二步，启动主服务器监控
-	if(!App_ProServerManager::instance()->Init())
+	//判断是否是需要以服务的状态启动
+	if(App_MainConfig::instance()->GetServerType() == 1)
 	{
-		OUR_DEBUG((LM_INFO, "[main]App_ProServerManager::instance()->Init() error.\n"));
-		getchar();
+		//以服务状态启动
+		//首先看有没有配置启动windows服务
+		App_Process::instance()->run(argc, argv);
+	}
+	else
+	{
+		//正常启动
+		ServerMain();
 	}
 
-	if(!App_ProServerManager::instance()->Start())
-	{
-		OUR_DEBUG((LM_INFO, "[main]App_ProServerManager::instance()->Start() error.\n"));
-		getchar();
-	}
-
-	OUR_DEBUG((LM_INFO, "[main]Server Run is End.\n"));
-
-	ACE::fini();
 
 	return 0;
 }

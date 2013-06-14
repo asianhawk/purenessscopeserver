@@ -21,6 +21,7 @@ CMainConfig::CMainConfig(void)
 	m_u2MaxHanderCount        = 0;
 	m_u2MaxConnectTime        = 0;
 	m_u1CommandAccount        = 0;
+	m_u1ServerType            = 0;
 
 	m_u1ConsoleSupport        = 0;
 	m_nConsolePort            = 0;
@@ -71,6 +72,13 @@ bool CMainConfig::Init(const char* szConfigPath)
 	{
 		OUR_DEBUG((LM_INFO, "[CMainConfig::Init]File Read Error = %s.\n", szConfigPath));
 		return false;
+	}
+
+	//获得服务器基础属性
+	pData = m_MainConfig.GetData("ServerType", "Type");
+	if(NULL != pData)
+	{
+		m_u1ServerType = (uint8)ACE_OS::atoi(pData);
 	}
 
 	pData = m_MainConfig.GetData("ServerID", "id");
@@ -406,6 +414,7 @@ void CMainConfig::Display()
 	OUR_DEBUG((LM_INFO, "[CMainConfig::Display]m_u1CommandAccount = %d.\n", m_u1CommandAccount));
 	OUR_DEBUG((LM_INFO, "[CMainConfig::Display]m_u2SendQueuePutTime = %d.\n", m_u2SendQueuePutTime));
 	OUR_DEBUG((LM_INFO, "[CMainConfig::Display]m_u2WorkQueuePutTime = %d.\n", m_u2WorkQueuePutTime));
+	OUR_DEBUG((LM_INFO, "[CMainConfig::Display]m_u1ServerType = %d.\n", m_u1ServerType));
 
 	for(int i = 0; i < (int)m_vecUDPServerInfo.size(); i++)
 	{
@@ -680,3 +689,7 @@ uint16 CMainConfig::GetWorkQueuePutTime()
 	return m_u2WorkQueuePutTime;
 }
 
+uint8 CMainConfig::GetServerType()
+{
+	return m_u1ServerType;
+}
