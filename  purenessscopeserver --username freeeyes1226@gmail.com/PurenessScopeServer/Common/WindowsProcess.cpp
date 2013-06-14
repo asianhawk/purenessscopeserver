@@ -79,7 +79,7 @@ int Process::run(int argc, ACE_TCHAR* argv[])
 		ACE_Log_Msg::STDERR | ACE_Log_Msg::OSTREAM,
 		0);
 
-	App_Service::instance()->name(ACE_TEXT ("PssServer"), ACE_TEXT ("PssServer Service"));
+		App_Service::instance()->name(ACE_TEXT (App_MainConfig::instance()->GetDisplayServiceName()), ACE_TEXT (App_MainConfig::instance()->GetWindowsServiceName()));
 
 	bool blStata = parse_args(argc, argv);
 	if(blStata == true)

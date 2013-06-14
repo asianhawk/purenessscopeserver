@@ -58,6 +58,8 @@ public:
 	const char* GetServerName();
 	const char* GetServerVersion();
 	const char* GetPacketVersion();
+	const char* GetWindowsServiceName();
+	const char* GetDisplayServiceName();
 	uint16 GetServerID();
 	uint16 GetServerPortCount();
 	_ServerInfo* GetServerPort(int nIndex);
@@ -116,33 +118,36 @@ private:
 	CXmlOpeation m_MainConfig;
 	char       m_szError[MAX_BUFF_500];
 
-	int        m_nServerID;                        //服务器ID
-	char       m_szServerName[MAX_BUFF_20];        //服务器名称
-	char       m_szServerVersion[MAX_BUFF_20];     //服务器版本
+	int        m_nServerID;                            //服务器ID
+	char       m_szServerName[MAX_BUFF_20];            //服务器名称
+	char       m_szServerVersion[MAX_BUFF_20];         //服务器版本
 
-	char       m_szPacketVersion[MAX_BUFF_20];     //数据解析包模块的版本号
+	char       m_szWindowsServiceName[MAX_BUFF_50];    //windows服务名称
+	char       m_szDisplayServiceName[MAX_BUFF_50];    //windows服务显示名称
 
-	uint32     m_u4MsgHighMark;                    //消息的高水位阀值
-	uint32     m_u4MsgLowMark;                     //消息的低水位阀值
-	uint32     m_u4MsgThreadCount;                 //允许的工作线程个数
-	uint32     m_u4MsgMaxQueue;                    //消息队列的最大个数
+	char       m_szPacketVersion[MAX_BUFF_20];         //数据解析包模块的版本号
 
-	char       m_szModulePath[MAX_BUFF_200];       //模块所在的路径
-	char       m_szResourceName[MAX_BUFF_1024];    //资源模块名称
+	uint32     m_u4MsgHighMark;                        //消息的高水位阀值
+	uint32     m_u4MsgLowMark;                         //消息的低水位阀值
+	uint32     m_u4MsgThreadCount;                     //允许的工作线程个数
+	uint32     m_u4MsgMaxQueue;                        //消息队列的最大个数
 
-	int        m_nEncryptFlag;                     //0，加密方式关闭，1为加密方式开启
-	char       m_szEncryptPass[MAX_BUFF_9];        //最长8位的加密密码，3DES算法
-	int        m_nEncryptOutFlag;                  //回应数据包，0，为不加密，1为加密
-	uint32     m_u4SendThresHold;                  //发送阀值(消息包的个数)
-	uint32     m_u4RecvBuffSize;                   //接收数据缓冲池的大小
-	uint16     m_u2SendQueueMax;                   //发送队列中最长的数据包个数
-	uint16     m_u2ThreadTimuOut;                  //线程超时时间判定
-	uint16     m_u2ThreadTimeCheck;                //线程自检时间
-	uint16     m_u2PacketTimeOut;                  //处理数据超时时间
-	uint16     m_u2SendAliveTime;                  //发送存活包的时间
-	uint16     m_u2HandleCount;                    //handle对象池的个数
-	uint16     m_u2MaxHanderCount;                 //最大同时处理Handler的数量
-	uint16     m_u2MaxConnectTime;                 //最长等待连接链接时间（此时间内，如果接收和发送都没有发生，则由服务器关闭这个链接）
+	char       m_szModulePath[MAX_BUFF_200];           //模块所在的路径
+	char       m_szResourceName[MAX_BUFF_1024];        //资源模块名称
+
+	int        m_nEncryptFlag;                         //0，加密方式关闭，1为加密方式开启
+	char       m_szEncryptPass[MAX_BUFF_9];            //最长8位的加密密码，3DES算法
+	int        m_nEncryptOutFlag;                      //回应数据包，0，为不加密，1为加密
+	uint32     m_u4SendThresHold;                      //发送阀值(消息包的个数)
+	uint32     m_u4RecvBuffSize;                       //接收数据缓冲池的大小
+	uint16     m_u2SendQueueMax;                       //发送队列中最长的数据包个数
+	uint16     m_u2ThreadTimuOut;                      //线程超时时间判定
+	uint16     m_u2ThreadTimeCheck;                    //线程自检时间
+	uint16     m_u2PacketTimeOut;                      //处理数据超时时间
+	uint16     m_u2SendAliveTime;                      //发送存活包的时间
+	uint16     m_u2HandleCount;                        //handle对象池的个数
+	uint16     m_u2MaxHanderCount;                     //最大同时处理Handler的数量
+	uint16     m_u2MaxConnectTime;                     //最长等待连接链接时间（此时间内，如果接收和发送都没有发生，则由服务器关闭这个链接）
 
 	uint16     m_u2ValidConnectCount;              //单位时间允许的最大链接次数
 	uint8      m_u1Valid;                          //是否需要单位时间的链接阀值验证，0为允许，1为不允许
