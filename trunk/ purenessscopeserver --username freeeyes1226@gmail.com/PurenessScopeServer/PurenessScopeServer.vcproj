@@ -833,6 +833,10 @@
 					>
 				</File>
 				<File
+					RelativePath=".\Common\ProgramService.h"
+					>
+				</File>
+				<File
 					RelativePath=".\Common\RandomNumber.h"
 					>
 				</File>
@@ -862,6 +866,10 @@
 				</File>
 				<File
 					RelativePath=".\Common\WindowsDump.h"
+					>
+				</File>
+				<File
+					RelativePath=".\Common\WindowsProcess.h"
 					>
 				</File>
 				<File
@@ -1029,6 +1037,10 @@
 					</FileConfiguration>
 				</File>
 				<File
+					RelativePath=".\Common\ProgramService.cpp"
+					>
+				</File>
+				<File
 					RelativePath=".\Common\RandomNumber.cpp"
 					>
 					<FileConfiguration
@@ -1110,6 +1122,10 @@
 							UsePrecompiledHeader="0"
 						/>
 					</FileConfiguration>
+				</File>
+				<File
+					RelativePath=".\Common\WindowsProcess.cpp"
+					>
 				</File>
 				<File
 					RelativePath=".\Common\XmlOpeation.cpp"

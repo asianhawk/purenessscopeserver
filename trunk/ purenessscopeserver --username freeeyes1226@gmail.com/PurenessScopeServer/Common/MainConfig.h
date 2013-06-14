@@ -110,6 +110,7 @@ public:
 	uint16 GetConnectServerCheck();
 	uint16 GetSendQueuePutTime();
 	uint16 GetWorkQueuePutTime();
+	uint8 GetServerType();
 
 private:
 	CXmlOpeation m_MainConfig;
@@ -154,6 +155,7 @@ private:
 	uint8      m_u1CommandAccount;                 //是否需要统计命令出入服务器的信息，0是关闭，1是打开。打开后会生成相应的报表
 	uint16     m_u2SendQueuePutTime;               //设置发送队列的入队超时时间
 	uint16     m_u2WorkQueuePutTime;               //设置工作队列的入队超时时间
+	uint8      m_u1ServerType;                     //设置服务器工作状态
 
 	uint8      m_u1ConsoleSupport;                 //是否支持Console服务，如果是1则是支持，0是不支持
 	char       m_szConsoleIP[MAX_BUFF_100];        //Console服务器IP
