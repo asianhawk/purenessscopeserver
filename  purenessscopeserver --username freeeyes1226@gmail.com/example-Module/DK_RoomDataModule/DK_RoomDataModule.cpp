@@ -10,6 +10,7 @@ static const char *g_szDesc      = "DKPoker-DataCenter";          //模块的描述文
 static const char *g_szName      = "DKPoker-DataCenter";          //模块的名字
 static const char *g_szModuleKey = "DKPoker-DataCenter";          //模块的Key
 
+/*
 #ifdef WIN32
 #ifdef DK_ROOMDATAMODULE_BUILD_DLL
 #define DECLDIR __declspec(dllexport)
@@ -29,6 +30,7 @@ extern "C"
 	DECLDIR const char* GetModuleKey();
 	DECLDIR int DoModuleMessage(uint16 u2CommandID, IBuffPacket* pBuffPacket, IBuffPacket* pReturnBuffPacket);
 }
+*/
 
 static CBaseCommand g_BaseCommand;
 CServerObject*      g_pServerObject = NULL;
