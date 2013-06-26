@@ -16,11 +16,11 @@ CProactorClientInfo::~CProactorClientInfo()
 
 bool CProactorClientInfo::Init(const char* pIP, int nPort, int nServerID, CProAsynchConnect* pProAsynchConnect, IClientMessage* pClientMessage)
 {
-	ACE_DEBUG((LM_ERROR, "[CProactorClientInfo::Init]SetAddrServer(%s:%d) Begin.\n", pIP, nPort));
+	OUR_DEBUG((LM_ERROR, "[CProactorClientInfo::Init]SetAddrServer(%s:%d) Begin.\n", pIP, nPort));
 	int nRet = m_AddrServer.set(nPort, pIP);
 	if(-1 == nRet)
 	{
-		ACE_DEBUG((LM_ERROR, "[CProactorClientInfo::Init]nServerID = %d, adrClient(%s:%d) error.\n", nServerID, pIP, nPort));
+		OUR_DEBUG((LM_ERROR, "[CProactorClientInfo::Init]nServerID = %d, adrClient(%s:%d) error.\n", nServerID, pIP, nPort));
 		return false;
 	}
 

@@ -32,7 +32,7 @@ int CProAsynchConnect::validate_connection(const ACE_Asynch_Connect::Result& res
 	ACE_HANDLE h = result.connect_handle();
 	if (!nRet || h == ACE_INVALID_HANDLE)
 	{
-		ACE_DEBUG((LM_ERROR, "[CProAsynchConnect::validate_connection](%s:%d) connection fails(%d).\n", remote.get_host_addr(), remote.get_port_number(), nRet));
+		OUR_DEBUG((LM_ERROR, "[CProAsynchConnect::validate_connection](%s:%d) connection fails(%d).\n", remote.get_host_addr(), remote.get_port_number(), nRet));
 		SetConnectState(false);
 		return 1;
 	}
