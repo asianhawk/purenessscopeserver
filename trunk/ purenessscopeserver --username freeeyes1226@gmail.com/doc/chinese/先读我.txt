@@ -88,6 +88,11 @@ export ACE_ROOT
 解释一下，/home/freeeyes/PurenessScopeServer/PurenessScopeServer/Linux_Bin/是你的工程工作路径，/usr/local/lib/是你的libace.lib的路径
 ACE_ROOT是你的ACE安装路径。
 
+如果要运行./runlinuxmpc.sh 生成编译配置文件，请先确认安装了perl。
+并请在环境变量里面添加
+PATH=$PATH:/root/tools/ACE_wrappers/bin
+export PATH你把这个加到你的文档中吧
+
 另外，如果在linux下使用epoll模型的话
 请配置/etc/security/limits.conf文件。
 

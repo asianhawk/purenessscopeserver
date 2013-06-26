@@ -17,7 +17,7 @@ int CReactorUDPClient::OpenAddress(const ACE_INET_Addr& AddrRemote, ACE_Reactor*
 {
 	if(m_skRemote.open(AddrRemote) == -1)
 	{
-		ACE_DEBUG((LM_ERROR, "[CReactorUDPClient::OpenAddress]Open error(%d).\n", errno));
+		OUR_DEBUG((LM_ERROR, "[CReactorUDPClient::OpenAddress]Open error(%d).\n", errno));
 		return -1;
 	}
 
@@ -27,7 +27,7 @@ int CReactorUDPClient::OpenAddress(const ACE_INET_Addr& AddrRemote, ACE_Reactor*
 
 	if(-1 == this->reactor()->register_handler(this, ACE_Event_Handler::READ_MASK))
 	{
-		ACE_DEBUG((LM_ERROR, "[CReactorUDPClient::OpenAddress] Addr is register_handler error(%d).\n", errno));
+		OUR_DEBUG((LM_ERROR, "[CReactorUDPClient::OpenAddress] Addr is register_handler error(%d).\n", errno));
 		return -1;
 	}
 	return 0;
@@ -49,7 +49,7 @@ int CReactorUDPClient::handle_input(ACE_HANDLE fd)
 {
 	if(fd == ACE_INVALID_HANDLE)
 	{
-		ACE_DEBUG((LM_ERROR, "[CReactorUDPClient::handle_input]fd is ACE_INVALID_HANDLE.\n"));
+		OUR_DEBUG((LM_ERROR, "[CReactorUDPClient::handle_input]fd is ACE_INVALID_HANDLE.\n"));
 		return -1;
 	}
 	
@@ -68,7 +68,7 @@ int CReactorUDPClient::handle_close(ACE_HANDLE handle, ACE_Reactor_Mask close_ma
 {
 	if(handle == ACE_INVALID_HANDLE)
 	{
-		ACE_DEBUG((LM_ERROR, "[CReactorUDPClient::handle_close]close_mask = %d.\n", (uint32)close_mask));
+		OUR_DEBUG((LM_ERROR, "[CReactorUDPClient::handle_close]close_mask = %d.\n", (uint32)close_mask));
 	}
 	
 	Close();
@@ -97,7 +97,7 @@ bool CReactorUDPClient::SendMessage(const char* pMessage, uint32 u4Len, const ch
 	}
 	else
 	{
-		ACE_DEBUG((LM_ERROR, "[CProactorUDPHandler::SendMessage]send error(%d).\n", errno));
+		OUR_DEBUG((LM_ERROR, "[CProactorUDPHandler::SendMessage]send error(%d).\n", errno));
 		SAFE_DELETE_ARRAY(pMessage);
 		return false;
 	}

@@ -17,7 +17,7 @@ bool CReactorClientInfo::Init(int nServerID, const char* pIP, int nPort, Reactor
 	int nRet = m_AddrServer.set(nPort, pIP);
 	if(-1 == nRet)
 	{
-		ACE_DEBUG((LM_ERROR, "[CReactorClientInfo::Init]adrClient(%s:%d) error.\n", pIP, nPort));
+		OUR_DEBUG((LM_ERROR, "[CReactorClientInfo::Init]adrClient(%s:%d) error.\n", pIP, nPort));
 		return false;
 	}
 
