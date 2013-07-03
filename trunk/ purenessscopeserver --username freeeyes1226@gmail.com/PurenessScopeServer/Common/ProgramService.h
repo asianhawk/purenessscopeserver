@@ -1,6 +1,8 @@
 #ifndef _PROGRAMSERVICE_H
 #define _PROGRAMSERVICE_H
 
+#ifdef WIN32
+
 #include "ace/Time_Value.h"
 #include "ace/Event_Handler.h"
 #include "ace/NT_Service.h"
@@ -49,5 +51,7 @@ private:
 
 
 typedef ACE_Singleton<CProgramService, ACE_Mutex> App_Service;
+
+#endif
 #endif 
 

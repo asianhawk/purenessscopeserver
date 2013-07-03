@@ -1,6 +1,8 @@
 #ifndef _WINDOWSPROCESS_H
 #define _WINDOWSPROCESS_H
 
+#ifdef WIN32
+
 #include "ace/Log_Msg.h"
 #include "ace/Get_Opt.h"
 #include "ace/streams.h"
@@ -37,6 +39,6 @@ private:
 };
 
 typedef ACE_Singleton<Process, ACE_Mutex> App_Process;
-
+#endif
 
 #endif

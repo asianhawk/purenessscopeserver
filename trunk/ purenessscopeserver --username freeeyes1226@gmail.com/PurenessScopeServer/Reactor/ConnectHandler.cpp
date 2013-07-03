@@ -430,6 +430,41 @@ int CConnectHandler::handle_input(ACE_HANDLE fd)
 		return -1;
 	}
 
+	//如果是DEBUG状态，记录当前接受包的二进制数据
+	if(App_MainConfig::instance()->GetDebug() == DEBUG_ON)
+	{
+		string strDebugData;
+		char szLog[10]  = {'\0'};
+		int  nDebugSize = 0; 
+		bool blblMore   = false;
+
+		if(nDataLen >= MAX_BUFF_200)
+		{
+			nDebugSize = MAX_BUFF_200;
+			blblMore   = true;
+		}
+		else
+		{
+			nDebugSize = nDataLen;
+		}
+		
+		char* pData = m_pCurrMessage->wr_ptr();
+		for(int i = 0; i < nDebugSize; i++)
+		{
+			sprintf_safe(szLog, 10, "0x%02X ", (unsigned char)pData[i]);
+			strDebugData += szLog;
+		}
+
+		if(blblMore == true)
+		{
+			AppLogManager::instance()->WriteLog(LOG_SYSTEM_DEBUG_CLIENTRECV, "[%s:%d]%s.(数据包过长只记录前200字节)", m_addrRemote.get_host_addr(), m_addrRemote.get_port_number(), strDebugData.c_str());
+		}
+		else
+		{
+			AppLogManager::instance()->WriteLog(LOG_SYSTEM_DEBUG_CLIENTRECV, "[%s:%d]%s.", m_addrRemote.get_host_addr(), m_addrRemote.get_port_number(), strDebugData.c_str());
+		}
+	}
+
 	m_u4CurrSize += nDataLen;
 
 	m_pCurrMessage->wr_ptr(nDataLen);
@@ -769,6 +804,43 @@ bool CConnectHandler::SendMessage(IBuffPacket* pBuffPacket, bool blState, uint8 
 
 bool CConnectHandler::PutSendPacket(ACE_Message_Block* pMbData)
 {
+
+	//如果是DEBUG状态，记录当前发送包的二进制数据
+	if(App_MainConfig::instance()->GetDebug() == DEBUG_ON)
+	{
+		string strDebugData;
+		char szLog[10]  = {'\0'};
+		int  nDebugSize = 0; 
+		bool blblMore   = false;
+
+		if(pMbData->length() >= MAX_BUFF_200)
+		{
+			nDebugSize = MAX_BUFF_200;
+			blblMore   = true;
+		}
+		else
+		{
+			nDebugSize = pMbData->length();
+		}
+
+		char* pData = pMbData->rd_ptr();
+		for(int i = 0; i < nDebugSize; i++)
+		{
+			sprintf_safe(szLog, 10, "0x%02X ", (unsigned char)pData[i]);
+			strDebugData += szLog;
+		}
+
+		if(blblMore == true)
+		{
+			AppLogManager::instance()->WriteLog(LOG_SYSTEM_DEBUG_CLIENTSEND, "[%s:%d]%s.(数据包过长只记录前200字节)", m_addrRemote.get_host_addr(), m_addrRemote.get_port_number(), strDebugData.c_str());
+		}
+		else
+		{
+			AppLogManager::instance()->WriteLog(LOG_SYSTEM_DEBUG_CLIENTSEND, "[%s:%d]%s.", m_addrRemote.get_host_addr(), m_addrRemote.get_port_number(), strDebugData.c_str());
+		}
+	}
+
+
 	ACE_Time_Value     nowait(0, MAX_QUEUE_TIMEOUT);
 
 	if(NULL == pMbData)

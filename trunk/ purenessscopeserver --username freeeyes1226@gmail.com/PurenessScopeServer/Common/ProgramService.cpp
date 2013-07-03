@@ -1,3 +1,4 @@
+#ifdef WIN32
 #include "ProgramService.h"
 
 CProgramService::CProgramService(void)
@@ -39,3 +40,6 @@ int CProgramService::handle_exception( ACE_HANDLE h )
 {
 	return 0;
 }
+#endif
+
+

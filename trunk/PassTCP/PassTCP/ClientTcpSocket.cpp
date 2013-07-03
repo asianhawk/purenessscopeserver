@@ -92,6 +92,7 @@ void CClientTcpSocket::Run()
       int nErr = connect(sckClient, (SOCKADDR*)&sockaddr, sizeof(SOCKADDR));
       if(0 != nErr)
       {
+        DWORD dwError = GetLastError();
         m_pSocket_State_Info->m_nFailConnect++;
         m_pSocket_State_Info->m_nCurrectSocket = 0;
       }

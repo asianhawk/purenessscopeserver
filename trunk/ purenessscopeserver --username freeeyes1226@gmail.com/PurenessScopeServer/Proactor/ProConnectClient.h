@@ -15,6 +15,7 @@
 #include "ClientParsePool.h"
 #include "ClientMessage.h"
 #include "AceProactorManager.h"
+#include "LogManager.h"
 
 #define MAX_BUFF_1024 1024
 #define MAX_IP_LEN    16
