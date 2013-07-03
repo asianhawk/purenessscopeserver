@@ -138,6 +138,41 @@ void CProConnectClient::handle_read_stream(const ACE_Asynch_Read_Stream::Result 
 	}
 	else if(mb.length() == m_pClientParse->GetPacketHeadLen() && m_pClientParse->GetIsHead() == false)
 	{
+		//如果是DEBUG状态，记录当前接受包的二进制数据
+		if(App_MainConfig::instance()->GetDebug() == DEBUG_ON)
+		{
+			string strDebugData;
+			char szLog[10]  = {'\0'};
+			int  nDebugSize = 0; 
+			bool blblMore   = false;
+
+			if(mb.length() >= MAX_BUFF_200)
+			{
+				nDebugSize = MAX_BUFF_200;
+				blblMore   = true;
+			}
+			else
+			{
+				nDebugSize = mb.length();
+			}
+
+			char* pData = mb.rd_ptr();
+			for(int i = 0; i < nDebugSize; i++)
+			{
+				sprintf_safe(szLog, 10, "0x%02X ", (unsigned char)pData[i]);
+				strDebugData += szLog;
+			}
+
+			if(blblMore == true)
+			{
+				AppLogManager::instance()->WriteLog(LOG_SYSTEM_DEBUG_SERVERRECV, "[%s:%d]%s.(数据包过长只记录前200字节)", m_AddrRemote.get_host_addr(), m_AddrRemote.get_port_number(), strDebugData.c_str());
+			}
+			else
+			{
+				AppLogManager::instance()->WriteLog(LOG_SYSTEM_DEBUG_SERVERRECV, "[%s:%d]%s.", m_AddrRemote.get_host_addr(), m_AddrRemote.get_port_number(), strDebugData.c_str());
+			}
+		}
+
 		//判断头的合法性
 		m_pClientParse->SetPacketHead(mb.rd_ptr(), (uint32)mb.length());
 		uint32 u4PacketBodyLen = m_pClientParse->GetPacketDataLen();
@@ -180,6 +215,41 @@ void CProConnectClient::handle_read_stream(const ACE_Asynch_Read_Stream::Result 
 	}
 	else
 	{
+		//如果是DEBUG状态，记录当前接受包的二进制数据
+		if(App_MainConfig::instance()->GetDebug() == DEBUG_ON)
+		{
+			string strDebugData;
+			char szLog[10]  = {'\0'};
+			int  nDebugSize = 0; 
+			bool blblMore   = false;
+
+			if(mb.length() >= MAX_BUFF_200)
+			{
+				nDebugSize = MAX_BUFF_200;
+				blblMore   = true;
+			}
+			else
+			{
+				nDebugSize = mb.length();
+			}
+
+			char* pData = mb.rd_ptr();
+			for(int i = 0; i < nDebugSize; i++)
+			{
+				sprintf_safe(szLog, 10, "0x%02X ", (unsigned char)pData[i]);
+				strDebugData += szLog;
+			}
+
+			if(blblMore == true)
+			{
+				AppLogManager::instance()->WriteLog(LOG_SYSTEM_DEBUG_SERVERRECV, "[%s:%d]%s.(数据包过长只记录前200字节)", m_AddrRemote.get_host_addr(), m_AddrRemote.get_port_number(), strDebugData.c_str());
+			}
+			else
+			{
+				AppLogManager::instance()->WriteLog(LOG_SYSTEM_DEBUG_SERVERRECV, "[%s:%d]%s.", m_AddrRemote.get_host_addr(), m_AddrRemote.get_port_number(), strDebugData.c_str());
+			}
+		}
+
 		//接受完整数据完成，开始分析完整数据包
 		m_pClientParse->SetPacketData(mb.rd_ptr(), (uint32)mb.length());
 		m_pClientParse->SetMessageBody(&mb);
@@ -286,7 +356,43 @@ bool CProConnectClient::DoMessage()
 
 bool CProConnectClient::SendData(ACE_Message_Block* pmblk)
 {
-	OUR_DEBUG((LM_DEBUG, "[CProConnectClient::SendData]Begin.\n"));
+	//OUR_DEBUG((LM_DEBUG, "[CProConnectClient::SendData]Begin.\n"));
+
+	//如果是DEBUG状态，记录当前接受包的二进制数据
+	if(App_MainConfig::instance()->GetDebug() == DEBUG_ON)
+	{
+		string strDebugData;
+		char szLog[10]  = {'\0'};
+		int  nDebugSize = 0; 
+		bool blblMore   = false;
+
+		if(pmblk->length() >= MAX_BUFF_200)
+		{
+			nDebugSize = MAX_BUFF_200;
+			blblMore   = true;
+		}
+		else
+		{
+			nDebugSize = pmblk->length();
+		}
+
+		char* pData = pmblk->rd_ptr();
+		for(int i = 0; i < nDebugSize; i++)
+		{
+			sprintf_safe(szLog, 10, "0x%02X ", (unsigned char)pData[i]);
+			strDebugData += szLog;
+		}
+
+		if(blblMore == true)
+		{
+			AppLogManager::instance()->WriteLog(LOG_SYSTEM_DEBUG_SERVERSEND, "[%s:%d]%s.(数据包过长只记录前200字节)", m_AddrRemote.get_host_addr(), m_AddrRemote.get_port_number(), strDebugData.c_str());
+		}
+		else
+		{
+			AppLogManager::instance()->WriteLog(LOG_SYSTEM_DEBUG_SERVERSEND, "[%s:%d]%s.", m_AddrRemote.get_host_addr(), m_AddrRemote.get_port_number(), strDebugData.c_str());
+		}
+	}
+
 	//发送信息
 	if(NULL != pmblk)
 	{

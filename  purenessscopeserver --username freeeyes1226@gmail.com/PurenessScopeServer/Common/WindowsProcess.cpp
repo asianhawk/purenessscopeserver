@@ -1,3 +1,4 @@
+#ifdef WIN32
 #include "WindowsProcess.h"
 
 ACE_NT_SERVICE_DEFINE (PssServer, CProgramService, ACE_TEXT("PssServer Service"));
@@ -160,4 +161,4 @@ int Process::run(int argc, ACE_TCHAR* argv[])
 
 	return 0;
 }
-
+#endif

@@ -216,6 +216,41 @@ int CConnectClient::handle_input(ACE_HANDLE fd)
 		return -1;
 	}
 
+	//如果是DEBUG状态，记录当前接受包的二进制数据
+	if(App_MainConfig::instance()->GetDebug() == DEBUG_ON)
+	{
+		string strDebugData;
+		char szLog[10]  = {'\0'};
+		int  nDebugSize = 0; 
+		bool blblMore   = false;
+
+		if(nDataLen >= MAX_BUFF_200)
+		{
+			nDebugSize = MAX_BUFF_200;
+			blblMore   = true;
+		}
+		else
+		{
+			nDebugSize = nDataLen;
+		}
+
+		char* pData = m_pCurrMessage->wr_ptr();
+		for(int i = 0; i < nDebugSize; i++)
+		{
+			sprintf_safe(szLog, 10, "0x%02X ", (unsigned char)pData[i]);
+			strDebugData += szLog;
+		}
+
+		if(blblMore == true)
+		{
+			AppLogManager::instance()->WriteLog(LOG_SYSTEM_DEBUG_SERVERRECV, "[%s:%d]%s.(数据包过长只记录前200字节)", m_addrRemote.get_host_addr(), m_addrRemote.get_port_number(), strDebugData.c_str());
+		}
+		else
+		{
+			AppLogManager::instance()->WriteLog(LOG_SYSTEM_DEBUG_SERVERRECV, "[%s:%d]%s.", m_addrRemote.get_host_addr(), m_addrRemote.get_port_number(), strDebugData.c_str());
+		}
+	}
+
 	m_u4CurrSize += nDataLen;
 
 	m_pCurrMessage->wr_ptr(nDataLen);
@@ -380,6 +415,41 @@ bool CConnectClient::CheckMessage()
 
 bool CConnectClient::SendData(ACE_Message_Block* pmblk)
 {
+	//如果是DEBUG状态，记录当前接受包的二进制数据
+	if(App_MainConfig::instance()->GetDebug() == DEBUG_ON)
+	{
+		string strDebugData;
+		char szLog[10]  = {'\0'};
+		int  nDebugSize = 0; 
+		bool blblMore   = false;
+
+		if(pmblk->length() >= MAX_BUFF_200)
+		{
+			nDebugSize = MAX_BUFF_200;
+			blblMore   = true;
+		}
+		else
+		{
+			nDebugSize = pmblk->length();
+		}
+
+		char* pData = pmblk->rd_ptr();
+		for(int i = 0; i < nDebugSize; i++)
+		{
+			sprintf_safe(szLog, 10, "0x%02X ", (unsigned char)pData[i]);
+			strDebugData += szLog;
+		}
+
+		if(blblMore == true)
+		{
+			AppLogManager::instance()->WriteLog(LOG_SYSTEM_DEBUG_CLIENTRECV, "[%s:%d]%s.(数据包过长只记录前200字节)", m_addrRemote.get_host_addr(), m_addrRemote.get_port_number(), strDebugData.c_str());
+		}
+		else
+		{
+			AppLogManager::instance()->WriteLog(LOG_SYSTEM_DEBUG_CLIENTRECV, "[%s:%d]%s.", m_addrRemote.get_host_addr(), m_addrRemote.get_port_number(), strDebugData.c_str());
+		}
+	}
+
 	ACE_Time_Value     nowait(MAX_MSG_PACKETTIMEOUT);
 
 	if(NULL == pmblk)

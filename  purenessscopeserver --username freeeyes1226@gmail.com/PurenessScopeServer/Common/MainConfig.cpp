@@ -22,6 +22,7 @@ CMainConfig::CMainConfig(void)
 	m_u2MaxConnectTime        = 0;
 	m_u1CommandAccount        = 0;
 	m_u1ServerType            = 0;
+	m_u1Debug                 = DEBUG_OFF;
 
 	m_u1ConsoleSupport        = 0;
 	m_nConsolePort            = 0;
@@ -82,6 +83,12 @@ bool CMainConfig::Init(const char* szConfigPath)
 	if(NULL != pData)
 	{
 		m_u1ServerType = (uint8)ACE_OS::atoi(pData);
+	}
+
+	pData = m_MainConfig.GetData("ServerType", "Debug");
+	if(NULL != pData)
+	{
+		m_u1Debug = (uint8)ACE_OS::atoi(pData);
 	}
 
 	pData = m_MainConfig.GetData("ServerType", "name");
@@ -398,6 +405,7 @@ void CMainConfig::Display()
 	OUR_DEBUG((LM_INFO, "[CMainConfig::Display]m_szServerName = %s.\n", m_szServerName));
 	OUR_DEBUG((LM_INFO, "[CMainConfig::Display]m_szServerVersion = %s.\n", m_szServerVersion));
 	OUR_DEBUG((LM_INFO, "[CMainConfig::Display]m_szPacketVersion = %s.\n", m_szPacketVersion));
+	OUR_DEBUG((LM_INFO, "[CMainConfig::Display]m_u1Debug = %d.\n", m_u1Debug));
 
 	for(int i = 0; i < (int)m_vecServerInfo.size(); i++)
 	{
@@ -719,4 +727,8 @@ const char* CMainConfig::GetDisplayServiceName()
 	return m_szDisplayServiceName;
 }
 
+uint8 CMainConfig::GetDebug()
+{
+	return m_u1Debug;
+}
 

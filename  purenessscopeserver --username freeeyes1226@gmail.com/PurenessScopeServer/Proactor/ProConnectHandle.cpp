@@ -294,6 +294,41 @@ void CProConnectHandle::handle_read_stream(const ACE_Asynch_Read_Stream::Result 
 
 	m_atvInput = ACE_OS::gettimeofday();
 
+	//如果是DEBUG状态，记录当前接受包的二进制数据
+	if(App_MainConfig::instance()->GetDebug() == DEBUG_ON)
+	{
+		string strDebugData;
+		char szLog[10]  = {'\0'};
+		int  nDebugSize = 0; 
+		bool blblMore   = false;
+
+		if(mb.length() >= MAX_BUFF_200)
+		{
+			nDebugSize = MAX_BUFF_200;
+			blblMore   = true;
+		}
+		else
+		{
+			nDebugSize = mb.length();
+		}
+
+		char* pData = mb.rd_ptr();
+		for(int i = 0; i < nDebugSize; i++)
+		{
+			sprintf_safe(szLog, 10, "0x%02X ", (unsigned char)pData[i]);
+			strDebugData += szLog;
+		}
+
+		if(blblMore == true)
+		{
+			AppLogManager::instance()->WriteLog(LOG_SYSTEM_DEBUG_CLIENTRECV, "[%s:%d]%s.(数据包过长只记录前200字节)", m_addrRemote.get_host_addr(), m_addrRemote.get_port_number(), strDebugData.c_str());
+		}
+		else
+		{
+			AppLogManager::instance()->WriteLog(LOG_SYSTEM_DEBUG_CLIENTRECV, "[%s:%d]%s.", m_addrRemote.get_host_addr(), m_addrRemote.get_port_number(), strDebugData.c_str());
+		}
+	}
+
 	if(result.bytes_transferred() < result.bytes_to_read())
 	{
 		//短读，继续读
@@ -649,6 +684,41 @@ bool CProConnectHandle::CheckAlive()
 
 bool CProConnectHandle::PutSendPacket(ACE_Message_Block* pMbData)
 {
+	//如果是DEBUG状态，记录当前发送包的二进制数据
+	if(App_MainConfig::instance()->GetDebug() == DEBUG_ON)
+	{
+		string strDebugData;
+		char szLog[10]  = {'\0'};
+		int  nDebugSize = 0; 
+		bool blblMore   = false;
+
+		if(pMbData->length() >= MAX_BUFF_200)
+		{
+			nDebugSize = MAX_BUFF_200;
+			blblMore   = true;
+		}
+		else
+		{
+			nDebugSize = pMbData->length();
+		}
+
+		char* pData = pMbData->rd_ptr();
+		for(int i = 0; i < nDebugSize; i++)
+		{
+			sprintf_safe(szLog, 10, "0x%02X ", (unsigned char)pData[i]);
+			strDebugData += szLog;
+		}
+
+		if(blblMore == true)
+		{
+			AppLogManager::instance()->WriteLog(LOG_SYSTEM_DEBUG_CLIENTSEND, "[%s:%d]%s.(数据包过长只记录前200字节)", m_addrRemote.get_host_addr(), m_addrRemote.get_port_number(), strDebugData.c_str());
+		}
+		else
+		{
+			AppLogManager::instance()->WriteLog(LOG_SYSTEM_DEBUG_CLIENTSEND, "[%s:%d]%s.", m_addrRemote.get_host_addr(), m_addrRemote.get_port_number(), strDebugData.c_str());
+		}
+	}
+
 	int nSendSize = m_u4AllSendSize;
 
 	//OUR_DEBUG ((LM_ERROR, "[CConnectHandler::PutSendPacket] Connectid=%d, m_nIOCount=%d!\n", GetConnectID(), m_nIOCount));

@@ -113,6 +113,7 @@ public:
 	uint16 GetSendQueuePutTime();
 	uint16 GetWorkQueuePutTime();
 	uint8 GetServerType();
+	uint8 GetDebug();
 
 private:
 	CXmlOpeation m_MainConfig;
@@ -131,6 +132,7 @@ private:
 	uint32     m_u4MsgLowMark;                         //消息的低水位阀值
 	uint32     m_u4MsgThreadCount;                     //允许的工作线程个数
 	uint32     m_u4MsgMaxQueue;                        //消息队列的最大个数
+	uint8      m_u1Debug;                              //是否开启Debug模式，1是开启，0是关闭
 
 	char       m_szModulePath[MAX_BUFF_200];           //模块所在的路径
 	char       m_szResourceName[MAX_BUFF_1024];        //资源模块名称

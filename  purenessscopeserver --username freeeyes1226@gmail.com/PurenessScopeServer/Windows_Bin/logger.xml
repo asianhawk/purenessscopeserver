@@ -17,4 +17,8 @@
 	<LogInfo logid="1011" logtype="2" logname="ViewSendQueueError" desc="框架记录客户端发送信息超时的日志信息" />
 	<LogInfo logid="1012" logtype="1" logname="ViewCommandData" desc="框架记录每个注册的逻辑指令的调用次数和平均时间等信息日志" />
 	<LogInfo logid="1013" logtype="1" logname="ViewConsoleData" desc="远程控制终端管理日志" />
+	<LogInfo logid="1014" logtype="1" logname="ViewDebugClientRecv" desc="DEBUG日志，接收来客户端的日志，二进制字节" />
+	<LogInfo logid="1015" logtype="1" logname="ViewDebugClientSend" desc="DEBUG日志，发送给客户端的日志，二进制字节" />
+	<LogInfo logid="1016" logtype="1" logname="ViewDebugServerRecv" desc="DEBUG日志，接收来服务器间的日志，二进制字节" />
+	<LogInfo logid="1017" logtype="1" logname="ViewDebugServerSend" desc="DEBUG日志，发送给服务器间的日志，二进制字节" />
 </config>
