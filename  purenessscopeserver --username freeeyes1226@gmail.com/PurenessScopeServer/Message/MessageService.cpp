@@ -235,6 +235,7 @@ bool CMessageService::ProcessMessage(CMessage* pMessage, uint32 u4ThreadID)
 
 	DisposeTime.Start();
 	App_MessageManager::instance()->DoMessage(pMessage, u2CommandID);
+
 	pThreadInfo->m_u4State = THREAD_RUNEND;
 
 	if(pMessage->GetMessageBase()->m_u2Cmd != CLIENT_LINK_CONNECT && pMessage->GetMessageBase()->m_u2Cmd != CLIENT_LINK_CDISCONNET && pMessage->GetMessageBase()->m_u2Cmd != CLIENT_LINK_SDISCONNET)

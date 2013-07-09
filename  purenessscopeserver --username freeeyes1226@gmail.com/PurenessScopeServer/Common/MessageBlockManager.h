@@ -11,22 +11,21 @@
 #include "ace/Malloc_T.h"
 #include "ace/Local_Memory_Pool.h"
 #include "ace/Synch_Traits.h"
-#include "ace/Message_Block.h"
 #include "ace/Singleton.h"
 #include "ace/Thread_Mutex.h"
 #include "ace/Task.h"
 #include "ace/Synch.h"
 
-#include "define.h"
+#include "IMessageBlockManager.h"
 
 typedef  ACE_Malloc<ACE_LOCAL_MEMORY_POOL, ACE_SYNCH_MUTEX> MUTEX_MALLOC;
 typedef ACE_Allocator_Adapter<MUTEX_MALLOC> Mutex_Allocator;
 
-class CMessageBlockManager
+class CMessageBlockManager : public IMessageBlockManager
 {
 public:
 	CMessageBlockManager(void);
-	~CMessageBlockManager(void);
+	virtual ~CMessageBlockManager(void);
 
 	void Init();
 	void Close();
