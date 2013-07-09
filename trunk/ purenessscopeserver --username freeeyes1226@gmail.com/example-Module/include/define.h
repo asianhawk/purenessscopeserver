@@ -27,12 +27,12 @@ using namespace std;
 #define NULL 0
 #endif
 
-#define MAINCONFIG            "main.conf"
-#define SERVER_CONNECT_FILE   "ConnectServer.conf"
-#define FORBIDDENIP_FILE      "forbiddenIP.conf"
+#define MAINCONFIG            "main.xml"
+#define FORBIDDENIP_FILE      "forbiddenIP.xml"
 
 #define MAX_BUFF_9    9
 #define MAX_BUFF_20   20
+#define MAX_BUFF_50   50
 #define MAX_BUFF_100  100
 #define MAX_BUFF_200  200
 #define MAX_BUFF_500  500
@@ -41,7 +41,7 @@ using namespace std;
 
 //根据不同的操作系统，定义不同的recv接收参数类型
 #ifdef WIN32
-	#define MSG_NOSIGNAL          0            //信号量参数（WINDOWS）
+#define MSG_NOSIGNAL          0            //信号量参数（WINDOWS）
 #endif
 
 #define SERVER_ACTOR_REACTOR  0
@@ -61,7 +61,7 @@ using namespace std;
 #define MAX_MSG_TIMEDELAYTIME 60           //逻辑线程自检时间间隔
 #define MAX_MSG_STARTTIME     1            //逻辑线程处理开始时间
 #define MAX_MSG_MASK          64000        //逻辑Mark的线程数
-#define MAX_MSG_PUTTIMEOUT    1000         //放入逻辑的延迟
+#define MAX_MSG_PUTTIMEOUT    100          //放入逻辑的延迟
 #define MAX_MSG_SENDPACKET    10           //最多缓冲发送包的个数,多于这个数字报警并丢弃下一个发送数据包
 #define MAX_MSG_SNEDTHRESHOLD 10           //发送阀值(消息包的个数)
 #define MAX_MSG_SENDCHECKTIME 100          //每隔多少毫秒进行一次发送的阀值
@@ -120,6 +120,11 @@ using namespace std;
 #define COMMAND_TYPE_IN                   0      //进入服务器命令包状态（用于CommandData，统计命令信息类）
 #define COMMAND_TYPE_OUT                  1      //出服务器的命令包状态（用于CommandData，统计命令信息类）
 
+#define PACKET_WITHSTREAM                 0      //不带包头的数据流模式
+#define PACKET_WITHHEAD                   1      //带包头的数据包模式
+
+#define PACKET_GET_ENOUGTH                0      //得到完整的数据包，需要继续接收
+#define PACKET_GET_NO_ENOUGTH             1      //得到的数据包不完整
 
 #define MAX_PACKET_SIZE     1024*1024
 
@@ -153,19 +158,27 @@ enum
 };
 
 //日志编号声明
-#define LOG_SYSTEM                 1000
-#define LOG_SYSTEM_ERROR           1001
-#define LOG_SYSTEM_CONNECT         1002
-#define LOG_SYSTEM_WORKTHREAD      1003
-#define LOG_SYSTEM_POSTTHREAD      1004
-#define LOG_SYSTEM_UDPTHREAD       1005
-#define LOG_SYSTEM_POSTCONNECT     1006
-#define LOG_SYSTEM_PACKETTIME      1007
-#define LOG_SYSTEM_PACKETTHREAD    1008
-#define LOG_SYSTEM_CONNECTABNORMAL 1009
-#define LOG_SYSTEM_RECVQUEUEERROR  1010
-#define LOG_SYSTEM_SENDQUEUEERROR  1011
-#define LOG_SYSTEM_COMMANDDATA     1012
+#define LOG_SYSTEM                      1000
+#define LOG_SYSTEM_ERROR                1001
+#define LOG_SYSTEM_CONNECT              1002
+#define LOG_SYSTEM_WORKTHREAD           1003
+#define LOG_SYSTEM_POSTTHREAD           1004
+#define LOG_SYSTEM_UDPTHREAD            1005
+#define LOG_SYSTEM_POSTCONNECT          1006
+#define LOG_SYSTEM_PACKETTIME           1007
+#define LOG_SYSTEM_PACKETTHREAD         1008
+#define LOG_SYSTEM_CONNECTABNORMAL      1009
+#define LOG_SYSTEM_RECVQUEUEERROR       1010
+#define LOG_SYSTEM_SENDQUEUEERROR       1011
+#define LOG_SYSTEM_COMMANDDATA          1012
+#define LOG_SYSTEM_CONSOLEDATA          1013
+#define LOG_SYSTEM_DEBUG_CLIENTRECV     1014
+#define LOG_SYSTEM_DEBUG_CLIENTSEND     1015
+#define LOG_SYSTEM_DEBUG_SERVERRECV     1016
+#define LOG_SYSTEM_DEBUG_SERVERSEND     1017
+
+#define DEBUG_ON  1
+#define DEBUG_OFF 0
 
 #define OUR_DEBUG(X)  ACE_DEBUG((LM_INFO, "[%t]")); ACE_DEBUG(X)
 
@@ -231,6 +244,16 @@ typedef float float32;
 typedef double float64;
 #endif
 
+#ifdef UNICODE
+typedef wofstream _tofstream;
+typedef wifstream _tifstream;
+typedef std::wstring _tstring;
+#else
+typedef ofstream _tofstream;
+typedef ifstream _tifstream;
+typedef std::string _tstring;
+#endif // UNICODE
+
 #ifndef VCHARS_STR
 typedef  struct _VCHARS_STR {
 	const char *text;
@@ -258,13 +281,12 @@ struct _TimeConnectInfo
 	uint8  m_u1Minutes;           //当前的分钟数
 	uint32 m_u4PacketCount;       //当前的包数量
 	uint32 m_u4RecvSize;          //当前接收数据量
-
 	uint8  m_u1NeedCheck;         //是否需要验证，0为需要，1为不需要
 	uint32 m_u4ValidPacketCount;  //单位时间可允许接收数据包的上限
 	uint32 m_u4ValidRecvSize;     //单位时间可允许的数据接收量
 
 	_TimeConnectInfo()
-	{
+	{ 
 		m_u1Minutes     = 0;
 		m_u4PacketCount = 0;
 		m_u4RecvSize    = 0;
@@ -302,7 +324,7 @@ struct _TimeConnectInfo
 		if(m_u1NeedCheck == 0)
 		{
 			//需要比较
-			if(m_u4PacketCount > m_u4ValidPacketCount || m_u4ValidRecvSize > m_u4ValidRecvSize)
+			if(m_u4PacketCount > m_u4ValidPacketCount || u4RecvSize > m_u4ValidRecvSize)
 			{
 				return false;
 			}
@@ -428,6 +450,88 @@ inline void sprintf_safe(char* szText, int nLen, const char* fmt ...)
 
 	va_end(ap);
 };
+
+//定义一个对64位长整形的网络字节序的转换
+inline uint64 hl64ton(uint64 u8Data)   
+{   
+	uint64 u8Ret  = 0;   
+	uint32 u4high = 0;   //高四位
+	uint32 u4low  = 0;   //低四位
+
+	u4low  = u8Data & 0xFFFFFFFF;
+	u4high = (u8Data >> 32) & 0xFFFFFFFF;
+	u4low  = ACE_HTONL(u4low);   
+	u4high = ACE_HTONL(u4high);   
+	u8Ret  = u4low;
+	u8Ret <<= 32;   
+	u8Ret |= u4high;   
+	return u8Ret;   
+}
+
+//定义一个队64位长整形的主机字节序的转换
+inline uint64 ntohl64(uint64 u8Data)   
+{   
+	uint64 u8Ret  = 0;   
+	uint32 u4high = 0;   //高四位
+	uint32 u4low  = 0;   //低四位
+
+	u4low   = u8Data & 0xFFFFFFFF;
+	u8Data  = (u8Data >> 32) & 0xFFFFFFFF;
+	u4low   = ACE_NTOHL(u4low);   
+	u4high  = ACE_NTOHL(u4high);   
+
+	u8Ret = u4low;
+	u8Ret<<= 32;   
+	u8Ret = u4high;   
+	return u8Ret;   
+}
+
+//定义一个函数，可支持字符串替换，目前先不考虑支持中文
+inline bool Replace_String(char* pText, uint32 u4Len, const char* pOld, const char* pNew)
+{
+	char* pTempSrc = new char(u4Len);
+
+	ACE_OS::memcpy(pTempSrc, pText, u4Len);
+	pTempSrc[u4Len - 1] = '\0';
+
+	uint16 u2NewLen = (uint16)ACE_OS::strlen(pNew);
+
+	char* pPos = ACE_OS::strstr(pTempSrc, pOld); 
+
+	while(pPos)
+	{
+		//计算出需要覆盖的字符串长度
+		uint32 u4PosLen = (uint32)(pPos - pTempSrc);
+
+		//黏贴最前面的
+		ACE_OS::memcpy(pText, pTempSrc, u4PosLen);
+		pText[u4PosLen] = '\0';
+
+		if(u4PosLen + u2NewLen >= (uint32)u4Len)
+		{
+			//清理中间变量
+			delete[] pTempSrc;
+			return false;		
+		}
+		else
+		{
+			//黏贴新字符
+			ACE_OS::memcpy(&pText[u4PosLen], pNew, u2NewLen);
+			pText[u4PosLen + u2NewLen] = '\0';
+
+			//指针向后移动	
+			pTempSrc = 	pTempSrc + u4PosLen;
+
+			//寻找下一个透汗的字符串
+			pPos = ACE_OS::strstr(pTempSrc, pOld); 
+		}
+
+	}
+
+	//清理中间变量
+	delete[] pTempSrc;
+	return true;
+}
 
 //客户端IP信息
 struct _ClientIPInfo

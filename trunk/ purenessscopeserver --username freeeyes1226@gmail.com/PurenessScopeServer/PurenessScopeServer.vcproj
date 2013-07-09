@@ -282,6 +282,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\IObject\IMessageBlockManager.h"
+				>
+			</File>
+			<File
 				RelativePath=".\IObject\IMessageManager.h"
 				>
 			</File>

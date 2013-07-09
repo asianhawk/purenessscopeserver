@@ -108,6 +108,8 @@ private:
 	_TimeConnectInfo    m_TimeConnectInfo;              //链接健康检测器
 	ACE_Message_Block*  m_pBlockMessage;                //当前发送缓冲等待数据块
 
+	CPacketParse        m_objSendPacketParse;           //发送数据包组织结构
+
 	Fast_Asynch_Read_Stream  m_Reader;
 	Fast_Asynch_Write_Stream m_Writer;
 };

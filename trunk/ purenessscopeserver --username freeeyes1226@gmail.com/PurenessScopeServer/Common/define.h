@@ -120,6 +120,12 @@ using namespace std;
 #define COMMAND_TYPE_IN                   0      //进入服务器命令包状态（用于CommandData，统计命令信息类）
 #define COMMAND_TYPE_OUT                  1      //出服务器的命令包状态（用于CommandData，统计命令信息类）
 
+#define PACKET_WITHSTREAM                 0      //不带包头的数据流模式
+#define PACKET_WITHHEAD                   1      //带包头的数据包模式
+
+#define PACKET_GET_ENOUGTH                0      //得到完整的数据包，需要继续接收
+#define PACKET_GET_NO_ENOUGTH             1      //得到的数据包不完整
+#define PACKET_GET_ERROR                  2      //数据包格式错误
 
 #define MAX_PACKET_SIZE     1024*1024
 
@@ -445,6 +451,41 @@ inline void sprintf_safe(char* szText, int nLen, const char* fmt ...)
 
 	va_end(ap);
 };
+
+//定义一个对64位长整形的网络字节序的转换
+inline uint64 hl64ton(uint64 u8Data)   
+{   
+	uint64 u8Ret  = 0;   
+	uint32 u4high = 0;   //高四位
+	uint32 u4low  = 0;   //低四位
+
+	u4low  = u8Data & 0xFFFFFFFF;
+	u4high = (u8Data >> 32) & 0xFFFFFFFF;
+	u4low  = ACE_HTONL(u4low);   
+	u4high = ACE_HTONL(u4high);   
+	u8Ret  = u4low;
+	u8Ret <<= 32;   
+	u8Ret |= u4high;   
+	return u8Ret;   
+}
+
+//定义一个队64位长整形的主机字节序的转换
+inline uint64 ntohl64(uint64 u8Data)   
+{   
+	uint64 u8Ret  = 0;   
+	uint32 u4high = 0;   //高四位
+	uint32 u4low  = 0;   //低四位
+
+	u4low   = u8Data & 0xFFFFFFFF;
+	u8Data  = (u8Data >> 32) & 0xFFFFFFFF;
+	u4low   = ACE_NTOHL(u4low);   
+	u4high  = ACE_NTOHL(u4high);   
+
+	u8Ret = u4low;
+	u8Ret<<= 32;   
+	u8Ret = u4high;   
+	return u8Ret;   
+}
 
 //定义一个函数，可支持字符串替换，目前先不考虑支持中文
 inline bool Replace_String(char* pText, uint32 u4Len, const char* pOld, const char* pNew)
