@@ -160,6 +160,7 @@ void CPacketParse::Close()
 		m_pmbBody = NULL;
 	}
 
+	m_objCurrBody.Close();
 	m_blIsHead = false;
 }
 
@@ -211,8 +212,13 @@ uint8 CPacketParse::GetPacketStream(ACE_Message_Block* pCurrMessage, IMessageBlo
 
 		if(blFind == false)
 		{
-			//将不完整的数据放入缓冲，等待完整后放入包体
-			m_objCurrBody.WriteStream(pCurrMessage->rd_ptr() + 1, pCurrMessage->length() - 1);
+			if(pCurrMessage->length() > 2)
+			{
+				//将不完整的数据放入缓冲，等待完整后放入包体
+				m_objCurrBody.WriteStream(pCurrMessage->rd_ptr() + 1, pCurrMessage->length() - 1);
+			}
+
+			m_blIsHead = true;
 
 			//没有找到包尾，需要继续接受数据
 			return PACKET_GET_NO_ENOUGTH;
@@ -252,6 +258,8 @@ uint8 CPacketParse::GetPacketStream(ACE_Message_Block* pCurrMessage, IMessageBlo
 			//将包内容放入包体
 			memcpy(m_pmbBody->wr_ptr(), (char*)&pData[1], u4PacketLen);
 
+			m_blIsHead = false;
+
 			//处理完的数据从池中移除
 			pCurrMessage->rd_ptr(u4Pos);
 			return PACKET_GET_ENOUGTH;
@@ -260,7 +268,7 @@ uint8 CPacketParse::GetPacketStream(ACE_Message_Block* pCurrMessage, IMessageBlo
 	else
 	{
 		//如果缓冲不存在，则说明缓冲中的包都解析完毕了
-		if(m_objCurrBody.GetPacketLen() <= 0)
+		if(m_blIsHead == false)
 		{
 			return PACKET_GET_ERROR;
 		}
@@ -298,6 +306,8 @@ uint8 CPacketParse::GetPacketStream(ACE_Message_Block* pCurrMessage, IMessageBlo
 		{
 			//将不完整的数据放入缓冲，等待完整后放入包体
 			m_objCurrBody.WriteStream(pData, u4Data);
+
+			m_blIsHead = true;
 
 			//没有找到包尾，需要继续接受数据
 			return PACKET_GET_NO_ENOUGTH;
@@ -340,6 +350,8 @@ uint8 CPacketParse::GetPacketStream(ACE_Message_Block* pCurrMessage, IMessageBlo
 
 			//将包内容放入包体
 			memcpy(m_pmbBody->wr_ptr(), (char*)m_objCurrBody.GetData(), m_objCurrBody.GetPacketLen());
+
+			m_blIsHead = false;
 
 			//处理完的数据从池中移除
 			pCurrMessage->rd_ptr(u4Pos);

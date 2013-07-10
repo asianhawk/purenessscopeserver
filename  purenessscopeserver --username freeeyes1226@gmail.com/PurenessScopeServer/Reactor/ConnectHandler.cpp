@@ -771,7 +771,6 @@ bool CConnectHandler::SendMessage(IBuffPacket* pBuffPacket, bool blState, uint8 
 	m_ThreadLock.release();	
 	//OUR_DEBUG((LM_DEBUG,"[CConnectHandler::SendMessage]Connectid=%d,m_nIOCount=%d.\n", GetConnectID(), m_nIOCount));
 
-	CPacketParse PacketParse;
 	ACE_Message_Block* pMbData = NULL;
 
 	//如果不是直接发送数据，则拼接数据包
@@ -781,7 +780,7 @@ bool CConnectHandler::SendMessage(IBuffPacket* pBuffPacket, bool blState, uint8 
 		uint32 u4SendPacketSize = 0;
 		if(u1SendType == SENDMESSAGE_NOMAL)
 		{
-			u4SendPacketSize = PacketParse.MakePacketLength(u4PacketSize);
+			u4SendPacketSize = m_objSendPacketParse.MakePacketLength(u4PacketSize);
 		}
 		else
 		{
@@ -804,7 +803,7 @@ bool CConnectHandler::SendMessage(IBuffPacket* pBuffPacket, bool blState, uint8 
 			if(u1SendType == SENDMESSAGE_NOMAL)
 			{
 				//这里组成返回数据包
-				PacketParse.MakePacket(pBuffPacket->GetData(), pBuffPacket->GetPacketLen(), m_pBlockMessage);
+				m_objSendPacketParse.MakePacket(pBuffPacket->GetData(), pBuffPacket->GetPacketLen(), m_pBlockMessage);
 			}
 			else
 			{
