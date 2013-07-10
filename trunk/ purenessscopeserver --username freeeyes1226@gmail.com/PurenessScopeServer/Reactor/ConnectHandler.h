@@ -116,6 +116,7 @@ private:
 	ACE_Message_Block*         m_pCurrMessage;                 //当前的MB对象
 	ACE_Message_Block*         m_pBlockMessage;                //当前发送缓冲等待数据块
 	uint32                     m_u4CurrSize;                   //当前MB缓冲字符长度
+	CPacketParse               m_objSendPacketParse;           //发送数据包组织结构
 	_TimeConnectInfo           m_TimeConnectInfo;              //链接健康检测器
 };
 
