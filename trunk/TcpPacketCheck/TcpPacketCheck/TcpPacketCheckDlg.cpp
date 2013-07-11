@@ -115,7 +115,7 @@ BOOL CTcpPacketCheckDlg::OnInitDialog()
 	}
 
 	m_lstResult.InsertColumn(0, _T("测试项目"), LVCFMT_LEFT, 200);
-	m_lstResult.InsertColumn(2, _T("测试结果"), LVCFMT_LEFT, 350);
+	m_lstResult.InsertColumn(2, _T("测试结果"), LVCFMT_LEFT, 450);
 
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
