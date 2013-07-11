@@ -17,7 +17,7 @@ public:
 	void Init();
 
 	uint32 GetPacketHeadLen();
-	uint32 GetPacketDataLen();
+	uint32 GetPacketBodyLen();
 	uint16 GetPacketCommandID();
 
 	bool GetIsHead();
@@ -28,7 +28,7 @@ public:
 	bool SetMessageBody(ACE_Message_Block* pmbBody);
 
 	bool SetPacketHead(char* pData, uint32 u4Len);
-	bool SetPacketData(char* pData, uint32 u4Len);
+	bool SetPacketBody(char* pData, uint32 u4Len);
 
 	//拼接数据返回包
 	bool MakePacket(const char* pData, uint32 u4Len, ACE_Message_Block* pMbData);

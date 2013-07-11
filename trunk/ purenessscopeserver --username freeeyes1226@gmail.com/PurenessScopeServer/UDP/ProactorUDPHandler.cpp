@@ -219,21 +219,19 @@ bool CProactorUDPHandler::CheckMessage(ACE_Message_Block* pMbData, uint32 u4Len)
 	ACE_OS::memcpy(pMBHead->wr_ptr(), (const void*)pMbData->rd_ptr(), m_pPacketParse->GetPacketHeadLen());
 	pMBHead->wr_ptr(m_pPacketParse->GetPacketHeadLen());
 
-	m_pPacketParse->SetPacketHead(pMBHead->rd_ptr(), (uint32)pMBHead->length());
-	if(u4Len != m_pPacketParse->GetPacketHeadLen() + m_pPacketParse->GetPacketDataLen())
+	m_pPacketParse->SetPacketHead(pMBHead, App_MessageBlockManager::instance());
+	if(u4Len != m_pPacketParse->GetPacketHeadLen() + m_pPacketParse->GetPacketBodyLen())
 	{
 		return false;
 	}
 
-	m_pPacketParse->SetMessageHead(pMBHead);
 	pMbData->rd_ptr(m_pPacketParse->GetPacketHeadLen());
 
 
-	ACE_Message_Block* pMBBody = App_MessageBlockManager::instance()->Create(m_pPacketParse->GetPacketDataLen());
-	ACE_OS::memcpy(pMBBody->wr_ptr(), (const void*)pMbData->rd_ptr(), m_pPacketParse->GetPacketDataLen());
-	pMBBody->wr_ptr(m_pPacketParse->GetPacketDataLen());
-	m_pPacketParse->SetPacketData(pMBBody->rd_ptr(), (uint32)pMBBody->length());
-	m_pPacketParse->SetMessageBody(pMBBody);
+	ACE_Message_Block* pMBBody = App_MessageBlockManager::instance()->Create(m_pPacketParse->GetPacketBodyLen());
+	ACE_OS::memcpy(pMBBody->wr_ptr(), (const void*)pMbData->rd_ptr(), m_pPacketParse->GetPacketBodyLen());
+	pMBBody->wr_ptr(m_pPacketParse->GetPacketBodyLen());
+	m_pPacketParse->SetPacketBody(pMBBody, App_MessageBlockManager::instance());
 
 	//UDP因为不是面向链接的
 	if(false == App_MakePacket::instance()->PutUDPMessageBlock(m_addrRemote, PACKET_PARSE, m_pPacketParse))

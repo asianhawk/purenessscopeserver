@@ -46,7 +46,7 @@ uint32 CPacketParse::GetPacketHeadLen()
 	return m_u4PacketHead;
 }
 
-uint32 CPacketParse::GetPacketDataLen()
+uint32 CPacketParse::GetPacketBodyLen()
 {
 	return m_u4PacketData;
 }
@@ -61,13 +61,18 @@ bool CPacketParse::GetIsHead()
 	return m_blIsHead;
 }
 
-bool CPacketParse::SetPacketHead(char* pData, uint32 u4Len)
+bool CPacketParse::SetPacketHead(ACE_Message_Block* pmbHead, IMessageBlockManager* pMessageBlockManager)
 {
 	//这里添加自己对包头的分析，主要分析出包长度。
+	char* pData  = (char* )pmbHead->rd_ptr();
+	uint32 u4Len = pmbHead->length();
+
 	m_u4HeadSrcSize = u4Len;
 	if(u4Len == sizeof(uint32))
 	{
 		ACE_OS::memcpy(&m_u4PacketData, pData, sizeof(uint32));
+		
+		m_pmbHead = pmbHead;
 		m_blIsHead = true;
 		return true;
 	}
@@ -77,14 +82,18 @@ bool CPacketParse::SetPacketHead(char* pData, uint32 u4Len)
 	}
 }
 
-bool CPacketParse::SetPacketData(char* pData, uint32 u4Len)
+bool CPacketParse::SetPacketBody(ACE_Message_Block* pmbBody, IMessageBlockManager* pMessageBlockManager)
 {
 	//这里分析出包体内的一些数据，如果包头包含了CommandID，那么包体就不必做解析。
+	char* pData  = (char* )pmbBody->rd_ptr();
+	uint32 u4Len = pmbBody->length();
+
 	m_u4BodySrcSize = u4Len;
 	if(u4Len >= sizeof(uint16))
 	{
 		ACE_OS::memcpy(&m_u2PacketCommandID, pData, sizeof(uint16));
 		m_blIsHead = false;
+		m_pmbBody = pmbBody;
 		return true;
 	}
 	else
@@ -102,18 +111,6 @@ uint32 CPacketParse::GetPacketHeadSrcLen()
 uint32 CPacketParse::GetPacketBodySrcLen()
 {
 	return m_u4BodySrcSize;
-}
-
-bool CPacketParse::SetMessageHead(ACE_Message_Block* pmbHead)
-{
-	m_pmbHead = pmbHead;
-	return true;
-}
-
-bool CPacketParse::SetMessageBody(ACE_Message_Block* pmbBody)
-{
-	m_pmbBody = pmbBody;
-	return true;
 }
 
 ACE_Message_Block* CPacketParse::GetMessageHead()
@@ -359,4 +356,20 @@ uint8 CPacketParse::GetPacketStream(ACE_Message_Block* pCurrMessage, IMessageBlo
 		}
 
 	}
+}
+
+void CPacketParse::Clear()
+{
+	m_pmbHead = NULL;
+	m_pmbBody = NULL;
+
+	m_blIsHead = false;
+
+	m_objCurrBody.Clear();
+
+	m_u4PacketHead      = 0;
+	m_u4PacketData      = 0;
+	m_u4HeadSrcSize     = 0;
+	m_u4BodySrcSize     = 0;
+	m_u2PacketCommandID = 0;
 }

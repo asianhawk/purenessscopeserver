@@ -23,20 +23,19 @@ public:
 	~CPacketParse(void);
 
 	void Init();
+	void Clear();
 
 	uint32 GetPacketHeadLen();
-	uint32 GetPacketDataLen();
+	uint32 GetPacketBodyLen();
 	uint16 GetPacketCommandID();
 
 	bool GetIsHead();
 
 	ACE_Message_Block* GetMessageHead();
 	ACE_Message_Block* GetMessageBody();
-	bool SetMessageHead(ACE_Message_Block* pmbHead);
-	bool SetMessageBody(ACE_Message_Block* pmbBody);
 
-	bool SetPacketHead(char* pData, uint32 u4Len);
-	bool SetPacketData(char* pData, uint32 u4Len);
+	bool SetPacketHead(ACE_Message_Block* pmbHead, IMessageBlockManager* pMessageBlockManager);
+	bool SetPacketBody(ACE_Message_Block* pmbBody, IMessageBlockManager* pMessageBlockManager);
 
 	const char* GetPacketVersion();
 	uint8 GetPacketMode();                                     //得到当前包的模式，1是带包头的，0是不带包头的（需要判定头尾标志的），默认是1

@@ -302,8 +302,8 @@ int CConsoleHandler::handle_input(ACE_HANDLE fd)
 	}
 	else if(m_pCurrMessage->length() == m_pPacketParse->GetPacketHeadLen() && m_pPacketParse->GetIsHead() == false)
 	{
-		m_pPacketParse->SetPacketHead(m_pCurrMessage->rd_ptr(), (uint32)m_pCurrMessage->length());
-		uint32 u4PacketBodyLen = m_pPacketParse->GetPacketDataLen();
+		m_pPacketParse->SetPacketHead(m_pCurrMessage, App_MessageBlockManager::instance());
+		uint32 u4PacketBodyLen = m_pPacketParse->GetPacketBodyLen();
 		m_u4CurrSize = 0;
 
 		//如果超过了最大包长度，为非法数据
@@ -332,10 +332,8 @@ int CConsoleHandler::handle_input(ACE_HANDLE fd)
 		}
 		else
 		{
-			m_pPacketParse->SetMessageHead(m_pCurrMessage);
-
 			//申请头的大小对应的mb
-			m_pCurrMessage = App_MessageBlockManager::instance()->Create(m_pPacketParse->GetPacketDataLen());
+			m_pCurrMessage = App_MessageBlockManager::instance()->Create(m_pPacketParse->GetPacketBodyLen());
 			if(m_pCurrMessage == NULL)
 			{
 				m_u4CurrSize = 0;
@@ -367,8 +365,7 @@ int CConsoleHandler::handle_input(ACE_HANDLE fd)
 	else
 	{
 		//接受完整数据完成，开始分析完整数据包
-		m_pPacketParse->SetPacketData(m_pCurrMessage->rd_ptr(), (uint32)m_pCurrMessage->length());
-		m_pPacketParse->SetMessageBody(m_pCurrMessage);
+		m_pPacketParse->SetPacketBody(m_pCurrMessage, App_MessageBlockManager::instance());
 
 		CheckMessage();
 
