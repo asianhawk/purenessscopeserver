@@ -4,7 +4,7 @@ include Makefile.define
 default:all
 
 # 主应用文件列表
-LIB_BASE_OBJS = packetParse.o
+LIB_BASE_OBJS = packetParse.o BuffPacket.o ACEMemory.o
 LIB_BASE = libPacketParse.so
 
 all: libPacketParse.so clear
