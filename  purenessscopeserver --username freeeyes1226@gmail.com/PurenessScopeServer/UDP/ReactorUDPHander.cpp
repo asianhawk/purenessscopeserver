@@ -190,21 +190,19 @@ bool CReactorUDPHander::CheckMessage(const char* pData, uint32 u4Len)
 	ACE_Message_Block* pMBHead = App_MessageBlockManager::instance()->Create(m_pPacketParse->GetPacketHeadLen());
 	ACE_OS::memcpy(pMBHead->wr_ptr(), (const void*)pData, m_pPacketParse->GetPacketHeadLen());
 	pMBHead->wr_ptr(m_pPacketParse->GetPacketHeadLen());
-	m_pPacketParse->SetPacketHead(pMBHead->rd_ptr(), (uint32)pMBHead->length());
+	m_pPacketParse->SetPacketHead(pMBHead, App_MessageBlockManager::instance());
 
-	if(u4Len != m_pPacketParse->GetPacketHeadLen() + m_pPacketParse->GetPacketDataLen())
+	if(u4Len != m_pPacketParse->GetPacketHeadLen() + m_pPacketParse->GetPacketBodyLen())
 	{
 		pMBHead->release();
 		return false;
 	}
-	m_pPacketParse->SetMessageHead(pMBHead);
 
 	char* pBody = (char* )(&pData[0] + m_pPacketParse->GetPacketHeadLen());
-	ACE_Message_Block* pMBBody = App_MessageBlockManager::instance()->Create(m_pPacketParse->GetPacketDataLen());
-	ACE_OS::memcpy(pMBBody->wr_ptr(), (const void*)pBody, m_pPacketParse->GetPacketDataLen());
-	pMBBody->wr_ptr(m_pPacketParse->GetPacketDataLen());
-	m_pPacketParse->SetPacketData(pMBBody->rd_ptr(), (uint32)pMBBody->length());
-	m_pPacketParse->SetMessageBody(pMBBody);
+	ACE_Message_Block* pMBBody = App_MessageBlockManager::instance()->Create(m_pPacketParse->GetPacketBodyLen());
+	ACE_OS::memcpy(pMBBody->wr_ptr(), (const void*)pBody, m_pPacketParse->GetPacketBodyLen());
+	pMBBody->wr_ptr(m_pPacketParse->GetPacketBodyLen());
+	m_pPacketParse->SetPacketBody(pMBBody, App_MessageBlockManager::instance());
 
 	//UDP因为不是面向链接的，所以这里ConnectID设置成-1
 	if(false == App_MakePacket::instance()->PutUDPMessageBlock(m_addrRemote, PACKET_PARSE, m_pPacketParse))

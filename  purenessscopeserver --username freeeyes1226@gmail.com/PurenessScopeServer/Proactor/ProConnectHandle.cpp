@@ -265,13 +265,11 @@ void CProConnectHandle::handle_read_stream(const ACE_Asynch_Read_Stream::Result 
 		if(m_pPacketParse->GetMessageHead() != NULL)
 		{
 			App_MessageBlockManager::instance()->Close(m_pPacketParse->GetMessageHead());
-			m_pPacketParse->SetMessageHead(NULL);
 		}
 
 		if(m_pPacketParse->GetMessageBody() != NULL)
 		{
 			App_MessageBlockManager::instance()->Close(m_pPacketParse->GetMessageBody());
-			m_pPacketParse->SetMessageBody(NULL);
 		}
 
 		if(&mb != m_pPacketParse->GetMessageHead() && &mb != m_pPacketParse->GetMessageBody())
@@ -347,13 +345,11 @@ void CProConnectHandle::handle_read_stream(const ACE_Asynch_Read_Stream::Result 
 				if(m_pPacketParse->GetMessageHead() != NULL)
 				{
 					App_MessageBlockManager::instance()->Close(m_pPacketParse->GetMessageHead());
-					m_pPacketParse->SetMessageHead(NULL);
 				}
 
 				if(m_pPacketParse->GetMessageBody() != NULL)
 				{
 					App_MessageBlockManager::instance()->Close(m_pPacketParse->GetMessageBody());
-					m_pPacketParse->SetMessageBody(NULL);
 				}
 
 				if(&mb != m_pPacketParse->GetMessageHead() && &mb != m_pPacketParse->GetMessageBody())
@@ -383,8 +379,8 @@ void CProConnectHandle::handle_read_stream(const ACE_Asynch_Read_Stream::Result 
 		else if(mb.length() == m_pPacketParse->GetPacketHeadLen() && m_pPacketParse->GetIsHead() == false)
 		{
 			//判断头的合法性
-			m_pPacketParse->SetPacketHead(mb.rd_ptr(), (uint32)mb.length());
-			uint32 u4PacketBodyLen = m_pPacketParse->GetPacketDataLen();
+			m_pPacketParse->SetPacketHead(&mb, App_MessageBlockManager::instance());
+			uint32 u4PacketBodyLen = m_pPacketParse->GetPacketBodyLen();
 
 			//如果超过了最大包长度，为非法数据
 			if(u4PacketBodyLen >= m_u4MaxPacketSize || u4PacketBodyLen <= 0)
@@ -394,13 +390,11 @@ void CProConnectHandle::handle_read_stream(const ACE_Asynch_Read_Stream::Result 
 				if(m_pPacketParse->GetMessageHead() != NULL)
 				{
 					App_MessageBlockManager::instance()->Close(m_pPacketParse->GetMessageHead());
-					m_pPacketParse->SetMessageHead(NULL);
 				}
 
 				if(m_pPacketParse->GetMessageBody() != NULL)
 				{
 					App_MessageBlockManager::instance()->Close(m_pPacketParse->GetMessageBody());
-					m_pPacketParse->SetMessageBody(NULL);
 				}
 
 				if(&mb != m_pPacketParse->GetMessageHead() && &mb != m_pPacketParse->GetMessageBody())
@@ -420,7 +414,6 @@ void CProConnectHandle::handle_read_stream(const ACE_Asynch_Read_Stream::Result 
 			}
 			else
 			{
-				m_pPacketParse->SetMessageHead(&mb);
 				Close();
 				RecvClinetPacket(u4PacketBodyLen);
 			}
@@ -428,8 +421,7 @@ void CProConnectHandle::handle_read_stream(const ACE_Asynch_Read_Stream::Result 
 		else
 		{
 			//接受完整数据完成，开始分析完整数据包
-			m_pPacketParse->SetPacketData(mb.rd_ptr(), (uint32)mb.length());
-			m_pPacketParse->SetMessageBody(&mb);
+			m_pPacketParse->SetPacketBody(&mb, App_MessageBlockManager::instance());
 
 			if(false == CheckMessage())
 			{
@@ -509,6 +501,8 @@ void CProConnectHandle::handle_read_stream(const ACE_Asynch_Read_Stream::Result 
 			else
 			{
 				//数据包为错误包，丢弃处理
+				m_pPacketParse->Clear();
+
 				Close(2);
 				return;
 			}

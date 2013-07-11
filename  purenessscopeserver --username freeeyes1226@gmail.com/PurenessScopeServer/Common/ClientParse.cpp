@@ -26,7 +26,7 @@ uint32 CClientParse::GetPacketHeadLen()
 	return m_u4PacketHead;
 }
 
-uint32 CClientParse::GetPacketDataLen()
+uint32 CClientParse::GetPacketBodyLen()
 {
 	return m_u4PacketData;
 }
@@ -56,7 +56,7 @@ bool CClientParse::SetPacketHead(char* pData, uint32 u4Len)
 	}
 }
 
-bool CClientParse::SetPacketData(char* pData, uint32 u4Len)
+bool CClientParse::SetPacketBody(char* pData, uint32 u4Len)
 {
 	//这里分析出包体内的一些数据，如果包头包含了CommandID，那么包体就不必做解析。
 	if(u4Len >= sizeof(uint16))

@@ -20,9 +20,10 @@ public:
 	~CPacketParse(void);
 
 	void Init();
+	void Clear();                                              //清理当前数据缓冲 
 
 	uint32 GetPacketHeadLen();                                 //得到的包头长度（未解密）
-	uint32 GetPacketDataLen();                                 //得到包体长度(未解密)
+	uint32 GetPacketBodyLen();                                 //得到包体长度(未解密)
 	uint16 GetPacketCommandID();                               //得到数据包命令字
 
 	const char* GetPacketVersion();                            //得到包解析模块的版本
@@ -33,11 +34,9 @@ public:
 
 	ACE_Message_Block* GetMessageHead();                       //得到解密好的数据块（包头）
 	ACE_Message_Block* GetMessageBody();                       //得到解密好的数据块（包体）
-	bool SetMessageHead(ACE_Message_Block* pmbHead);           //设置数据块信息（包头）
-	bool SetMessageBody(ACE_Message_Block* pmbBody);           //设置数据块信息（包体）
 
-	bool SetPacketHead(char* pData, uint32 u4Len);             //设置原始包头入口，在这里将数据还原成ACE_Message_Block解密解密好的包体
-	bool SetPacketData(char* pData, uint32 u4Len);             //设置原始包体入口，在这里将数据还原成ACE_Message_Block解密解密好的包体
+	bool SetPacketHead(ACE_Message_Block* pmbHead, IMessageBlockManager* pMessageBlockManager);             //设置原始包头入口，在这里将数据还原成ACE_Message_Block解密解密好的包体
+	bool SetPacketBody(ACE_Message_Block* pmbBody, IMessageBlockManager* pMessageBlockManager);             //设置原始包体入口，在这里将数据还原成ACE_Message_Block解密解密好的包体
 
 	uint32 GetPacketHeadSrcLen();                              //得到数据包原始包头长度
 	uint32 GetPacketBodySrcLen();                              //得到数据包原始包体长度

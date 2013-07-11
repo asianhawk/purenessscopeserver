@@ -487,8 +487,8 @@ int CConnectHandler::handle_input(ACE_HANDLE fd)
 		}
 		else if(m_pCurrMessage->length() == m_pPacketParse->GetPacketHeadLen() && m_pPacketParse->GetIsHead() == false)
 		{
-			m_pPacketParse->SetPacketHead(m_pCurrMessage->rd_ptr(), (uint32)m_pCurrMessage->length());
-			uint32 u4PacketBodyLen = m_pPacketParse->GetPacketDataLen();
+			m_pPacketParse->SetPacketHead(m_pCurrMessage, App_MessageBlockManager::instance());
+			uint32 u4PacketBodyLen = m_pPacketParse->GetPacketBodyLen();
 			m_u4CurrSize = 0;
 
 			//如果超过了最大包长度，为非法数据
@@ -523,11 +523,9 @@ int CConnectHandler::handle_input(ACE_HANDLE fd)
 			}
 			else
 			{
-				m_pPacketParse->SetMessageHead(m_pCurrMessage);
-
-				//OUR_DEBUG((LM_ERROR, "[CConnectHandle::RecvClinetPacket] m_pPacketParse->GetPacketDataLen())=%d.\n", m_pPacketParse->GetPacketDataLen()));
+				//OUR_DEBUG((LM_ERROR, "[CConnectHandle::RecvClinetPacket] m_pPacketParse->GetPacketBodyLen())=%d.\n", m_pPacketParse->GetPacketBodyLen()));
 				//申请头的大小对应的mb
-				m_pCurrMessage = App_MessageBlockManager::instance()->Create(m_pPacketParse->GetPacketDataLen());
+				m_pCurrMessage = App_MessageBlockManager::instance()->Create(m_pPacketParse->GetPacketBodyLen());
 				if(m_pCurrMessage == NULL)
 				{
 					m_u4CurrSize = 0;
@@ -565,8 +563,7 @@ int CConnectHandler::handle_input(ACE_HANDLE fd)
 		else
 		{
 			//接受完整数据完成，开始分析完整数据包
-			m_pPacketParse->SetPacketData(m_pCurrMessage->rd_ptr(), (uint32)m_pCurrMessage->length());
-			m_pPacketParse->SetMessageBody(m_pCurrMessage);
+			m_pPacketParse->SetPacketBody(m_pCurrMessage, App_MessageBlockManager::instance());
 
 			if(false == CheckMessage())
 			{
@@ -643,6 +640,8 @@ int CConnectHandler::handle_input(ACE_HANDLE fd)
 			}
 			else
 			{
+				m_pPacketParse->Clear();
+
 				AppLogManager::instance()->WriteLog(LOG_SYSTEM_CONNECT, "Close Connection from [%s:%d] RecvSize = %d, RecvCount = %d, SendSize = %d, SendCount = %d, m_u8RecvQueueTimeCost = %dws, m_u4RecvQueueCount = %d, m_u8SendQueueTimeCost = %dws.",m_addrRemote.get_host_addr(), m_addrRemote.get_port_number(), m_u4AllRecvSize, m_u4AllRecvCount, m_u4AllSendSize, m_u4AllSendCount, (uint32)m_u8RecvQueueTimeCost, m_u4RecvQueueCount, (uint32)m_u8SendQueueTimeCost);
 				OUR_DEBUG((LM_ERROR, "[CConnectHandle::RecvClinetPacket] pmb new is NULL.\n"));
 

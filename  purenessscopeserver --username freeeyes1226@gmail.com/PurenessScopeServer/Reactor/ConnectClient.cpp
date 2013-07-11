@@ -263,7 +263,7 @@ int CConnectClient::handle_input(ACE_HANDLE fd)
 	else if(m_pCurrMessage->length() == m_pClientParse->GetPacketHeadLen() && m_pClientParse->GetIsHead() == false)
 	{
 		m_pClientParse->SetPacketHead(m_pCurrMessage->rd_ptr(), (uint32)m_pCurrMessage->length());
-		uint32 u4PacketBodyLen = m_pClientParse->GetPacketDataLen();
+		uint32 u4PacketBodyLen = m_pClientParse->GetPacketBodyLen();
 		m_u4CurrSize = 0;
 
 		//如果超过了最大包长度，为非法数据
@@ -294,7 +294,7 @@ int CConnectClient::handle_input(ACE_HANDLE fd)
 			m_pClientParse->SetMessageHead(m_pCurrMessage);
 
 			//申请头的大小对应的mb
-			m_pCurrMessage = App_MessageBlockManager::instance()->Create(m_pClientParse->GetPacketDataLen());
+			m_pCurrMessage = App_MessageBlockManager::instance()->Create(m_pClientParse->GetPacketBodyLen());
 			if(m_pCurrMessage == NULL)
 			{
 				m_u4CurrSize = 0;
@@ -324,7 +324,7 @@ int CConnectClient::handle_input(ACE_HANDLE fd)
 	else
 	{
 		//接受完整数据完成，开始分析完整数据包
-		m_pClientParse->SetPacketData(m_pCurrMessage->rd_ptr(), (uint32)m_pCurrMessage->length());
+		m_pClientParse->SetPacketBody(m_pCurrMessage->rd_ptr(), (uint32)m_pCurrMessage->length());
 		m_pClientParse->SetMessageBody(m_pCurrMessage);
 		m_u4CurrSize = 0;
 
@@ -391,7 +391,7 @@ bool CConnectClient::CheckMessage()
 	m_nIOCount++;
 	m_ThreadLock.release();
 
-	m_u4RecvSize = m_pClientParse->GetPacketHeadLen() + m_pClientParse->GetPacketDataLen();
+	m_u4RecvSize = m_pClientParse->GetPacketHeadLen() + m_pClientParse->GetPacketBodyLen();
 	m_u4RecvCount++;
 
 	ACE_Time_Value tvBegin = ACE_OS::gettimeofday();

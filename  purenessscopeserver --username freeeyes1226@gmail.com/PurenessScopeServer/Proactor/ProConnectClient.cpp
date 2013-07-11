@@ -175,7 +175,7 @@ void CProConnectClient::handle_read_stream(const ACE_Asynch_Read_Stream::Result 
 
 		//判断头的合法性
 		m_pClientParse->SetPacketHead(mb.rd_ptr(), (uint32)mb.length());
-		uint32 u4PacketBodyLen = m_pClientParse->GetPacketDataLen();
+		uint32 u4PacketBodyLen = m_pClientParse->GetPacketBodyLen();
 
 		//如果超过了最大包长度，为非法数据
 		if(u4PacketBodyLen >= m_u4MaxPacketSize || u4PacketBodyLen <= 0)
@@ -251,7 +251,7 @@ void CProConnectClient::handle_read_stream(const ACE_Asynch_Read_Stream::Result 
 		}
 
 		//接受完整数据完成，开始分析完整数据包
-		m_pClientParse->SetPacketData(mb.rd_ptr(), (uint32)mb.length());
+		m_pClientParse->SetPacketBody(mb.rd_ptr(), (uint32)mb.length());
 		m_pClientParse->SetMessageBody(&mb);
 
 		//处理接收数据包
@@ -331,7 +331,7 @@ bool CProConnectClient::DoMessage()
 	m_nIOCount++;
 	m_ThreadWritrLock.release();
 
-	m_u4RecvSize = m_pClientParse->GetPacketHeadLen() + m_pClientParse->GetPacketDataLen();
+	m_u4RecvSize = m_pClientParse->GetPacketHeadLen() + m_pClientParse->GetPacketBodyLen();
 	m_u4RecvCount++;
 
 	ACE_Time_Value tvBegin = ACE_OS::gettimeofday();
