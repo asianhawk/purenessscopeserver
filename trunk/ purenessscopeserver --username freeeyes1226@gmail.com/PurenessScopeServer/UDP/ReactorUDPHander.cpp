@@ -181,35 +181,63 @@ bool CReactorUDPHander::CheckMessage(const char* pData, uint32 u4Len)
 		return false;
 	}
 
-	if(u4Len <= m_pPacketParse->GetPacketHeadLen())
+	if(m_pPacketParse->GetPacketMode() == PACKET_WITHHEAD)
 	{
-		return false;
+		if(u4Len <= m_pPacketParse->GetPacketHeadLen())
+		{
+			return false;
+		}
+
+		//将完整的数据包转换为PacketParse对象
+		ACE_Message_Block* pMBHead = App_MessageBlockManager::instance()->Create(m_pPacketParse->GetPacketHeadLen());
+		ACE_OS::memcpy(pMBHead->wr_ptr(), (const void*)pData, m_pPacketParse->GetPacketHeadLen());
+		pMBHead->wr_ptr(m_pPacketParse->GetPacketHeadLen());
+		m_pPacketParse->SetPacketHead(pMBHead, App_MessageBlockManager::instance());
+
+		if(u4Len != m_pPacketParse->GetPacketHeadLen() + m_pPacketParse->GetPacketBodyLen())
+		{
+			pMBHead->release();
+			return false;
+		}
+
+		char* pBody = (char* )(&pData[0] + m_pPacketParse->GetPacketHeadLen());
+		ACE_Message_Block* pMBBody = App_MessageBlockManager::instance()->Create(m_pPacketParse->GetPacketBodyLen());
+		ACE_OS::memcpy(pMBBody->wr_ptr(), (const void*)pBody, m_pPacketParse->GetPacketBodyLen());
+		pMBBody->wr_ptr(m_pPacketParse->GetPacketBodyLen());
+		m_pPacketParse->SetPacketBody(pMBBody, App_MessageBlockManager::instance());
+
+		//UDP因为不是面向链接的，所以这里ConnectID设置成-1
+		if(false == App_MakePacket::instance()->PutUDPMessageBlock(m_addrRemote, PACKET_PARSE, m_pPacketParse))
+		{
+			App_PacketParsePool::instance()->Delete(m_pPacketParse);
+			OUR_DEBUG((LM_ERROR, "[CProactorUDPHandler::SendMessage]PutMessageBlock is error.\n"));
+			return false;
+		}
 	}
-
-	//将完整的数据包转换为PacketParse对象
-	ACE_Message_Block* pMBHead = App_MessageBlockManager::instance()->Create(m_pPacketParse->GetPacketHeadLen());
-	ACE_OS::memcpy(pMBHead->wr_ptr(), (const void*)pData, m_pPacketParse->GetPacketHeadLen());
-	pMBHead->wr_ptr(m_pPacketParse->GetPacketHeadLen());
-	m_pPacketParse->SetPacketHead(pMBHead, App_MessageBlockManager::instance());
-
-	if(u4Len != m_pPacketParse->GetPacketHeadLen() + m_pPacketParse->GetPacketBodyLen())
+	else
 	{
-		pMBHead->release();
-		return false;
-	}
+		ACE_Message_Block* pMbData = App_MessageBlockManager::instance()->Create(u4Len); 
+		ACE_OS::memcpy(pMbData->wr_ptr(), pData, u4Len);
+		pMbData->wr_ptr(u4Len);
 
-	char* pBody = (char* )(&pData[0] + m_pPacketParse->GetPacketHeadLen());
-	ACE_Message_Block* pMBBody = App_MessageBlockManager::instance()->Create(m_pPacketParse->GetPacketBodyLen());
-	ACE_OS::memcpy(pMBBody->wr_ptr(), (const void*)pBody, m_pPacketParse->GetPacketBodyLen());
-	pMBBody->wr_ptr(m_pPacketParse->GetPacketBodyLen());
-	m_pPacketParse->SetPacketBody(pMBBody, App_MessageBlockManager::instance());
-
-	//UDP因为不是面向链接的，所以这里ConnectID设置成-1
-	if(false == App_MakePacket::instance()->PutUDPMessageBlock(m_addrRemote, PACKET_PARSE, m_pPacketParse))
-	{
-		App_PacketParsePool::instance()->Delete(m_pPacketParse);
-		OUR_DEBUG((LM_ERROR, "[CProactorUDPHandler::SendMessage]PutMessageBlock is error.\n"));
-		return false;
+		//以数据流处理
+		if(PACKET_GET_ENOUGTH == m_pPacketParse->GetPacketStream(pMbData, App_MessageBlockManager::instance()))
+		{
+			//UDP因为不是面向链接的
+			if(false == App_MakePacket::instance()->PutUDPMessageBlock(m_addrRemote, PACKET_PARSE, m_pPacketParse))
+			{
+				App_PacketParsePool::instance()->Delete(m_pPacketParse);
+				OUR_DEBUG((LM_ERROR, "[CProactorUDPHandler::SendMessage]PutMessageBlock is error.\n"));
+				return false;
+			}
+		}
+		else
+		{
+			OUR_DEBUG((LM_ERROR, "[CProactorUDPHandler::SendMessage]m_pPacketParse GetPacketStream is error.\n"));
+			App_PacketParsePool::instance()->Delete(m_pPacketParse);
+			return false;
+		}
+		App_MessageBlockManager::instance()->Close(pMbData);
 	}
 
 	m_atvInput = ACE_OS::gettimeofday();
