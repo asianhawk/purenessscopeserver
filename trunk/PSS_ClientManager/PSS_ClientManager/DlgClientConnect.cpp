@@ -22,17 +22,21 @@ CDlgClientConnect::~CDlgClientConnect()
 
 void CDlgClientConnect::DoDataExchange(CDataExchange* pDX)
 {
-  CDialog::DoDataExchange(pDX);
-  DDX_Control(pDX, IDC_EDIT1, m_txtClientConnectCount);
-  DDX_Control(pDX, IDC_EDIT2, m_txtCpu);
-  DDX_Control(pDX, IDC_EDIT5, m_txtMemory);
-  DDX_Control(pDX, IDC_LIST1, m_lcClientConnectHistory);
+	CDialog::DoDataExchange(pDX);
+	DDX_Control(pDX, IDC_EDIT1, m_txtClientConnectCount);
+	DDX_Control(pDX, IDC_EDIT2, m_txtCpu);
+	DDX_Control(pDX, IDC_EDIT5, m_txtMemory);
+	DDX_Control(pDX, IDC_LIST1, m_lcClientConnectHistory);
+	DDX_Control(pDX, IDC_EDIT3, m_txtDebugState);
+	DDX_Control(pDX, IDC_RADIO2, m_btnDebug);
 }
 
 
 BEGIN_MESSAGE_MAP(CDlgClientConnect, CDialog)
   ON_BN_CLICKED(IDC_BUTTON1, &CDlgClientConnect::OnBnClickedButton1)
   ON_BN_CLICKED(IDC_BUTTON6, &CDlgClientConnect::OnBnClickedButton6)
+  ON_BN_CLICKED(IDC_BUTTON5, &CDlgClientConnect::OnBnClickedButton5)
+  ON_BN_CLICKED(IDC_BUTTON4, &CDlgClientConnect::OnBnClickedButton4)
 END_MESSAGE_MAP()
 
 CString CDlgClientConnect::GetPageTitle()
@@ -207,4 +211,90 @@ void CDlgClientConnect::OnBnClickedButton6()
     }
 
   }
+}
+
+void CDlgClientConnect::OnBnClickedButton5()
+{
+	//获得DEBUG状态
+	char szSendMessage[200] = {'\0'};
+	char szCommand[100]     = {'\0'};
+	sprintf_s(szCommand, 100, "%s ShowDebug -a", m_pTcpClientConnect->GetKey());
+	int nSendLen = (int)strlen(szCommand); 
+
+	memcpy_s(szSendMessage, 200, &nSendLen, sizeof(int));
+	memcpy_s(&szSendMessage[4], 200, &szCommand, nSendLen);
+
+	char szRecvBuff[10 * 1024] = {'\0'};
+	int nRecvLen = 10 * 1024;
+	bool blState = m_pTcpClientConnect->SendConsoleMessage(szSendMessage, nSendLen + sizeof(int), (char*)szRecvBuff, nRecvLen);
+	if(blState == false)
+	{
+		MessageBox(_T(MESSAGE_SENDERROR) , _T(MESSAGE_TITLE_ERROR), MB_OK);
+	}
+	else
+	{
+		int nStrLen      = 0;
+		int nPos         = 4;
+		int nResult      = 0;
+		memcpy_s(&nResult, sizeof(int), &szRecvBuff[nPos], sizeof(char));
+		nPos += sizeof(int);
+
+		if(nResult == 0)
+		{
+			m_txtDebugState.SetWindowText(_T("DEBUG日志关闭"));
+		}
+		else
+		{
+			m_txtDebugState.SetWindowText(_T("DEBUG日志打开"));
+		}
+	}
+}
+
+void CDlgClientConnect::OnBnClickedButton4()
+{
+	//设置DEBUG状态
+	int nType = 0;
+	switch(GetCheckedRadioButton(IDC_RADIO1, IDC_RADIO2))
+	{
+	case IDC_RADIO1:
+		nType = 0;
+		break;
+	case IDC_RADIO2:
+		nType = 1;
+		break;
+	}
+
+	char szSendMessage[200] = {'\0'};
+	char szCommand[100]     = {'\0'};
+	sprintf_s(szCommand, 100, "%s SetDebug -s %d ", m_pTcpClientConnect->GetKey(), nType);
+	int nSendLen = (int)strlen(szCommand); 
+
+	memcpy_s(szSendMessage, 200, &nSendLen, sizeof(int));
+	memcpy_s(&szSendMessage[4], 200, &szCommand, nSendLen);
+
+	char szRecvBuff[10 * 1024] = {'\0'};
+	int nRecvLen = 10 * 1024;
+	bool blState = m_pTcpClientConnect->SendConsoleMessage(szSendMessage, nSendLen + sizeof(int), (char*)szRecvBuff, nRecvLen);
+	if(blState == false)
+	{
+		MessageBox(_T(MESSAGE_SENDERROR) , _T(MESSAGE_TITLE_ERROR), MB_OK);
+	}
+	else
+	{
+		int nStrLen      = 0;
+		int nPos         = 4;
+		int nResult      = 0;
+		memcpy_s(&nResult, sizeof(int), &szRecvBuff[nPos], sizeof(char));
+		nPos += sizeof(int);
+
+		if(nResult == 0)
+		{
+			MessageBox(_T(MESSAGE_RESULT_SUCCESS) , _T(MESSAGE_TITLE_ERROR), MB_OK);
+			OnBnClickedButton5();
+		}
+		else
+		{
+			MessageBox(_T(MESSAGE_RESULT_FAIL) , _T(MESSAGE_TITLE_SUCCESS), MB_OK);
+		}
+	}
 }

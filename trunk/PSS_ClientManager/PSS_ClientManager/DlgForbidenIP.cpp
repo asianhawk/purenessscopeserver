@@ -75,7 +75,7 @@ void CDlgForbidenIP::OnBnClickedButton1()
     nType = 0;
     break;
   case IDC_RADIO2:
-    nType = 0;
+    nType = 1;
     break;
   }
 

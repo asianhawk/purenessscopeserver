@@ -732,3 +732,7 @@ uint8 CMainConfig::GetDebug()
 	return m_u1Debug;
 }
 
+void CMainConfig::SetDebug(uint8 u1Debug)
+{
+	m_u1Debug = u1Debug;
+}
