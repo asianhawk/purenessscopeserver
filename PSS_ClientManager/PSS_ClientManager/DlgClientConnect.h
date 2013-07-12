@@ -54,8 +54,12 @@ public:
   CEdit m_txtClientConnectCount;
   CEdit m_txtCpu;
   CEdit m_txtMemory;
+  CEdit m_txtDebugState;
+  CButton m_btnDebug;
   CListCtrl m_lcClientConnectHistory;
   afx_msg void OnBnClickedButton1();
   virtual BOOL OnInitDialog();
   afx_msg void OnBnClickedButton6();
+  afx_msg void OnBnClickedButton5();
+  afx_msg void OnBnClickedButton4();
 };

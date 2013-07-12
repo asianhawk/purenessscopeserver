@@ -112,8 +112,9 @@ public:
 	uint16 GetConnectServerCheck();
 	uint16 GetSendQueuePutTime();
 	uint16 GetWorkQueuePutTime();
-	uint8 GetServerType();
-	uint8 GetDebug();
+	uint8  GetServerType();
+	uint8  GetDebug();
+	void   SetDebug(uint8 u1Debug);
 
 private:
 	CXmlOpeation m_MainConfig;

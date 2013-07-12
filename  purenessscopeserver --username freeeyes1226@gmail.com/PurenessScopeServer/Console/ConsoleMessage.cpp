@@ -263,6 +263,16 @@ int CConsoleMessage::ParseCommand(const char* pCommand, IBuffPacket* pBuffPacket
 		DoMessage_CommandDataLog(CommandInfo, pBuffPacket);
 		return CONSOLE_MESSAGE_SUCCESS;
 	}
+	else if(ACE_OS::strcmp(CommandInfo.m_szCommandTitle, CONSOLEMESSAGE_SETDEBUG) == 0)
+	{
+		DoMessage_SetDebug(CommandInfo, pBuffPacket);
+		return CONSOLE_MESSAGE_SUCCESS;
+	}
+	else if(ACE_OS::strcmp(CommandInfo.m_szCommandTitle, CONSOLEMESSAGE_SHOWDEBUG) == 0)
+	{
+		DoMessage_ShowDebug(CommandInfo, pBuffPacket);
+		return CONSOLE_MESSAGE_SUCCESS;
+	}
 	else
 	{
 		return CONSOLE_MESSAGE_FAIL;
@@ -1225,6 +1235,38 @@ bool CConsoleMessage::DoMessage_CommandDataLog(_CommandInfo& CommandInfo, IBuffP
 	return true;
 }
 
+bool CConsoleMessage::DoMessage_SetDebug( _CommandInfo& CommandInfo, IBuffPacket* pBuffPacket )
+{
+	uint8 u1Debug = 0;
+	if(GetDebug(CommandInfo.m_szCommandExp, u1Debug) == true)
+	{
+		if(u1Debug == DEBUG_OFF)
+		{
+			App_MainConfig::instance()->SetDebug(DEBUG_OFF);
+		}
+		else
+		{
+			App_MainConfig::instance()->SetDebug(DEBUG_ON);
+		}
+
+		(*pBuffPacket) << (uint8)0;	
+	}
+
+	return true;
+}
+
+bool CConsoleMessage::DoMessage_ShowDebug( _CommandInfo& CommandInfo, IBuffPacket* pBuffPacket )
+{
+	if(ACE_OS::strcmp(CommandInfo.m_szCommandExp, "-a") == 0)
+	{
+		(*pBuffPacket) << (uint8)App_MainConfig::instance()->GetDebug();
+
+		(*pBuffPacket) << (uint8)0;	
+	}
+
+	return true;
+}
+
 bool CConsoleMessage::SetConsoleKey(vecConsoleKey* pvecConsoleKey)
 {
 	m_pvecConsoleKey = pvecConsoleKey;
@@ -1250,3 +1292,21 @@ bool CConsoleMessage::CheckConsoleKey( const char* pKey )
 	return false;
 }
 
+bool CConsoleMessage::GetDebug(const char* pCommand, uint8& u1Debug)
+{
+	char szTempData[MAX_BUFF_100] = {'\0'};
+
+	int nCommandLen = ACE_OS::strlen(pCommand);
+	//»ñµÃIPµØÖ·
+	char* pPosBegin = (char* )ACE_OS::strstr(pCommand, "-s ");
+	int nLen = nCommandLen - (pPosBegin - pCommand) - 3;
+	if(nLen >= MAX_BUFF_100 || nLen < 0)
+	{
+		return false;
+	}
+	ACE_OS::memcpy(szTempData, pPosBegin + 3, nLen);
+
+	u1Debug = (uint8)ACE_OS::atoi(szTempData);
+
+	return true;
+}
