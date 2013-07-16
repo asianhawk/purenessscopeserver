@@ -324,6 +324,10 @@
 						>
 					</File>
 					<File
+						RelativePath=".\PacketParse\PacketParseBase.h"
+						>
+					</File>
+					<File
 						RelativePath=".\PacketParse\PacketParsePool.h"
 						>
 					</File>
