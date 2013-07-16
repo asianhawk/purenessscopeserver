@@ -1,64 +1,37 @@
 #pragma once 
-#include "IMessageBlockManager.h"
-#include "BuffPacket.h"
+
+#include "PacketParseBase.h"
 
 #ifdef WIN32
-#if defined DLLCLASS_EXPORTS
-#define DLLCLASS_EXPORTS __declspec(dllexport)
+#if defined PACKETPARSE_BUILD_DLL
+#define DLL_EXPORT __declspec(dllexport)
 #else
-#define DLLCLASS_EXPORTS __declspec(dllimport)
+#define DLL_EXPORT __declspec(dllimport)
 #endif
 #else
-#define DLLCLASS_EXPORTS
+#define DLL_EXPORT
 #endif 
 
-
-class DLLCLASS_EXPORTS CPacketParse
+#ifdef WIN32
+class DLL_EXPORT CPacketParse : public CPacketParseBase
+#else
+class CPacketParse
+#endif 
 {
 public:
 	CPacketParse(void);
-	~CPacketParse(void);
+	virtual ~CPacketParse(void);
 
-	void Init();
-	void Clear();                                              //清理当前数据缓冲 
+	bool SetPacketHead(ACE_Message_Block* pmbHead, IMessageBlockManager* pMessageBlockManager);
+	bool SetPacketBody(ACE_Message_Block* pmbBody, IMessageBlockManager* pMessageBlockManager);
 
-	uint32 GetPacketHeadLen();                                 //得到的包头长度（未解密）
-	uint32 GetPacketBodyLen();                                 //得到包体长度(未解密)
-	uint16 GetPacketCommandID();                               //得到数据包命令字
-
-	const char* GetPacketVersion();                            //得到包解析模块的版本
-	uint8 GetPacketMode();                                     //得到当前包的模式，1是带包头的，0是不带包头的（需要判定头尾标志的），默认是1
-	uint8 GetPacketStream(ACE_Message_Block* pCurrMessage, IMessageBlockManager* pMessageBlockManager);   //专门对应 Mode为0的不带包头的数据包,如果是带包头的模式，这里什么都不用做。
-
-	bool GetIsHead();                                          //得到包头标记位，如果当前是包头，则返回True，否则返回False
-
-	ACE_Message_Block* GetMessageHead();                       //得到解密好的数据块（包头）
-	ACE_Message_Block* GetMessageBody();                       //得到解密好的数据块（包体）
-
-	bool SetPacketHead(ACE_Message_Block* pmbHead, IMessageBlockManager* pMessageBlockManager);             //设置原始包头入口，在这里将数据还原成ACE_Message_Block解密解密好的包体
-	bool SetPacketBody(ACE_Message_Block* pmbBody, IMessageBlockManager* pMessageBlockManager);             //设置原始包体入口，在这里将数据还原成ACE_Message_Block解密解密好的包体
-
-	uint32 GetPacketHeadSrcLen();                              //得到数据包原始包头长度
-	uint32 GetPacketBodySrcLen();                              //得到数据包原始包体长度
+	//专门对应 Mode为0的不带包头的数据包,如果是带包头的模式，这里什么都不用做。
+	//因为用到了内存池，所以pHead和pBody由框架提供，并且由框架回收，所以在这里，不可以用new出来的pHead和pBody，否则会造成内存泄露。
+	//这里要注意一下啊。当然，如果你觉得前面的接口繁琐，你也可以用这个接口实现你的规则，前提是你的m_u1PacketMode必须是PACKET_WITHSTREAM
+	uint8 GetPacketStream(ACE_Message_Block* pCurrMessage, IMessageBlockManager* pMessageBlockManager);   
 
 	//拼接数据返回包
-	bool MakePacket(const char* pData, uint32 u4Len, ACE_Message_Block* pMbData);   //返回的数据包，你可以在这里添加你的加密方法
-	uint32 MakePacketLength(uint32 u4DataLen);                                      //获得加密后包的长度
+	bool MakePacket(const char* pData, uint32 u4Len, ACE_Message_Block* pMbData);
+	uint32 MakePacketLength(uint32 u4DataLen);
 
-	void Close();
-
-private:
-  uint32 m_u4PacketHead;
-  uint32 m_u4PacketData;
-  uint32 m_u4HeadSrcSize;
-  uint32 m_u4BodySrcSize;
-  uint16 m_u2PacketCommandID;
-  bool   m_blIsHead;
-  char   m_szPacketVersion[MAX_BUFF_20];   //包解析器版本
-  uint8  m_u1PacketMode;                   //包解析模式   
-
-  ACE_Message_Block* m_pmbHead;   //包头部分
-  ACE_Message_Block* m_pmbBody;   //包体部分
-
-  CBuffPacket m_objCurrBody;      //记录尚未完整的包体
 };

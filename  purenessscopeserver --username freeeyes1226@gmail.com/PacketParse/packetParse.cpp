@@ -3,62 +3,16 @@
 
 CPacketParse::CPacketParse(void)
 {
-	//在这里设置包头的长度，因为大部分的包头长度是固定的。包体长度是可变的。
-	m_u4PacketHead      = PACKET_HEAD;
-	m_u2PacketCommandID = 0;
-	m_u4PacketData      = 0;
-	m_u4HeadSrcSize     = 0;
-	m_u4BodySrcSize     = 0;
-
-    //这里修改属于你的包解析版本号
-    sprintf_safe(m_szPacketVersion, MAX_BUFF_20, "0.90");
+	//这里修改属于你的包解析版本号
+	sprintf_safe(m_szPacketVersion, MAX_BUFF_20, "0.90");
 
 	//这里设置你的包模式
 	m_u1PacketMode      = PACKET_WITHHEAD;
-
-	m_blIsHead          = false;
-
-	m_pmbHead           = NULL;
-	m_pmbBody           = NULL;
 }
 
 CPacketParse::~CPacketParse(void)
 {
-	m_objCurrBody.Close();
-}
-
-void CPacketParse::Init()
-{
-	m_u4PacketHead      = PACKET_HEAD;
-	m_u2PacketCommandID = 0;
-	m_u4PacketData      = 0;
-	m_u4HeadSrcSize     = 0;
-	m_u4BodySrcSize     = 0;
-
-	m_blIsHead          = false;
-
-	m_pmbHead           = NULL;
-	m_pmbBody           = NULL;
-}
-
-uint32 CPacketParse::GetPacketHeadLen()
-{
-	return m_u4PacketHead;
-}
-
-uint32 CPacketParse::GetPacketBodyLen()
-{
-	return m_u4PacketData;
-}
-
-uint16 CPacketParse::GetPacketCommandID()
-{
-	return m_u2PacketCommandID;
-}
-
-bool CPacketParse::GetIsHead()
-{
-	return m_blIsHead;
+	
 }
 
 bool CPacketParse::SetPacketHead(ACE_Message_Block* pmbHead, IMessageBlockManager* pMessageBlockManager)
@@ -103,25 +57,7 @@ bool CPacketParse::SetPacketBody(ACE_Message_Block* pmbBody, IMessageBlockManage
 	}
 }
 
-uint32 CPacketParse::GetPacketHeadSrcLen()
-{
-	return m_u4HeadSrcSize;
-}
 
-uint32 CPacketParse::GetPacketBodySrcLen()
-{
-	return m_u4BodySrcSize;
-}
-
-ACE_Message_Block* CPacketParse::GetMessageHead()
-{
-	return m_pmbHead;
-}
-
-ACE_Message_Block* CPacketParse::GetMessageBody()
-{
-	return m_pmbBody;
-}
 
 uint32 CPacketParse::MakePacketLength(uint32 u4DataLen)
 {
@@ -143,33 +79,7 @@ bool CPacketParse::MakePacket(const char* pData, uint32 u4Len, ACE_Message_Block
 	return true;
 }
 
-void CPacketParse::Close()
-{
-	if(m_pmbHead != NULL)
-	{
-		m_pmbHead->release();
-		m_pmbHead = NULL;
-	}
 
-	if(m_pmbBody != NULL)
-	{
-		m_pmbBody->release();
-		m_pmbBody = NULL;
-	}
-
-	m_objCurrBody.Close();
-	m_blIsHead = false;
-}
-
-const char* CPacketParse::GetPacketVersion()
-{
-  return m_szPacketVersion;
-}
-
-uint8 CPacketParse::GetPacketMode()
-{
-	return (uint8)m_u1PacketMode;
-}
 
 uint8 CPacketParse::GetPacketStream(ACE_Message_Block* pCurrMessage, IMessageBlockManager* pMessageBlockManager)
 {
@@ -358,18 +268,3 @@ uint8 CPacketParse::GetPacketStream(ACE_Message_Block* pCurrMessage, IMessageBlo
 	}
 }
 
-void CPacketParse::Clear()
-{
-	m_pmbHead = NULL;
-	m_pmbBody = NULL;
-
-	m_blIsHead = false;
-
-	m_objCurrBody.Clear();
-
-	m_u4PacketHead      = 0;
-	m_u4PacketData      = 0;
-	m_u4HeadSrcSize     = 0;
-	m_u4BodySrcSize     = 0;
-	m_u2PacketCommandID = 0;
-}
