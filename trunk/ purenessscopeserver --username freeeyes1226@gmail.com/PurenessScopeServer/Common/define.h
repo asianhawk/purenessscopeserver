@@ -131,6 +131,15 @@ using namespace std;
 
 #define CONNECT_LIMIT_RETRY 30              //初始化中间服务器链接后定期检查，单位是秒
 
+//对应当前框架支持的网络模式
+enum
+{
+	NETWORKMODE_PRO_IOCP    = 1,
+	NETWORKMODE_RE_SELECT   = 10,
+	NETWORKMODE_RE_TPSELECT = 11,
+	NETWORKMODE_RE_EPOLL    = 12,
+};
+
 //对应链接的状态，用于设置链接时候的状态
 enum
 {

@@ -35,29 +35,50 @@ bool CServerManager::Init()
 		if(i == 0)
 		{
 			//这里区分操作系统版本，使用不同的反应器
-#ifdef WIN32
-			blState = App_ReactorManager::instance()->AddNewReactor(REACTOR_CLIENTDEFINE, Reactor_Select, 0);
-			OUR_DEBUG((LM_INFO, "[CServerManager::Init]AddNewReactor REACTOR_CLIENTDEFINE = Reactor_Select.\n"));
-#else
-			blState = App_ReactorManager::instance()->AddNewReactor(REACTOR_CLIENTDEFINE, Reactor_DEV_POLL, 0);
-			OUR_DEBUG((LM_INFO, "[CServerManager::Init]AddNewReactor REACTOR_CLIENTDEFINE = Reactor_DEV_POLL.\n"));	
-#endif		
-			if(!blState)
+			if(App_MainConfig::instance()->GetNetworkMode() == NETWORKMODE_RE_SELECT)
 			{
-				OUR_DEBUG((LM_INFO, "[CServerManager::Init]AddNewReactor REACTOR_CLIENTDEFINE Error.\n"));
+				blState = App_ReactorManager::instance()->AddNewReactor(REACTOR_CLIENTDEFINE, Reactor_Select, 0);
+				OUR_DEBUG((LM_INFO, "[CServerManager::Init]AddNewReactor REACTOR_CLIENTDEFINE = Reactor_Select.\n"));
+			}
+			else if(App_MainConfig::instance()->GetNetworkMode() == NETWORKMODE_RE_TPSELECT)
+			{
+				blState = App_ReactorManager::instance()->AddNewReactor(REACTOR_CLIENTDEFINE, Reactor_TP, 0);
+				OUR_DEBUG((LM_INFO, "[CServerManager::Init]AddNewReactor REACTOR_CLIENTDEFINE = Reactor_TP.\n"));
+			}
+			else if(App_MainConfig::instance()->GetNetworkMode() == NETWORKMODE_RE_EPOLL)
+			{
+				blState = App_ReactorManager::instance()->AddNewReactor(REACTOR_CLIENTDEFINE, Reactor_DEV_POLL, 0);
+				OUR_DEBUG((LM_INFO, "[CServerManager::Init]AddNewReactor REACTOR_CLIENTDEFINE = Reactor_DEV_POLL.\n"));
+			}
+			else
+			{
+				OUR_DEBUG((LM_INFO, "[CServerManager::Init]AddNewProactor NETWORKMODE Error.\n"));
 				return false;
 			}
 		}
 		else
 		{
-#ifdef WIN32
-			//blState = App_ReactorManager::instance()->AddNewReactor(i, Reactor_WFMO, 1);
-			blState = App_ReactorManager::instance()->AddNewReactor(i, Reactor_Select, 1);
-			OUR_DEBUG((LM_INFO, "[CServerManager::Init]AddNewReactor REACTOR_CLIENTDEFINE = Reactor_Select.\n"));
-#else
-			blState = App_ReactorManager::instance()->AddNewReactor(i, Reactor_DEV_POLL, 1);
-			OUR_DEBUG((LM_INFO, "[CServerManager::Init]AddNewReactor REACTOR_CLIENTDEFINE = Reactor_DEV_POLL.\n"));
-#endif
+			if(App_MainConfig::instance()->GetNetworkMode() == NETWORKMODE_RE_SELECT)
+			{
+				blState = App_ReactorManager::instance()->AddNewReactor(i, Reactor_Select, 1);
+				OUR_DEBUG((LM_INFO, "[CServerManager::Init]AddNewReactor REACTOR_CLIENTDEFINE = Reactor_Select.\n"));
+			}
+			else if(App_MainConfig::instance()->GetNetworkMode() == NETWORKMODE_RE_TPSELECT)
+			{
+				blState = App_ReactorManager::instance()->AddNewReactor(i, Reactor_TP, 1);
+				OUR_DEBUG((LM_INFO, "[CServerManager::Init]AddNewReactor REACTOR_CLIENTDEFINE = Reactor_TP.\n"));
+			}
+			else if(App_MainConfig::instance()->GetNetworkMode() == NETWORKMODE_RE_EPOLL)
+			{
+				blState = App_ReactorManager::instance()->AddNewReactor(i, Reactor_DEV_POLL, 1);
+				OUR_DEBUG((LM_INFO, "[CServerManager::Init]AddNewReactor REACTOR_CLIENTDEFINE = Reactor_DEV_POLL.\n"));
+			}
+			else
+			{
+				OUR_DEBUG((LM_INFO, "[CServerManager::Init]AddNewProactor NETWORKMODE Error.\n"));
+				return false;
+			}
+
 			if(!blState)
 			{
 				OUR_DEBUG((LM_INFO, "[CServerManager::Init]AddNewReactor [%d] Error.\n", i));

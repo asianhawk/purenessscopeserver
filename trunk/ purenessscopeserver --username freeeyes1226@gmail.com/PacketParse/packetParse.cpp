@@ -3,6 +3,9 @@
 
 CPacketParse::CPacketParse(void)
 {
+	//如果是包头模式，这里需要设置包头的长度
+	m_u4PacketHead      = PACKET_HEAD;
+
 	//这里修改属于你的包解析版本号
 	sprintf_safe(m_szPacketVersion, MAX_BUFF_20, "0.90");
 

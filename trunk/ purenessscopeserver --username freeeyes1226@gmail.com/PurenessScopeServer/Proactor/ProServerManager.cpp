@@ -33,28 +33,39 @@ bool CProServerManager::Init()
 		if(i == 0)
 		{
 			//这里区分操作系统版本，使用不同的反应器
-#ifdef WIN32
-			blState = App_ProactorManager::instance()->AddNewProactor(REACTOR_CLIENTDEFINE, Proactor_WIN32, 0);
-			OUR_DEBUG((LM_INFO, "[CProServerManager::Init]AddNewProactor REACTOR_CLIENTDEFINE = Proactor_WIN32.\n"));
-#else
-			blState = App_ProactorManager::instance()->AddNewProactor(REACTOR_CLIENTDEFINE, Proactor_POSIX, 0);
-			OUR_DEBUG((LM_INFO, "[CProServerManager::Init]AddNewProactor REACTOR_CLIENTDEFINE = Proactor_POSIX.\n"));	
-#endif		
+			if(App_MainConfig::instance()->GetNetworkMode() == NETWORKMODE_PRO_IOCP)
+			{
+				blState = App_ProactorManager::instance()->AddNewProactor(REACTOR_CLIENTDEFINE, Proactor_WIN32, 0);
+				OUR_DEBUG((LM_INFO, "[CProServerManager::Init]AddNewProactor NETWORKMODE = Proactor_WIN32.\n"));
+			}
+			else
+			{
+				OUR_DEBUG((LM_INFO, "[CProServerManager::Init]AddNewProactor NETWORKMODE Error.\n"));
+				return false;
+			}
+
+			//linux下的posix，暂时注释，因为linux对posix支持不完整，所以这种模式暂时不考虑。
+			//blState = App_ProactorManager::instance()->AddNewProactor(REACTOR_CLIENTDEFINE, Proactor_POSIX, 0);
+			//OUR_DEBUG((LM_INFO, "[CProServerManager::Init]AddNewProactor REACTOR_CLIENTDEFINE = Proactor_POSIX.\n"));			
 			if(!blState)
 			{
-				OUR_DEBUG((LM_INFO, "[CProServerManager::Init]AddNewProactor REACTOR_CLIENTDEFINE Error.\n"));
+				OUR_DEBUG((LM_INFO, "[CProServerManager::Init]AddNewProactor NETWORKMODE Error.\n"));
 				return false;
 			}
 		}
 		else
 		{
-#ifdef WIN32
-			blState = App_ProactorManager::instance()->AddNewProactor(i, Proactor_WIN32, 1);
-			OUR_DEBUG((LM_INFO, "[CProServerManager::Init]AddNewProactor REACTOR_CLIENTDEFINE = Proactor_WIN32.\n"));
-#else
-			blState = App_ProactorManager::instance()->AddNewProactor(i, Proactor_POSIX, 1);
-			OUR_DEBUG((LM_INFO, "[CProServerManager::Init]AddNewReactor REACTOR_CLIENTDEFINE = Proactor_POSIX.\n"));
-#endif
+			if(App_MainConfig::instance()->GetNetworkMode() == NETWORKMODE_PRO_IOCP)
+			{
+				blState = App_ProactorManager::instance()->AddNewProactor(i, Proactor_WIN32, 1);
+				OUR_DEBUG((LM_INFO, "[CProServerManager::Init]AddNewProactor NETWORKMODE = Proactor_WIN32.\n"));
+			}
+			else
+			{
+				OUR_DEBUG((LM_INFO, "[CProServerManager::Init]AddNewProactor NETWORKMODE Error.\n"));
+				return false;
+			}
+
 			if(!blState)
 			{
 				OUR_DEBUG((LM_INFO, "[CProServerManager::Init]AddNewProactor [%d] Error.\n", i));
