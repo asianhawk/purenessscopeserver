@@ -40,6 +40,8 @@ CMainConfig::CMainConfig(void)
 	m_u2SendQueuePutTime    = (uint16)MAX_MSG_PUTTIMEOUT;
 	m_u2WorkQueuePutTime    = (uint16)MAX_MSG_PUTTIMEOUT;
 
+	m_u1NetworkMode         = (uint8)NETWORKMODE_PRO_IOCP;
+
 	m_szServerName[0]         = '\0';
 	m_szServerVersion[0]      = '\0';
 	m_szPacketVersion[0]      = '\0';
@@ -77,6 +79,39 @@ bool CMainConfig::Init(const char* szConfigPath)
 		OUR_DEBUG((LM_INFO, "[CMainConfig::Init]File Read Error = %s.\n", szConfigPath));
 		return false;
 	}
+
+	//获得当前网络模型
+	pData = m_MainConfig.GetData("NetWorkMode", "Mode");
+	if(NULL != pData)
+	{
+		if(ACE_OS::strcmp(pData, "Iocp") == 0)
+		{
+			m_u1NetworkMode = (uint8)NETWORKMODE_PRO_IOCP;
+		}
+		else if(ACE_OS::strcmp(pData, "Select") == 0)
+		{
+			m_u1NetworkMode = (uint8)NETWORKMODE_RE_SELECT;
+		}
+		else if(ACE_OS::strcmp(pData, "Poll") == 0)
+		{
+			m_u1NetworkMode = (uint8)NETWORKMODE_RE_TPSELECT;
+		}
+		else if(ACE_OS::strcmp(pData, "Epoll") == 0)
+		{
+			m_u1NetworkMode = (uint8)NETWORKMODE_RE_EPOLL;
+		}
+		else
+		{
+			OUR_DEBUG((LM_INFO, "[CMainConfig::Init]NetworkMode is Invalid!!, please read main.xml desc.\n", szConfigPath));
+			return false;
+		}
+	}
+	else
+	{
+		OUR_DEBUG((LM_INFO, "[CMainConfig::Init]NetworkMode is Invalid!!, please read main.xml desc.\n", szConfigPath));
+		return false;
+	}
+
 
 	//获得服务器基础属性
 	pData = m_MainConfig.GetData("ServerType", "Type");
@@ -735,4 +770,9 @@ uint8 CMainConfig::GetDebug()
 void CMainConfig::SetDebug(uint8 u1Debug)
 {
 	m_u1Debug = u1Debug;
+}
+
+uint8 CMainConfig::GetNetworkMode()
+{
+	return m_u1NetworkMode;
 }

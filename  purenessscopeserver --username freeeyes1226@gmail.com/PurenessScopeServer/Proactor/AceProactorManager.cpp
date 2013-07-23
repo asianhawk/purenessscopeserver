@@ -252,11 +252,6 @@ bool CAceProactorManager::AddNewProactor(int nProactorID, int nProactorType, int
 		return false;
 	}
 
-	//if(nProactorID == REACTOR_CLIENTDEFINE)          //第一个Proactor作为默认的
-	//{
-	//	ACE_Proactor::instance(pAceProactor->GetProactor(), 1);
-	//}
-
 	m_mapAceProactor.insert(mapAceProactor::value_type(nProactorID, pAceProactor));
 	OUR_DEBUG((LM_INFO, "[CAceProactorManager::AddNewProactor]New [%d] ProactorType = [%d] nThreadCount = [%d]. pAceProactor=[%@]\n", nProactorID, nProactorType, nThreadCount,pAceProactor));
 	return true;
