@@ -125,10 +125,20 @@ using namespace std;
 
 #define PACKET_GET_ENOUGTH                0      //得到完整的数据包，需要继续接收
 #define PACKET_GET_NO_ENOUGTH             1      //得到的数据包不完整
+#define PACKET_GET_ERROR                  2      //数据包格式错误
 
 #define MAX_PACKET_SIZE     1024*1024
 
 #define CONNECT_LIMIT_RETRY 30              //初始化中间服务器链接后定期检查，单位是秒
+
+//对应当前框架支持的网络模式
+enum
+{
+	NETWORKMODE_PRO_IOCP    = 1,
+	NETWORKMODE_RE_SELECT   = 10,
+	NETWORKMODE_RE_TPSELECT = 11,
+	NETWORKMODE_RE_EPOLL    = 12,
+};
 
 //对应链接的状态，用于设置链接时候的状态
 enum

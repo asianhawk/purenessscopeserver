@@ -430,7 +430,7 @@ bool CClientProConnectManager::SendData(int nServerID, const char* pData, int nS
 	return pClientInfo->SendData(pmblk);
 }
 
-bool CClientProConnectManager::SendDataUDP(int nServerID,const char* pIP, int nPort, const char* pMessage, uint32 u4Len)
+bool CClientProConnectManager::SendDataUDP(int nServerID,const char* pIP, int nPort, const char* pMessage, uint32 u4Len, bool blIsDelete)
 {
 	ACE_Guard<ACE_Recursive_Thread_Mutex> guard(m_ThreadWritrLock);
 	mapProactorUDPClientInfo::iterator f = m_mapProactorUDPClientInfo.find(nServerID);
@@ -438,14 +438,24 @@ bool CClientProConnectManager::SendDataUDP(int nServerID,const char* pIP, int nP
 	{
 		//如果这个链接已经存在，则不创建新的链接
 		OUR_DEBUG((LM_ERROR, "[CClientProConnectManager::SendDataUDP]nServerID =(%d) is not exist.\n", nServerID));
-		SAFE_DELETE_ARRAY(pMessage);
+		if(true == blIsDelete)
+		{
+			SAFE_DELETE_ARRAY(pMessage);
+		}
 		return false;
 	}
 
 	CProactorUDPClient* pClientInfo = (CProactorUDPClient* )f->second;
 
 	//发送数据
-	return pClientInfo->SendMessage(pMessage, u4Len, pIP, nPort);
+	bool blSendRet = pClientInfo->SendMessage(pMessage, u4Len, pIP, nPort);
+
+	if(true == blIsDelete)
+	{
+		SAFE_DELETE_ARRAY(pMessage);
+	}
+
+	return blSendRet;
 }
 
 bool CClientProConnectManager::StartConnectTask(int nIntervalTime)
