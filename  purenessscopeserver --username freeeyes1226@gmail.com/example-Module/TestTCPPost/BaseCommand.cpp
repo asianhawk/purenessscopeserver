@@ -69,8 +69,8 @@ int CBaseCommand::DoMessage(IMessage* pMessage, bool& bDeleteFlag)
 
 		//往中间服务器发送消息
 		char szPostData[MAX_BUFF_100] = {'\0'};
-		sprintf_safe(szPostData, MAX_BUFF_100, "hello");
-		if(false == m_pServerObject->GetClientManager()->SendData(1, szPostData, (int)ACE_OS::strlen(szPostData)))
+		sprintf_safe(szPostData, MAX_BUFF_100, "hello world");
+		if(false == m_pServerObject->GetClientManager()->SendData(1, szPostData, (int)ACE_OS::strlen(szPostData)), false)
 		{
 			OUR_DEBUG((LM_ERROR, "[CBaseCommand::DoMessage] Send Post Data Error.\n"));
 			return 0;
