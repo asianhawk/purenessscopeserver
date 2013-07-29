@@ -8,6 +8,7 @@ CBaseCommand::CBaseCommand(void)
 
 CBaseCommand::~CBaseCommand(void)
 {
+	delete m_pPostServerData1;
 }
 
 void CBaseCommand::SetServerObject(CServerObject* pServerObject)
@@ -46,7 +47,7 @@ int CBaseCommand::DoMessage(IMessage* pMessage, bool& bDeleteFlag)
 	{
 		uint32     u4PacketLen = 0;
 		uint16     u2CommandID = 0;
-		VCHARS_STR strsName;
+		//VCHARS_STR strsName;
 		string     strName;
 
 		IBuffPacket* pBodyPacket = m_pServerObject->GetPacketManager()->Create();
@@ -62,15 +63,18 @@ int CBaseCommand::DoMessage(IMessage* pMessage, bool& bDeleteFlag)
 		pBodyPacket->WriteStream(BodyPacket.m_pData, BodyPacket.m_nDataLen);
 
 		(*pBodyPacket) >> u2CommandID;
-		(*pBodyPacket) >> strsName;
-		strName.assign(strsName.text, strsName.u1Len);
+		//(*pBodyPacket) >> strsName;
+		//strName.assign(strsName.text, strsName.u1Len);
 
 		m_pServerObject->GetPacketManager()->Delete(pBodyPacket);
 
 		//往中间服务器发送消息
 		char szPostData[MAX_BUFF_100] = {'\0'};
 		sprintf_safe(szPostData, MAX_BUFF_100, "hello world");
-		if(false == m_pServerObject->GetClientManager()->SendData(1, szPostData, (int)ACE_OS::strlen(szPostData)), false)
+		
+		//设置当前接收数据的ConnectID，用于收到远程回应信息返回
+		m_pPostServerData1->SetConnectID(pMessage->GetMessageBase()->m_u4ConnectID);
+		if(false == m_pServerObject->GetClientManager()->SendData(1, szPostData, (int)ACE_OS::strlen(szPostData), false))
 		{
 			OUR_DEBUG((LM_ERROR, "[CBaseCommand::DoMessage] Send Post Data Error.\n"));
 			return 0;
@@ -83,11 +87,13 @@ int CBaseCommand::DoMessage(IMessage* pMessage, bool& bDeleteFlag)
 
 void CBaseCommand::InitServer()
 {
-	CPostServerData* pPostServerData1 = new CPostServerData();
-	CPostServerData* pPostServerData2 = new CPostServerData();
+	m_pPostServerData1 = new CPostServerData();
 
-	m_pServerObject->GetClientManager()->Connect(1, "127.0.0.1", 10040, (IClientMessage* )pPostServerData1);
-	m_pServerObject->GetClientManager()->Connect(2, "127.0.0.1", 10050, (IClientMessage* )pPostServerData2);
+	//设置返回客户端需要的发送对象
+	m_pPostServerData1->SetServerObject(m_pServerObject);
+
+	//初始化连接关系
+	m_pServerObject->GetClientManager()->Connect(1, "127.0.0.1", 10040, (IClientMessage* )m_pPostServerData1);
 
 }
 

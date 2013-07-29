@@ -104,7 +104,7 @@ void CProConnectClient::open(ACE_HANDLE h, ACE_Message_Block&)
 	App_ClientProConnectManager::instance()->SetHandler(m_nServerID, this);
 	m_pClientMessage = App_ClientProConnectManager::instance()->GetClientMessage(m_nServerID);
 
-	RecvData(m_pClientParse->GetPacketHeadLen());
+	RecvData(MAX_BUFF_1024);
 }
 
 
@@ -123,155 +123,13 @@ void CProConnectClient::handle_read_stream(const ACE_Asynch_Read_Stream::Result 
 		Close();
 		return;
 	}
-	else if(result.bytes_transferred() < result.bytes_to_read())    //如果是短读，继续读。
+	else 
 	{
-		if(m_Reader.read(mb ,result.bytes_to_read() - result.bytes_transferred()) == -1)
-		{
-			mb.release();
-			if(NULL != m_pClientMessage)
-			{
-				m_pClientMessage->ConnectError((int)ACE_OS::last_error());
-			}
-			Close();
-			return;
-		}
-	}
-	else if(mb.length() == m_pClientParse->GetPacketHeadLen() && m_pClientParse->GetIsHead() == false)
-	{
-		//如果是DEBUG状态，记录当前接受包的二进制数据
-		if(App_MainConfig::instance()->GetDebug() == DEBUG_ON)
-		{
-			string strDebugData;
-			char szLog[10]  = {'\0'};
-			int  nDebugSize = 0; 
-			bool blblMore   = false;
-
-			if(mb.length() >= MAX_BUFF_200)
-			{
-				nDebugSize = MAX_BUFF_200;
-				blblMore   = true;
-			}
-			else
-			{
-				nDebugSize = mb.length();
-			}
-
-			char* pData = mb.rd_ptr();
-			for(int i = 0; i < nDebugSize; i++)
-			{
-				sprintf_safe(szLog, 10, "0x%02X ", (unsigned char)pData[i]);
-				strDebugData += szLog;
-			}
-
-			if(blblMore == true)
-			{
-				AppLogManager::instance()->WriteLog(LOG_SYSTEM_DEBUG_SERVERRECV, "[%s:%d]%s.(数据包过长只记录前200字节)", m_AddrRemote.get_host_addr(), m_AddrRemote.get_port_number(), strDebugData.c_str());
-			}
-			else
-			{
-				AppLogManager::instance()->WriteLog(LOG_SYSTEM_DEBUG_SERVERRECV, "[%s:%d]%s.", m_AddrRemote.get_host_addr(), m_AddrRemote.get_port_number(), strDebugData.c_str());
-			}
-		}
-
-		//判断头的合法性
-		m_pClientParse->SetPacketHead(mb.rd_ptr(), (uint32)mb.length());
-		uint32 u4PacketBodyLen = m_pClientParse->GetPacketBodyLen();
-
-		//如果超过了最大包长度，为非法数据
-		if(u4PacketBodyLen >= m_u4MaxPacketSize || u4PacketBodyLen <= 0)
-		{
-			OUR_DEBUG((LM_ERROR, "[CConnectHandler::handle_read_stream]u4PacketHeadLen(%d) more than MAX_MSG_PACKETLENGTH.", u4PacketBodyLen));
-
-			if(m_pClientParse->GetMessageHead() != NULL)
-			{
-				m_pClientParse->GetMessageHead()->release();
-				m_pClientParse->SetMessageHead(NULL);
-			}
-
-			if(m_pClientParse->GetMessageBody() != NULL)
-			{
-				m_pClientParse->GetMessageBody()->release();
-				m_pClientParse->SetMessageBody(NULL);
-			}
-
-			if(&mb != m_pClientParse->GetMessageHead() && &mb != m_pClientParse->GetMessageBody())
-			{
-				mb.release();
-			}
-			App_ClientParsePool::instance()->Delete(m_pClientParse);
-			if(NULL != m_pClientMessage)
-			{
-				//包错误，包长度非法，错误ID是100
-				m_pClientMessage->ConnectError(100);
-			}
-			Close();
-			return;
-		}
-		else
-		{
-			m_pClientParse->SetMessageHead(&mb);
-			RecvData(u4PacketBodyLen);
-		}
-	}
-	else
-	{
-		//如果是DEBUG状态，记录当前接受包的二进制数据
-		if(App_MainConfig::instance()->GetDebug() == DEBUG_ON)
-		{
-			string strDebugData;
-			char szLog[10]  = {'\0'};
-			int  nDebugSize = 0; 
-			bool blblMore   = false;
-
-			if(mb.length() >= MAX_BUFF_200)
-			{
-				nDebugSize = MAX_BUFF_200;
-				blblMore   = true;
-			}
-			else
-			{
-				nDebugSize = mb.length();
-			}
-
-			char* pData = mb.rd_ptr();
-			for(int i = 0; i < nDebugSize; i++)
-			{
-				sprintf_safe(szLog, 10, "0x%02X ", (unsigned char)pData[i]);
-				strDebugData += szLog;
-			}
-
-			if(blblMore == true)
-			{
-				AppLogManager::instance()->WriteLog(LOG_SYSTEM_DEBUG_SERVERRECV, "[%s:%d]%s.(数据包过长只记录前200字节)", m_AddrRemote.get_host_addr(), m_AddrRemote.get_port_number(), strDebugData.c_str());
-			}
-			else
-			{
-				AppLogManager::instance()->WriteLog(LOG_SYSTEM_DEBUG_SERVERRECV, "[%s:%d]%s.", m_AddrRemote.get_host_addr(), m_AddrRemote.get_port_number(), strDebugData.c_str());
-			}
-		}
-
-		//接受完整数据完成，开始分析完整数据包
-		m_pClientParse->SetPacketBody(mb.rd_ptr(), (uint32)mb.length());
-		m_pClientParse->SetMessageBody(&mb);
-
-		//处理接收数据包
-		DoMessage();
-
-		//App_ClientParsePool::instance()->Delete(m_pClientParse);
-		m_pClientParse = App_ClientParsePool::instance()->Create();
-		if(NULL == m_pClientParse)
-		{
-			Close();
-			if(NULL != m_pClientMessage)
-			{
-				//包错误，包长度非法，错误ID是101
-				m_pClientMessage->ConnectError(101);
-			}
-			return;
-		}
+		//处理接收数据(这里不区分是不是完整包，交给上层逻辑自己去判定)
+		m_pClientMessage->RecvData(&mb);
 
 		//接受下一个数据包
-		RecvData(m_pClientParse->GetPacketHeadLen());
+		RecvData(MAX_BUFF_1024);
 	}
 }
 
@@ -314,42 +172,6 @@ bool CProConnectClient::RecvData(uint32 u4PacketLen)
 		Close();
 		return false;
 	}
-
-	return true;
-}
-
-bool CProConnectClient::DoMessage()
-{
-	//接收到完整的数据包，开始解析
-	if(NULL == m_pClientParse)
-	{
-		OUR_DEBUG((LM_DEBUG,"[CProConnectClient::DoMessage] m_pClientParse is NULL.\n"));	
-		return false;
-	}
-
-	m_ThreadWritrLock.acquire();
-	m_nIOCount++;
-	m_ThreadWritrLock.release();
-
-	m_u4RecvSize = m_pClientParse->GetPacketHeadLen() + m_pClientParse->GetPacketBodyLen();
-	m_u4RecvCount++;
-
-	ACE_Time_Value tvBegin = ACE_OS::gettimeofday();
-	//回调处理方法，处理方法由外围继承
-	if(NULL != m_pClientMessage)
-	{
-		m_pClientMessage->RecvData(m_pClientParse);
-	}
-	ACE_Time_Value tvEnd = ACE_OS::gettimeofday();
-	m_u4CostTime += (uint32)(tvEnd.msec() - tvBegin.msec());
-
-	//用完了，就删除
-	m_pClientParse->Close();
-	App_ClientParsePool::instance()->Delete(m_pClientParse);
-
-	m_ThreadWritrLock.acquire();
-	m_nIOCount--;
-	m_ThreadWritrLock.release();
 
 	return true;
 }

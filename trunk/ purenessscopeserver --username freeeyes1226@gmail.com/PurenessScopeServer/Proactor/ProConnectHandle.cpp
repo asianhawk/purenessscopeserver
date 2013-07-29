@@ -712,7 +712,8 @@ bool CProConnectHandle::SendMessage(IBuffPacket* pBuffPacket, bool blState, uint
 		}
 		else
 		{
-			pMbData = App_MessageBlockManager::instance()->Create((uint32)m_pBlockMessage->length());
+			//如果没有缓冲区，直接发送
+			pMbData = App_MessageBlockManager::instance()->Create((uint32)pBuffPacket->GetPacketLen());
 			if(NULL == pMbData)
 			{
 				OUR_DEBUG((LM_DEBUG,"[CConnectHandler::SendMessage] Connectid=[%d] pMbData is NULL.\n", GetConnectID()));

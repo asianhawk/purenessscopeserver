@@ -15,7 +15,7 @@
 	
 	<Message Msg_High_mark="64000" Msg_Low_mark="64000" Msg_Thread="3" Msg_MaxQueue="10000" desc="消息处理线程相关参数设置，" />
 	
-	<Module ModulePath="./" ModuleString="TcpTestd.dll" desc="模块加载配置相关参数，ModulePath是路径，ModuleString是模块名称，以逗号隔开"/>
+	<Module ModulePath="./" ModuleString="TcpTestPostd.dll" desc="模块加载配置相关参数，ModulePath是路径，ModuleString是模块名称，以逗号隔开"/>
 	
 	<RecvInfo RecvBuffSize="20480" RecvQueueTimeout="50" desc="接收客户端数据配置参数" />
 	<SendInfo SendQueueMax="100" SendThresHold="50" SendAliveTime="60" SendQueueTimeout="50" SendQueueCount="1" PutQueueTimeout = "100" desc="发送到客户端需要配置的参数" />

@@ -255,100 +255,10 @@ int CConnectClient::handle_input(ACE_HANDLE fd)
 
 	m_pCurrMessage->wr_ptr(nDataLen);
 
-	//如果没有读完，短读
-	if((uint32)m_pCurrMessage->size() > m_u4CurrSize)
-	{
-		return 0;
-	}
-	else if(m_pCurrMessage->length() == m_pClientParse->GetPacketHeadLen() && m_pClientParse->GetIsHead() == false)
-	{
-		m_pClientParse->SetPacketHead(m_pCurrMessage->rd_ptr(), (uint32)m_pCurrMessage->length());
-		uint32 u4PacketBodyLen = m_pClientParse->GetPacketBodyLen();
-		m_u4CurrSize = 0;
+	//接收数据，返回给逻辑层，自己不处理整包完整性判定
+	m_pClientMessage->RecvData(m_pCurrMessage);
 
-		//如果超过了最大包长度，为非法数据
-		if(u4PacketBodyLen >= m_u4MaxPacketSize || u4PacketBodyLen <= 0)
-		{
-			m_u4CurrSize = 0;
-			OUR_DEBUG((LM_ERROR, "[CConnectClient::handle_read_stream]u4PacketHeadLen(%d) more than MAX_MSG_PACKETLENGTH.", u4PacketBodyLen));
-			if(m_pClientParse->GetMessageHead() != NULL)
-			{
-				m_pClientParse->GetMessageHead()->release();
-			}
-
-			if(m_pClientParse->GetMessageBody() != NULL)
-			{
-				m_pClientParse->GetMessageBody()->release();
-			}
-
-			if(m_pCurrMessage != NULL && m_pClientParse->GetMessageBody() != m_pCurrMessage && m_pClientParse->GetMessageBody() != m_pCurrMessage)
-			{
-				m_pCurrMessage->release();
-				m_pCurrMessage = NULL;
-			}
-			App_ClientParsePool::instance()->Delete(m_pClientParse);
-			return 0;
-		}
-		else
-		{
-			m_pClientParse->SetMessageHead(m_pCurrMessage);
-
-			//申请头的大小对应的mb
-			m_pCurrMessage = App_MessageBlockManager::instance()->Create(m_pClientParse->GetPacketBodyLen());
-			if(m_pCurrMessage == NULL)
-			{
-				m_u4CurrSize = 0;
-				OUR_DEBUG((LM_ERROR, "[CConnectClient::RecvClinetPacket] pmb new is NULL.\n"));
-
-				if(m_pClientParse->GetMessageHead() != NULL)
-				{
-					m_pClientParse->GetMessageHead()->release();
-				}
-
-				if(m_pClientParse->GetMessageBody() != NULL)
-				{
-					m_pClientParse->GetMessageBody()->release();
-				}
-
-				if(m_pCurrMessage != NULL && m_pClientParse->GetMessageBody() != m_pCurrMessage && m_pClientParse->GetMessageBody() != m_pCurrMessage)
-				{
-					m_pCurrMessage->release();
-					m_pCurrMessage = NULL;
-				}
-				App_ClientParsePool::instance()->Delete(m_pClientParse);
-				return -1;
-			}
-			return 0;
-		}
-	}
-	else
-	{
-		//接受完整数据完成，开始分析完整数据包
-		m_pClientParse->SetPacketBody(m_pCurrMessage->rd_ptr(), (uint32)m_pCurrMessage->length());
-		m_pClientParse->SetMessageBody(m_pCurrMessage);
-		m_u4CurrSize = 0;
-
-		//将接收的完整数据包扔给逻辑去处理
-		CheckMessage();
-
-		m_u4CurrSize = 0;
-
-		//申请头的大小对应的mb
-		m_pCurrMessage = App_MessageBlockManager::instance()->Create(m_pClientParse->GetPacketHeadLen());
-		if(m_pCurrMessage == NULL)
-		{
-			OUR_DEBUG((LM_ERROR, "[CConnectClient::RecvClinetPacket] pmb new is NULL.\n"));
-			return -1;
-		}
-
-		//申请新的包
-		m_pClientParse = App_ClientParsePool::instance()->Create();
-		if(NULL == m_pClientParse)
-		{
-			OUR_DEBUG((LM_DEBUG,"[CConnectClient::open] Open(%d) m_pPacketParse new error.\n", GetServerID()));
-			return -1;
-		}
-	}
+	m_pCurrMessage->reset();
 
 	return 0;
 }
@@ -377,40 +287,6 @@ void CConnectClient::SetServerID(int nServerID)
 int CConnectClient::GetServerID()
 {
 	return m_nServerID;
-}
-
-bool CConnectClient::CheckMessage()
-{
-	if(NULL == m_pClientMessage)
-	{
-		OUR_DEBUG((LM_DEBUG,"[CConnectClient::CheckMessage](%d)m_pClientMessage is NULL.\n", GetServerID()));
-		return false;
-	}
-
-	m_ThreadLock.acquire();
-	m_nIOCount++;
-	m_ThreadLock.release();
-
-	m_u4RecvSize = m_pClientParse->GetPacketHeadLen() + m_pClientParse->GetPacketBodyLen();
-	m_u4RecvCount++;
-
-	ACE_Time_Value tvBegin = ACE_OS::gettimeofday();
-	//处理接收到的数据
-	if(NULL != m_pClientMessage)
-	{
-		m_pClientMessage->RecvData((IClientParse* )m_pClientParse);
-	}
-	ACE_Time_Value tvEnd = ACE_OS::gettimeofday();
-	m_u4CostTime += (uint32)(tvEnd.msec() - tvBegin.msec());
-
-	m_pClientParse->Close();
-	App_ClientParsePool::instance()->Delete(m_pClientParse);
-
-	m_ThreadLock.acquire();
-	m_nIOCount--;
-	m_ThreadLock.release();
-
-	return true;
 }
 
 bool CConnectClient::SendData(ACE_Message_Block* pmblk)
