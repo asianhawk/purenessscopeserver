@@ -39,7 +39,6 @@ public:
 	bool Close();
 
 	void ClinetClose();                                    //主动关闭
-	bool CheckMessage();                                   //处理接收到的消息
 	_ClientConnectInfo GetClientConnectInfo();             //得到当前链接信息
 
 private:

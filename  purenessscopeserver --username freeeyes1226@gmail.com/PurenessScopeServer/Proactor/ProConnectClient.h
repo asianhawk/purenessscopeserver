@@ -42,7 +42,6 @@ public:
 
 private:
 	bool RecvData(uint32 u4PacketLen);              //接收数据
-	bool DoMessage();                               //处理接收到的数据完整包
 
 private:
 	ACE_INET_Addr               m_AddrRemote;        //链接远程服务器的地址
@@ -52,8 +51,8 @@ private:
 	CClientParse*               m_pClientParse;      //接收的数据包解析工具
 	IClientMessage*             m_pClientMessage;    //处理消息接收的类
 	int                         m_nIOCount;          //当前引用个数
-  uint32                      m_u4MaxPacketSize;   //最大接收包长
-  int                         m_nServerID;         //当前ServerID
+	uint32                      m_u4MaxPacketSize;   //最大接收包长
+	int                         m_nServerID;         //当前ServerID
 	ACE_Recursive_Thread_Mutex  m_ThreadWritrLock;   //线程锁
 
 	ACE_Time_Value              m_atvBegin;          //链接建立时间

@@ -85,7 +85,7 @@ PutQueueTimeout  ÊÇ·ÅÈë¹¤×÷Ïß³Ì¶ÓÁÐµÄÊ±¼ä£¬µ¥Î»ÊÇºÁÃë£¬³¬¹ýÕâ¸öÖµ¾Í»á±»¿ò¼Ü¼ÇÂ¼¡
 <ClientInfo HandlerCount="5000" MaxHandlerCount="10000" MaxConnectTime="60" CommandAccount="1" desc="¿Í»§¶ËÁ´½ÓÏà¹Ø²ÎÊý"/>
 HandlerCount ÊÇ¿ò¼ÜÆô¶¯µÄÊ±ºò£¬³õÊ¼»¯µÄ¿Í»§¶ËÁ¬½Ó¶ÔÏó¸öÊý£¬ÎªÁË×·ÇóÐ§ÂÊ£¬ÔÚ¿ò¼ÜÆô¶¯µÄÊ±ºò£¬ÕâÐ©¶ÔÏó¾Í»á±»´´½¨³É³Ø£¬µ±Á¬½Ó½¨Á¢¾Í»áÔÚÕâÀï»ñÈ¡£¬µ±Á¬½Ó¶Ï¿ª¾Í»á¹é»¹¸øÕâ¸ö³Ø¡£
 			 Èç¹û³¬¹ýÕâ¸ö³ØµÄ¿Í»§¶ËÁ¬½Ó£¬³Ø»á×Ô¼ºÔö¼Ó¡£µ«ÊÇ²»»á³¬¹ýMaxHandlerCount¡£µ±´ïµ½Õâ¸ö¼«ÏÞ£¬¿ò¼Ü¾Í²»»á½ÓÊÕÐÂµÄÁ¬½ÓÇëÇó¡£
-MaxConnectTime ÊÇÔÊÐí×î´óÁ¬½Óµ±Ç°¿ò¼ÜµÄÊýÁ¿¡£
+MaxConnectTime ÊÇµ±Ç°¿Í»§¶ËÁ¬½ÓÔÊÐíµÈ´ýÊý¾Ý½ÓÊÕ¿ÕÏÐµÄ×î´óÊ±¼ä¼ä¸ô¡£
 CommandAccount ÊÇ·ñÐèÒªÍ³¼ÆÃüÁî³öÈë·þÎñÆ÷µÄÐÅÏ¢£¬0ÊÇ¹Ø±Õ£¬1ÊÇ´ò¿ª¡£´ò¿ªºó»áÉú³ÉÏàÓ¦µÄ±¨±í¡£
 		       ±¨±íµÄ¸ñÊ½ÊÇ£¬Ã¿Ò»¸öÃüÁîµÄµ÷ÓÃ´ÎÊý£¬Æ½¾ù´¦ÀíÊ±¼ä£¬×îºó´¦ÀíÊ±¼äµÈÐÅÏ¢¡£Ä¿Ç°Ö»Ö§³ÖLinux¡£
 
