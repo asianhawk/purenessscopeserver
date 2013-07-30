@@ -781,14 +781,6 @@
 					>
 				</File>
 				<File
-					RelativePath=".\Common\ClientParse.h"
-					>
-				</File>
-				<File
-					RelativePath=".\Common\ClientParsePool.h"
-					>
-				</File>
-				<File
 					RelativePath=".\Common\ClientUDPMassage.h"
 					>
 				</File>
@@ -926,30 +918,6 @@
 				</File>
 				<File
 					RelativePath=".\Common\BuffPacketManager.cpp"
-					>
-					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath=".\Common\ClientParse.cpp"
-					>
-					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath=".\Common\ClientParsePool.cpp"
 					>
 					<FileConfiguration
 						Name="Release|Win32"

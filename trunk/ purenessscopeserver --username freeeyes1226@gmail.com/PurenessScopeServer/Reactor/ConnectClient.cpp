@@ -3,7 +3,6 @@
 
 CConnectClient::CConnectClient(void)
 {
-	m_pClientParse      = NULL;
 	m_pCurrMessage      = NULL;
 	m_nIOCount          = 1;
 	m_nServerID         = 0;
@@ -13,7 +12,7 @@ CConnectClient::CConnectClient(void)
 	m_u4RecvSize        = 0;
 	m_u4RecvCount       = 0;
 	m_u4CostTime        = 0;
-  m_u4MaxPacketSize   = MAX_MSG_PACKETLENGTH;
+    m_u4MaxPacketSize   = MAX_MSG_PACKETLENGTH;
 }
 
 CConnectClient::~CConnectClient(void)
@@ -97,14 +96,8 @@ int CConnectClient::open(void* p)
 	m_atvBegin          = ACE_OS::gettimeofday();
 	m_u4CurrSize        = 0;
 
-	m_pClientParse = App_ClientParsePool::instance()->Create();
-	if(m_pClientParse == NULL)
-	{
-		return -1;
-	}
-
 	//申请当前的MessageBlock
-	m_pCurrMessage = App_MessageBlockManager::instance()->Create(m_pClientParse->GetPacketHeadLen());
+	m_pCurrMessage = App_MessageBlockManager::instance()->Create(MAX_BUFF_1024);
 	if(m_pCurrMessage == NULL)
 	{
 		OUR_DEBUG((LM_ERROR, "[CConnectClient::RecvClinetPacket] pmb new is NULL.\n"));
@@ -129,14 +122,6 @@ int CConnectClient::handle_input(ACE_HANDLE fd)
 		return -1;
 	}
 
-	//判断数据包结构是否为NULL
-	if(m_pClientParse == NULL)
-	{
-		OUR_DEBUG((LM_ERROR, "[CConnectClient::handle_input]m_pPacketParse == NULL.\n"));
-		sprintf_safe(m_szError, MAX_BUFF_500, "[CConnectHandler::handle_input]m_pPacketParse == NULL.");
-		return -1;
-	}
-
 	//判断缓冲是否为NULL
 	if(m_pCurrMessage == NULL)
 	{
@@ -144,48 +129,16 @@ int CConnectClient::handle_input(ACE_HANDLE fd)
 		OUR_DEBUG((LM_ERROR, "[CConnectClient::handle_input]m_pCurrMessage == NULL.\n"));
 		sprintf_safe(m_szError, MAX_BUFF_500, "[CConnectClient::handle_input]m_pCurrMessage == NULL.");
 
-		if(m_pClientParse->GetMessageHead() != NULL)
-		{
-			m_pClientParse->GetMessageHead()->release();
-		}
-
-		if(m_pClientParse->GetMessageBody() != NULL)
-		{
-			m_pClientParse->GetMessageBody()->release();
-		}
-
-		if(m_pCurrMessage != NULL && m_pClientParse->GetMessageBody() != m_pCurrMessage && m_pClientParse->GetMessageBody() != m_pCurrMessage)
-		{
-			m_pCurrMessage->release();
-			m_pCurrMessage = NULL;
-		}
-		App_ClientParsePool::instance()->Delete(m_pClientParse);
 		return -1;
 	}
 
-	int nCurrCount = (uint32)m_pCurrMessage->size() - m_u4CurrSize;
+	int nCurrCount = (uint32)m_pCurrMessage->size();
 	if(nCurrCount < 0)
 	{
 		//如果剩余字节为负，说明程序出了问题
 		OUR_DEBUG((LM_ERROR, "[CConnectClient::handle_input][%d] nCurrCount < 0 m_u4CurrSize = %d.\n", GetServerID(), m_u4CurrSize));
 		m_u4CurrSize = 0;
 
-		if(m_pClientParse->GetMessageHead() != NULL)
-		{
-			m_pClientParse->GetMessageHead()->release();
-		}
-
-		if(m_pClientParse->GetMessageBody() != NULL)
-		{
-			m_pClientParse->GetMessageBody()->release();
-		}
-
-		if(m_pCurrMessage != NULL && m_pClientParse->GetMessageBody() != m_pCurrMessage && m_pClientParse->GetMessageBody() != m_pCurrMessage)
-		{
-			m_pCurrMessage->release();
-			m_pCurrMessage = NULL;
-		}
-		App_ClientParsePool::instance()->Delete(m_pClientParse);
 		return -1;
 	}
 
@@ -197,22 +150,6 @@ int CConnectClient::handle_input(ACE_HANDLE fd)
 		OUR_DEBUG((LM_ERROR, "[CConnectClient::handle_input] ConnectID = %d, recv data is error nDataLen = [%d] errno = [%d].\n", GetServerID(), nDataLen, u4Error));
 		sprintf_safe(m_szError, MAX_BUFF_500, "[CConnectClient::handle_input] ConnectID = %d, recv data is error[%d].\n", GetServerID(), nDataLen);
 
-		if(m_pClientParse->GetMessageHead() != NULL)
-		{
-			m_pClientParse->GetMessageHead()->release();
-		}
-
-		if(m_pClientParse->GetMessageBody() != NULL)
-		{
-			m_pClientParse->GetMessageBody()->release();
-		}
-
-		if(m_pCurrMessage != NULL && m_pClientParse->GetMessageBody() != m_pCurrMessage && m_pClientParse->GetMessageBody() != m_pCurrMessage)
-		{
-			m_pCurrMessage->release();
-			m_pCurrMessage = NULL;
-		}
-		App_ClientParsePool::instance()->Delete(m_pClientParse);
 		return -1;
 	}
 
@@ -250,8 +187,6 @@ int CConnectClient::handle_input(ACE_HANDLE fd)
 			AppLogManager::instance()->WriteLog(LOG_SYSTEM_DEBUG_SERVERRECV, "[%s:%d]%s.", m_addrRemote.get_host_addr(), m_addrRemote.get_port_number(), strDebugData.c_str());
 		}
 	}
-
-	m_u4CurrSize += nDataLen;
 
 	m_pCurrMessage->wr_ptr(nDataLen);
 

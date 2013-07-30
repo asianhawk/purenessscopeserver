@@ -6,9 +6,8 @@ CProConnectClient::CProConnectClient(void)
 	m_nIOCount          = 1;
 	m_nServerID         = 0;
 	m_mbRecv            = NULL;
-	m_pClientParse      = NULL;
 	m_pClientMessage    = NULL;
-  m_u4MaxPacketSize   = MAX_MSG_PACKETLENGTH;
+    m_u4MaxPacketSize   = MAX_MSG_PACKETLENGTH;
 
 	m_u4SendSize        = 0;
 	m_u4SendCount       = 0;
@@ -94,13 +93,6 @@ void CProConnectClient::open(ACE_HANDLE h, ACE_Message_Block&)
 	m_u4CostTime        = 0;
 	m_atvBegin          = ACE_OS::gettimeofday();
 
-	m_pClientParse = App_ClientParsePool::instance()->Create();
-	if(m_pClientParse == NULL)
-	{
-		Close();
-		return;
-	}
-
 	App_ClientProConnectManager::instance()->SetHandler(m_nServerID, this);
 	m_pClientMessage = App_ClientProConnectManager::instance()->GetClientMessage(m_nServerID);
 
@@ -127,6 +119,7 @@ void CProConnectClient::handle_read_stream(const ACE_Asynch_Read_Stream::Result 
 	{
 		//处理接收数据(这里不区分是不是完整包，交给上层逻辑自己去判定)
 		m_pClientMessage->RecvData(&mb);
+		mb.release();
 
 		//接受下一个数据包
 		RecvData(MAX_BUFF_1024);

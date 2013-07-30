@@ -181,7 +181,7 @@ void CClientTcpSocket::Run()
       }
 
       //接收数据
-      if(blSendFlag == true)
+      if(blSendFlag == true && m_pSocket_Info->m_blIsRecv == true)
       {
         while(true)
         {
