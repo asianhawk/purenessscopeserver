@@ -1892,6 +1892,12 @@ bool CConnectManagerGroup::PostMessage( uint32 u4ConnectID, const char* pData, u
 	if(f == m_mapConnectManager.end())
 	{
 		OUR_DEBUG((LM_INFO, "[CConnectManagerGroup::PostMessage]Out of range Queue ID.\n"));
+
+		if(blSendState == true)
+		{
+			SAFE_DELETE_ARRAY(pData);
+		}
+
 		return false;
 	}
 
@@ -1899,6 +1905,12 @@ bool CConnectManagerGroup::PostMessage( uint32 u4ConnectID, const char* pData, u
 	if(NULL == pConnectManager)
 	{
 		OUR_DEBUG((LM_INFO, "[CConnectManagerGroup::PostMessage]No find send Queue object.\n"));
+
+		if(blSendState == true)
+		{
+			SAFE_DELETE_ARRAY(pData);
+		}
+
 		return false;		
 	}
 
@@ -1907,11 +1919,23 @@ bool CConnectManagerGroup::PostMessage( uint32 u4ConnectID, const char* pData, u
 	if(NULL != pBuffPacket)
 	{
 		pBuffPacket->WriteStream(pData, nDataLen);
-		return pConnectManager->PostMessage(u4ConnectID, pBuffPacket, u1SendType, u2CommandID, blSendState);
+
+		if(blSendState == true)
+		{
+			SAFE_DELETE_ARRAY(pData);
+		}
+
+		return pConnectManager->PostMessage(u4ConnectID, pBuffPacket, u1SendType, u2CommandID, true);
 	} 
 	else
 	{
 		OUR_DEBUG((LM_INFO, "[CConnectManagerGroup::PostMessage]pBuffPacket is NULL.\n"));
+
+		if(blSendState == true)
+		{
+			SAFE_DELETE_ARRAY(pData);
+		}
+
 		return false;
 	}
 }
@@ -1956,6 +1980,12 @@ bool CConnectManagerGroup::PostMessage( vector<uint32> vecConnectID, const char*
 		if(f == m_mapConnectManager.end())
 		{
 			OUR_DEBUG((LM_INFO, "[CConnectManagerGroup::PostMessage]Out of range Queue ID.\n"));
+
+			if(blSendState == true)
+			{
+				SAFE_DELETE_ARRAY(pData);
+			}
+
 			return false;
 		}
 
@@ -1963,6 +1993,12 @@ bool CConnectManagerGroup::PostMessage( vector<uint32> vecConnectID, const char*
 		if(NULL == pConnectManager)
 		{
 			OUR_DEBUG((LM_INFO, "[CConnectManagerGroup::PostMessage]No find send Queue object.\n"));
+
+			if(blSendState == true)
+			{
+				SAFE_DELETE_ARRAY(pData);
+			}
+
 			return false;		
 		}
 
@@ -1970,17 +2006,29 @@ bool CConnectManagerGroup::PostMessage( vector<uint32> vecConnectID, const char*
 		IBuffPacket* pBuffPacket = App_BuffPacketManager::instance()->Create();
 		if(NULL != pBuffPacket)
 		{
-			pBuffPacket->WriteStream(pData, nDataLen);
-			pConnectManager->PostMessage(u4ConnectID, pBuffPacket, u1SendType, u2CommandID, blSendState);
+			return pBuffPacket->WriteStream(pData, nDataLen);
+
+			if(blSendState == true)
+			{
+				SAFE_DELETE_ARRAY(pData);
+			}
+
+			return pConnectManager->PostMessage(u4ConnectID, pBuffPacket, u1SendType, u2CommandID, true);
 		} 
 		else
 		{
 			OUR_DEBUG((LM_INFO, "[CConnectManagerGroup::PostMessage]pBuffPacket is NULL.\n"));
+
+			if(blSendState == true)
+			{
+				SAFE_DELETE_ARRAY(pData);
+			}
+
 			return false;
 		}
 	}
 
-	return true;
+	return false;
 }
 
 bool CConnectManagerGroup::CloseConnect(uint32 u4ConnectID)
@@ -2157,12 +2205,22 @@ bool CConnectManagerGroup::PostMessageAll( const char* pData, uint32 nDataLen, u
 	if(NULL == pBuffPacket)
 	{
 		OUR_DEBUG((LM_INFO, "[CConnectManagerGroup::PostMessageAll]pBuffPacket is NULL.\n"));
-		//SAFE_DELETE(pData);
+
+		if(blSendState == true)
+		{
+			SAFE_DELETE_ARRAY(pData);
+		}
+
 		return false;
 	}
 	else
 	{
 		pBuffPacket->WriteStream(pData, nDataLen);
+
+		if(blSendState == true)
+		{
+			SAFE_DELETE_ARRAY(pData);
+		}
 	}
 
 	//全部群发

@@ -2,7 +2,6 @@
 
 #include "IBuffPacket.h"
 #include "ClientCommand.h"
-#include "IClientParse.h"
 #include "IObject.h"
 
 #include <string>
@@ -40,6 +39,7 @@ public:
 
 			m_pServerObject->GetConnectManager()->PostMessage(m_u4ConnectID, pData, mbRecv->length(), SENDMESSAGE_JAMPNOMAL, u2RetCommand, true);
 		}
+
 		return true;
 	};
 

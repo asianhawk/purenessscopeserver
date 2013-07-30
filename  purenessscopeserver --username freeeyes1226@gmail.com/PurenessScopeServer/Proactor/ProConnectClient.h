@@ -12,7 +12,6 @@
 #include "ace/Thread_Mutex.h"
 
 #include "MainConfig.h"
-#include "ClientParsePool.h"
 #include "ClientMessage.h"
 #include "AceProactorManager.h"
 #include "LogManager.h"
@@ -48,7 +47,6 @@ private:
 	ACE_Message_Block*          m_mbRecv;            //收取数据缓冲
 	ACE_Asynch_Read_Stream      m_Reader;            //读取流
 	ACE_Asynch_Write_Stream     m_Writer;            //写入流
-	CClientParse*               m_pClientParse;      //接收的数据包解析工具
 	IClientMessage*             m_pClientMessage;    //处理消息接收的类
 	int                         m_nIOCount;          //当前引用个数
 	uint32                      m_u4MaxPacketSize;   //最大接收包长

@@ -17,7 +17,6 @@
 
 #include "MainConfig.h"
 #include "MessageBlockManager.h"
-#include "ClientParsePool.h"
 #include "ClientMessage.h"
 #include "AceReactorManager.h"
 #include "LogManager.h"
@@ -49,7 +48,6 @@ public:
 	ACE_INET_Addr              m_addrRemote;
 	int                        m_nIOCount;                     //当前IO操作的个数
 	ACE_Recursive_Thread_Mutex m_ThreadLock;
-	CClientParse*              m_pClientParse;
 	IClientMessage*            m_pClientMessage;               //消息处理类的指针
 	ACE_Message_Block*         m_pCurrMessage;                 //当前的MB对象
 	int                        m_nServerID;                    //服务器ID
