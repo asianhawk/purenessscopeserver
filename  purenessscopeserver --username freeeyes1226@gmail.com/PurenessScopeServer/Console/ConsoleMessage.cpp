@@ -354,10 +354,10 @@ bool CConsoleMessage::GetConnectServerID(const char* pCommand, int& nServerID)
 {
 	char szTempData[MAX_BUFF_100] = {'\0'};
 
-	int nCommandLen = ACE_OS::strlen(pCommand);
+	int nCommandLen = (int)ACE_OS::strlen(pCommand);
 	//获得IP地址
 	char* pPosBegin = (char* )ACE_OS::strstr(pCommand, "-s ");
-	int nLen = nCommandLen - (pPosBegin - pCommand) - 3;
+	int nLen = (int)(nCommandLen - (pPosBegin - pCommand) - 3);
 	if(nLen >= MAX_BUFF_100 || nLen < 0)
 	{
 		return false;
@@ -1299,7 +1299,7 @@ bool CConsoleMessage::GetDebug(const char* pCommand, uint8& u1Debug)
 	int nCommandLen = ACE_OS::strlen(pCommand);
 	//获得IP地址
 	char* pPosBegin = (char* )ACE_OS::strstr(pCommand, "-s ");
-	int nLen = nCommandLen - (pPosBegin - pCommand) - 3;
+	int nLen = (int)(nCommandLen - (pPosBegin - pCommand) - 3);
 	if(nLen >= MAX_BUFF_100 || nLen < 0)
 	{
 		return false;

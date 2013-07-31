@@ -907,7 +907,7 @@ bool CConnectHandler::PutSendPacket(ACE_Message_Block* pMbData)
 		}
 		else
 		{
-			nDebugSize = pMbData->length();
+			nDebugSize = (int)pMbData->length();
 		}
 
 		char* pData = pMbData->rd_ptr();

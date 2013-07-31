@@ -2,8 +2,18 @@
 #define _PROASYNCHCONNECT_H
 
 #include "ace/Asynch_Connector.h"
-
 #include "ProConnectClient.h"
+
+//设置一个结构体，用于异步通知当前连接信息
+struct _ProConnectState_Info
+{
+	int m_nServerID;
+
+	_ProConnectState_Info()
+	{
+		m_nServerID = 0;
+	}
+};
 
 class CProAsynchConnect : public ACE_Asynch_Connector<CProConnectClient>
 {

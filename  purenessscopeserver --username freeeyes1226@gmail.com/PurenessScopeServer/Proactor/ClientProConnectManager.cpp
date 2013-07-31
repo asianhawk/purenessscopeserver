@@ -61,7 +61,12 @@ bool CProactorClientInfo::Run(bool blIsReadly)
 	{
 		m_pProAsynchConnect->SetConnectState(true);
 		OUR_DEBUG((LM_ERROR, "[CProactorClientInfo::Run]Connect IP=%s,Port=%d.\n", m_AddrServer.get_host_addr(), m_AddrServer.get_port_number()));
-		if(m_pProAsynchConnect->connect(m_AddrServer, (const ACE_INET_Addr &)ACE_Addr::sap_any, 1, (const void*)m_nServerID) == -1)
+		
+		//创建一个数据参数，传给远端
+		_ProConnectState_Info* pProConnectInfo = new _ProConnectState_Info();
+		pProConnectInfo->m_nServerID = m_nServerID;
+		
+		if(m_pProAsynchConnect->connect(m_AddrServer, (const ACE_INET_Addr &)ACE_Addr::sap_any, 1, (const void*)pProConnectInfo) == -1)
 		{
 			OUR_DEBUG((LM_ERROR, "[CProactorClientInfo::Run]m_pAsynchConnect open error(%d).\n", ACE_OS::last_error()));
 			return false;
