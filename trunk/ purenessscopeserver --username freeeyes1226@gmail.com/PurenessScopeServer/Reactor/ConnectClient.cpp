@@ -241,7 +241,7 @@ bool CConnectClient::SendData(ACE_Message_Block* pmblk)
 		}
 		else
 		{
-			nDebugSize = pmblk->length();
+			nDebugSize = (int)pmblk->length();
 		}
 
 		char* pData = pmblk->rd_ptr();

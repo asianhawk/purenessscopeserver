@@ -34,12 +34,28 @@ int CProAsynchConnect::validate_connection(const ACE_Asynch_Connect::Result& res
 	{
 		OUR_DEBUG((LM_ERROR, "[CProAsynchConnect::validate_connection](%s:%d) connection fails(%d).\n", remote.get_host_addr(), remote.get_port_number(), nRet));
 		SetConnectState(false);
+
+		_ProConnectState_Info* pProConnectStateInfo = (_ProConnectState_Info* )result.act();
+
+		if(NULL != pProConnectStateInfo)
+		{
+			m_nServerID = 0;
+			SAFE_DELETE(pProConnectStateInfo);
+		}
+
 		return 1;
 	}
 
-	m_nServerID = (int )result.act();
+	_ProConnectState_Info* pProConnectStateInfo = (_ProConnectState_Info* )result.act();
+
+	if(NULL != pProConnectStateInfo)
+	{
+		m_nServerID = pProConnectStateInfo->m_nServerID;
+		SAFE_DELETE(pProConnectStateInfo);
+	}
 	
-	OUR_DEBUG((LM_ERROR, "[CProactorClientInfo::Run]Connect m_nServerID=%d, IP=%s,Port=%d OK.\n", m_nServerID, remote.get_host_addr(), remote.get_port_number()));
+	
+	OUR_DEBUG((LM_ERROR, "[CProactorClientInfo::Run]Connect IP=%s,Port=%d OK.\n", remote.get_host_addr(), remote.get_port_number()));
 	return 0;
 }
 

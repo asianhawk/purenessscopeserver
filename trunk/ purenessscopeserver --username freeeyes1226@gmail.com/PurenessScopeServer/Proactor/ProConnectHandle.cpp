@@ -314,7 +314,7 @@ void CProConnectHandle::handle_read_stream(const ACE_Asynch_Read_Stream::Result 
 		}
 		else
 		{
-			nDebugSize = mb.length();
+			nDebugSize = (int)mb.length();
 		}
 
 		char* pData = mb.rd_ptr();
@@ -777,7 +777,7 @@ bool CProConnectHandle::PutSendPacket(ACE_Message_Block* pMbData)
 		}
 		else
 		{
-			nDebugSize = pMbData->length();
+			nDebugSize = (int)pMbData->length();
 		}
 
 		char* pData = pMbData->rd_ptr();
@@ -1856,6 +1856,12 @@ bool CProConnectManagerGroup::PostMessage( vector<uint32> vecConnectID, const ch
 		else
 		{
 			OUR_DEBUG((LM_INFO, "[CProConnectManagerGroup::PostMessage]pBuffPacket is NULL.\n"));
+
+			if(blSendState == true)
+			{
+				SAFE_DELETE_ARRAY(pData);
+			}
+
 			return false;
 		}
 	}
@@ -2078,6 +2084,12 @@ bool CProConnectManagerGroup::PostMessageAll( const char* pData, uint32 nDataLen
 		if(NULL == pConnectManager)
 		{
 			OUR_DEBUG((LM_INFO, "[CProConnectManagerGroup::PostMessage]No find send Queue object.\n"));
+
+			if(blSendState == true)
+			{
+				SAFE_DELETE_ARRAY(pData);
+			}
+
 			return false;		
 		}
 
