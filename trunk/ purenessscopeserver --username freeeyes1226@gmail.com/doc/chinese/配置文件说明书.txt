@@ -96,9 +96,10 @@ ConnectPacketCount Õâ¸öÊÇµ¥Î»Ê±¼ä£¨60Ãë£©ÔÊÐí¿Í»§¶Ë·¢ËÍµÄ×î´ó°üÊý£¬°´ÕÕIPÍ³¼Æ¡£È
 ConnectRecvSize Õâ¸öÊÇµ¥Î»Ê±¼ä£¨60Ãë£©ÔÊÐí¿Í»§¶Ë·¢ËÍµÄ×î´óÊý¾Ý×Ö½Ú£¬°´ÕÕIPÍ³¼Æ¡£Èç¹ûÒ»¸öIPÔÚµ¥Î»Ê±¼äÄÚ·¢ËÍµÄ×Ö½ÚÊý£¨ÎÞÂÛÓÐÐ§»¹ÊÇÎÞÐ§°ü£©³¬¹ýÁËÕâ¸ö·§Öµ£¬¾Í»á×Ô¶¯±»¿ò¼Ü½ûÖ¹Á¬½Ó1·ÖÖÓ¡£
 ForbiddenTime ÕâÀïÊÇÉèÖÃ³Í·£Ê±¼ä£¬Äã¿ÉÒÔÉèÖÃ³É1·ÖÖÓ£¬Ò²¿ÉÒÔÉèÖÃÎª10·ÖÖÓ¡£Õâ¶ÎÊ±¼äÄÚÕâ¸öIPµÄÒ»ÇÐÁ¬½ÓÇëÇó£¬·¢°üÇëÇó¶¼»á±»ÈÏÎªÊÇ·Ç·¨¶ø±»¶ªÆú£¬µ¥Î»ÊÇÃë¡£
 
-<ConnectServer TimeInterval=500 TimeCheck=30 desc="¿ò¼ÜÁ¬½ÓÆäËüÔ¶³Ì·þÎñÆ÷Ïà¹Ø²ÎÊý£¬TimeIntervalÊÇÁ¬½ÓÃ¿¸ö·þÎñÆ÷Ö®¼äµÄ±£»¤Ê±¼ä£¬µ¥Î»ÊÇºÁÃë,TimeCheckµ¥Î»ÊÇÃë" />
+<ConnectServer TimeInterval=500 TimeCheck=30 Recvbuff=¡°1024¡± desc="¿ò¼ÜÁ¬½ÓÆäËüÔ¶³Ì·þÎñÆ÷Ïà¹Ø²ÎÊý£¬TimeIntervalÊÇÁ¬½ÓÃ¿¸ö·þÎñÆ÷Ö®¼äµÄ±£»¤Ê±¼ä£¬µ¥Î»ÊÇºÁÃë,TimeCheckµ¥Î»ÊÇÃë" />
 TimeInterval ÕâÊÇ·þÎñÆ÷¼äÁ¬½Ó£¬TimeIntervalÊÇÃ¿´Î·þÎñÆ÷¼äÁ¬½ÓµÄÐÝÏ¢Ê±¼ä¡£Ò»°ãÇé¿öÏÂÕâÀï¿ÉÒÔ²»¶¯¡£µ¥Î»ÊÇºÁÃë¡£
 TimeCheck ÊÇ×Ô¶¯¼ì²âËùÓÐ·þÎñÆ÷Á¬½Ó×´Ì¬µÄÊ±¼ä£¬Èç¹ûÓÐÁ¬½ÓÒÑ¾­¶Ï¿ª£¬Ôò»áÔÚÕâÀï±»×Ô¶¯ÖØÁ¬¡£
+Recvbuff ÕâÊÇÉèÖÃ½ÓÊÕ»º³åµÄ×î´ó×Ö½ÚÊý¡£Ò»´ÎrecvDataµÄ×î´ó×Ö½ÚÊý¡£
 		  ·þÎñÆ÷¼äÁ¬½Ó×Ô¶¯ÖØÁ·ÓÐÁ½ÖÖ»úÖÆ£¬Ò»¸öÊÇ·¢°üµÄÊ±ºò£¬Èç¹û·¢ÏÖÁ¬½ÓÒÑ¾­¶Ï¿ª£¬Ôò»á×Ô¶¯ÖØÁ·ºó·¢ËÍÊý¾Ý¡£»¹ÓÐ¾ÍÊÇÃ»ÓÐ·¢°üµÄÊ±ºò£¬Á¬½Ó±»¶Ï¿ª¡£¿ò¼Ü»á¶¨Ê±¼ì²é¡£²¢×Ô¶¯ÖØÁ¬¡£
 
 ¶þ.forbiddenIP.xmlÎÄ¼þËµÃ÷

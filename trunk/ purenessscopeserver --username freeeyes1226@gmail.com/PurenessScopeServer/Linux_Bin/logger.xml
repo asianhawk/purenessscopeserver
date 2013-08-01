@@ -21,4 +21,5 @@
 	<LogInfo logid="1015" logtype="1" logname="ViewDebugClientSend" desc="DEBUG日志，发送给客户端的日志，二进制字节" />
 	<LogInfo logid="1016" logtype="1" logname="ViewDebugServerRecv" desc="DEBUG日志，接收来服务器间的日志，二进制字节" />
 	<LogInfo logid="1017" logtype="1" logname="ViewDebugServerSend" desc="DEBUG日志，发送给服务器间的日志，二进制字节" />
+	<LogInfo logid="1018" logtype="1" logname="ViewMonitor" desc="定时记录CPU和内存的日志" />
 </config>

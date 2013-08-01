@@ -97,7 +97,7 @@ int CConnectClient::open(void* p)
 	m_u4CurrSize        = 0;
 
 	//ÉêÇëµ±Ç°µÄMessageBlock
-	m_pCurrMessage = App_MessageBlockManager::instance()->Create(MAX_BUFF_1024);
+	m_pCurrMessage = App_MessageBlockManager::instance()->Create(App_MainConfig::instance()->GetConnectServerRecvBuffer());
 	if(m_pCurrMessage == NULL)
 	{
 		OUR_DEBUG((LM_ERROR, "[CConnectClient::RecvClinetPacket] pmb new is NULL.\n"));
