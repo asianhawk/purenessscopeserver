@@ -96,7 +96,7 @@ void CProConnectClient::open(ACE_HANDLE h, ACE_Message_Block&)
 	App_ClientProConnectManager::instance()->SetHandler(m_nServerID, this);
 	m_pClientMessage = App_ClientProConnectManager::instance()->GetClientMessage(m_nServerID);
 
-	RecvData(MAX_BUFF_1024);
+	RecvData(App_MainConfig::instance()->GetConnectServerRecvBuffer());
 }
 
 
@@ -122,7 +122,7 @@ void CProConnectClient::handle_read_stream(const ACE_Asynch_Read_Stream::Result 
 		mb.release();
 
 		//接受下一个数据包
-		RecvData(MAX_BUFF_1024);
+		RecvData(App_MainConfig::instance()->GetConnectServerRecvBuffer());
 	}
 }
 

@@ -19,8 +19,10 @@
 
 #ifdef WIN32
 #include "ProConnectHandle.h"
+#include "WindowsCPU.h"
 #else
 #include "ConnectHandler.h"
+#include "LinuxCPU.h"
 #endif
 
 class CMessageService : public ACE_Task<ACE_MT_SYNCH>

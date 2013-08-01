@@ -116,6 +116,8 @@ public:
 	uint8  GetDebug();
 	void   SetDebug(uint8 u1Debug);
 	uint8  GetNetworkMode();
+	uint32 GetConnectServerRecvBuffer();
+	uint8 GetMonitor();
 
 private:
 	CXmlOpeation m_MainConfig;
@@ -173,8 +175,10 @@ private:
 	uint32     m_u4ReactorCount;                   //系统中遇到的反应器的个数
 	uint32     m_u4ConnectServerTimerout;          //连接远程服务器间隔时间  
 	uint16     m_u2ConnectServerCheck;             //服务器间连接单位检查时间
+	uint32     m_u4ConnectServerRecvBuff;          //服务器间的数据包接收缓冲大小
 
 	uint8      m_u1NetworkMode;                    //当前可以设置的网络模式
+	uint8      m_u1Monitor;                        //设置当前的监控开关是否打开，0是关闭，1是打开
 
 	typedef vector<_ServerInfo> vecServerInfo;
 	vecServerInfo m_vecServerInfo;

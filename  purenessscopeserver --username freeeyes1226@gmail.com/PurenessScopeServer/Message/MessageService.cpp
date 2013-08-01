@@ -349,7 +349,6 @@ bool CMessageService::SaveThreadInfoData()
 				pThreadInfo->m_u4CurrPacketCount = 0;
 				return true;
 			}
-			//
 		}
 		else
 		{
@@ -421,6 +420,18 @@ int CMessageServiceGroup::handle_timeout(const ACE_Time_Value &tv, const void *a
 				}
 			}
 		}
+	}
+
+	//记录PacketParse的统计过程
+	AppLogManager::instance()->WriteLog(LOG_SYSTEM_PACKETTHREAD, "[CMessageService::handle_timeout] UsedCount = %d, FreeCount= %d.", App_PacketParsePool::instance()->GetUsedCount(), App_PacketParsePool::instance()->GetFreeCount());
+
+	if(App_MainConfig::instance()->GetMonitor() == 1)
+	{
+#ifdef WIN32
+		AppLogManager::instance()->WriteLog(LOG_SYSTEM_MONITOR, "[Monitor] CPU Rote=%d,Memory=%d.", GetProcessCPU_Idel(), GetProcessMemorySize());
+#else
+		AppLogManager::instance()->WriteLog(LOG_SYSTEM_MONITOR, "[Monitor] CPU Rote=%d,Memory=%d.", GetProcessCPU_Idel_Linux(), GetProcessMemorySize_Linux());
+#endif
 	}
 
 	return 0;
