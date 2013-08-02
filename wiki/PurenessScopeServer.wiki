@@ -1,4 +1,4 @@
-#labels TCP,Server,Develop,C
+#labels TCP,Server,Develop,C,C
 一。为什么要设计PurenessScopeServer？
 在我的到目前为止开发生涯中，其实一直挺讨厌网络通讯模块的，为什么？首先还是自己做的并不是很精，而我也是一个懒人，不喜欢成天纠结着IOCP,EPOLL,SELECT之类的模式词汇。
 纵观这几年自己做过的一些项目，几乎每个项目都离不开网络，自己经历开发的几款网络游戏，所用的模型都不同，而且写多了自己也快乱掉了，而且不具备通用性和移植性。
@@ -79,6 +79,3 @@ ACE_ROOT是你的ACE安装路径。
 首先编译PurenessScopeServer工程，然后编译PacketPrase工程，把生成的so或者dll拷贝到PurenessScopeServer工程下的相应目录下(Windows是Windows_bin，Linux是Linux_Bin)
 然后编译example-Module里面的你想测试的模块。把生成的so或者dll放在PurenessScopeServer工程下的相应目录下(Windows是Windows_bin，Linux是Linux_Bin)，
 并修改main.conf文件中的ModuleString，你也可以把你的所有逻辑so放在一个你指定的目录下并设置ModulePath。（具体请参考，配置文件说明书）
-
-PSClient工程编译需要依赖duilib，请去http://www.duilib.com/下载duilib的源代码并编译，把编译后的duilib.lib放在PSClient的lib文件夹下。
-并把duilib.dll放在PSClient的bin目录下。
