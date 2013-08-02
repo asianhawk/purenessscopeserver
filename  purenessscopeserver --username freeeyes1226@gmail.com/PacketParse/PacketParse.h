@@ -1,4 +1,5 @@
-#pragma once 
+#ifndef _PACKETPARSE_H
+#define _PACKETPARSE_H
 
 //这个类是完全交给开发者使用的
 //在这里开发者只要去实现下面的5个接口，就可以完成一个数据包处理过程
@@ -24,7 +25,7 @@
 #ifdef WIN32
 class DLL_EXPORT CPacketParse : public CPacketParseBase
 #else
-class CPacketParse
+class CPacketParse : public CPacketParseBase
 #endif 
 {
 public:
@@ -44,3 +45,5 @@ public:
 	uint32 MakePacketLength(uint32 u4DataLen);
 
 };
+
+#endif
