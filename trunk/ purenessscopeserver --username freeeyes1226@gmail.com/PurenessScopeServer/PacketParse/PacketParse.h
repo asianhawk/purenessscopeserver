@@ -1,4 +1,5 @@
-#pragma once 
+#ifndef _PACKETPARSE_H
+#define _PACKETPARSE_H
 
 #include "PacketParseBase.h"
 
@@ -15,7 +16,7 @@
 #ifdef WIN32
 class DLL_EXPORT CPacketParse : public CPacketParseBase
 #else
-class CPacketParse
+class CPacketParse : public CPacketParseBase
 #endif 
 {
 public:
@@ -35,3 +36,5 @@ public:
 	uint32 MakePacketLength(uint32 u4DataLen);
 
 };
+#endif
+
