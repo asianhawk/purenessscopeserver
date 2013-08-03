@@ -47,7 +47,7 @@ bool CServerManager::Init()
 			}
 			else if(App_MainConfig::instance()->GetNetworkMode() == NETWORKMODE_RE_EPOLL)
 			{
-				blState = App_ReactorManager::instance()->AddNewReactor(REACTOR_CLIENTDEFINE, Reactor_DEV_POLL, 0);
+				blState = App_ReactorManager::instance()->AddNewReactor(REACTOR_CLIENTDEFINE, Reactor_DEV_POLL, 0, App_MainConfig::instance()->GetHandleCount());
 				OUR_DEBUG((LM_INFO, "[CServerManager::Init]AddNewReactor REACTOR_CLIENTDEFINE = Reactor_DEV_POLL.\n"));
 			}
 			else
@@ -70,7 +70,7 @@ bool CServerManager::Init()
 			}
 			else if(App_MainConfig::instance()->GetNetworkMode() == NETWORKMODE_RE_EPOLL)
 			{
-				blState = App_ReactorManager::instance()->AddNewReactor(i, Reactor_DEV_POLL, 1);
+				blState = App_ReactorManager::instance()->AddNewReactor(i, Reactor_DEV_POLL, 1, App_MainConfig::instance()->GetHandleCount());
 				OUR_DEBUG((LM_INFO, "[CServerManager::Init]AddNewReactor REACTOR_CLIENTDEFINE = Reactor_DEV_POLL.\n"));
 			}
 			else

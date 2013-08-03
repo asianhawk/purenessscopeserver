@@ -40,7 +40,7 @@ public:
 
 	void Close();
 
-	bool Init(int nReactorType, int nThreadCount);
+	bool Init(int nReactorType, int nThreadCount, int nMaxHandleCount = 0);
 	const char* GetError();
 	int GetThreadCount();
 	int GetReactorType();
@@ -70,7 +70,7 @@ public:
 	CAceReactorManager(void);
 	~CAceReactorManager(void);
 
-	bool AddNewReactor(int nReactorID, int nReactorType = Reactor_Select, int nThreadCount = 1);
+	bool AddNewReactor(int nReactorID, int nReactorType = Reactor_Select, int nThreadCount = 1, int nMaxHandleCount = 0);
 	void Close();
 	const char* GetError();
 
