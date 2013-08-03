@@ -205,11 +205,7 @@
 				Name="headfile"
 				>
 				<File
-					RelativePath=".\Encrypt\3Des.h"
-					>
-				</File>
-				<File
-					RelativePath=".\Encrypt\Encrypt.h"
+					RelativePath=".\Encrypt\Aes.cpp"
 					>
 				</File>
 			</Filter>
@@ -217,28 +213,8 @@
 				Name="cppfile"
 				>
 				<File
-					RelativePath=".\Encrypt\3Des.cpp"
+					RelativePath=".\Encrypt\Aes.h"
 					>
-					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath=".\Encrypt\Encrypt.cpp"
-					>
-					<FileConfiguration
-						Name="Release|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
 				</File>
 			</Filter>
 		</Filter>

@@ -41,7 +41,7 @@ void CAceReactor::Close()
 	m_blRun        = false;
 }
 
-bool CAceReactor::Init(int nReactorType, int nThreadCount)
+bool CAceReactor::Init(int nReactorType, int nThreadCount, int nMaxHandleCount)
 {
 	try
 	{
@@ -103,7 +103,7 @@ bool CAceReactor::Init(int nReactorType, int nThreadCount)
 #ifdef ACE_HAS_EVENT_POLL     //Linux下的EPoll模型
 		case Reactor_DEV_POLL:
 			{
-				ACE_Dev_Poll_Reactor* devreactor = new ACE_Dev_Poll_Reactor(MAX_DEV_POLL_COUNT);
+				ACE_Dev_Poll_Reactor* devreactor = new ACE_Dev_Poll_Reactor(nMaxHandleCount);
 				if(NULL == devreactor)
 				{
 					throw "[CAceReactor::Init]New ACE_Dev_Poll_Reactor Error.";
@@ -278,7 +278,7 @@ const char* CAceReactorManager::GetError()
 	return m_szError;
 }
 
-bool CAceReactorManager::AddNewReactor(int nReactorID, int nReactorType, int nThreadCount)
+bool CAceReactorManager::AddNewReactor(int nReactorID, int nReactorType, int nThreadCount, int nMaxHandleCount)
 {
 	CAceReactor* pAceReactor = new CAceReactor();
 	if(NULL == pAceReactor)
@@ -293,7 +293,7 @@ bool CAceReactorManager::AddNewReactor(int nReactorID, int nReactorType, int nTh
 	}
 
 	pAceReactor->SetReactorID((uint32)nReactorID);
-	bool blState = pAceReactor->Init(nReactorType, nThreadCount);
+	bool blState = pAceReactor->Init(nReactorType, nThreadCount, nMaxHandleCount);
 	if(!blState)
 	{
 		sprintf_safe(m_szError, MAX_BUFF_500, "%s", pAceReactor->GetError());
