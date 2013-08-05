@@ -86,6 +86,10 @@ bool CConnectHandler::Close(int nIOCount)
 			m_pCurrMessage->release();
 		}
 
+		//调用连接断开消息
+		CPacketParse objPacketParse;
+		objPacketParse.DisConnect(GetConnectID());
+
 		//msg_queue()->deactivate();
 		shutdown();
 		OUR_DEBUG((LM_ERROR, "[CConnectHandler::Close]Close(%d),m_u4RecvQueueCount=%d,m_u8SendQueueTimeCost=%Q OK.\n", GetConnectID(), m_u4RecvQueueCount, m_u8SendQueueTimeCost));
@@ -139,6 +143,10 @@ bool CConnectHandler::ServerClose()
 
 	//msg_queue()->deactivate();
 	shutdown();
+
+	//调用连接断开消息
+	CPacketParse objPacketParse;
+	objPacketParse.DisConnect(GetConnectID());
 
 	m_u1ConnectState = CONNECT_SERVER_CLOSE;
 
@@ -237,6 +245,9 @@ int CConnectHandler::open(void*)
 		return -1;
 	}
 
+	//告诉PacketParse连接应建立
+	m_pPacketParse->Connect(GetConnectID());
+
 	//申请头的大小对应的mb
 	if(m_pPacketParse->GetPacketMode() == PACKET_WITHHEAD)
 	{
@@ -244,7 +255,7 @@ int CConnectHandler::open(void*)
 	}
 	else
 	{
-		m_pCurrMessage = App_MessageBlockManager::instance()->Create(MAX_BUFF_1024);
+		m_pCurrMessage = App_MessageBlockManager::instance()->Create(App_MainConfig::instance()->GetServerRecvBuff());
 	}
 	
 	if(m_pCurrMessage == NULL)
@@ -489,7 +500,38 @@ int CConnectHandler::handle_input(ACE_HANDLE fd)
 		}
 		else if(m_pCurrMessage->length() == m_pPacketParse->GetPacketHeadLen() && m_pPacketParse->GetIsHead() == false)
 		{
-			m_pPacketParse->SetPacketHead(m_pCurrMessage, App_MessageBlockManager::instance());
+			bool blStateHead = m_pPacketParse->SetPacketHead(GetConnectID(), m_pCurrMessage, App_MessageBlockManager::instance());
+			if(false == blStateHead)
+			{
+				m_u4CurrSize = 0;
+				OUR_DEBUG((LM_ERROR, "[CConnectHandler::handle_input]SetPacketHead is false.\n"));
+				if(m_pPacketParse->GetMessageHead() != NULL)
+				{
+					m_pPacketParse->GetMessageHead()->release();
+				}
+
+				if(m_pPacketParse->GetMessageBody() != NULL)
+				{
+					m_pPacketParse->GetMessageBody()->release();
+				}
+
+				if(m_pCurrMessage != NULL && m_pPacketParse->GetMessageBody() != m_pCurrMessage && m_pPacketParse->GetMessageHead() != m_pCurrMessage)
+				{
+					m_pCurrMessage->release();
+				}
+				m_pCurrMessage = NULL;
+
+				App_PacketParsePool::instance()->Delete(m_pPacketParse);
+
+				//发送客户端链接断开消息。
+				if(false == App_MakePacket::instance()->PutMessageBlock(GetConnectID(), PACKET_CDISCONNECT, NULL))
+				{
+					OUR_DEBUG((LM_ERROR, "[CConnectHandler::handle_input] ConnectID = %d, PACKET_CONNECT is error.\n", GetConnectID()));
+				}
+
+				return -1;
+			}
+
 			uint32 u4PacketBodyLen = m_pPacketParse->GetPacketBodyLen();
 			m_u4CurrSize = 0;
 
@@ -567,7 +609,39 @@ int CConnectHandler::handle_input(ACE_HANDLE fd)
 		else
 		{
 			//接受完整数据完成，开始分析完整数据包
-			m_pPacketParse->SetPacketBody(m_pCurrMessage, App_MessageBlockManager::instance());
+			bool blStateBody = m_pPacketParse->SetPacketBody(GetConnectID(), m_pCurrMessage, App_MessageBlockManager::instance());
+			if(false == blStateBody)
+			{
+				//如果数据包体是错误的，则断开连接
+				m_u4CurrSize = 0;
+				OUR_DEBUG((LM_ERROR, "[CConnectHandle::RecvClinetPacket]SetPacketBody is false.\n"));
+
+				if(m_pPacketParse->GetMessageHead() != NULL)
+				{
+					m_pPacketParse->GetMessageHead()->release();
+				}
+
+				if(m_pPacketParse->GetMessageBody() != NULL)
+				{
+					m_pPacketParse->GetMessageBody()->release();
+				}
+
+				if(m_pCurrMessage != NULL && m_pPacketParse->GetMessageBody() != m_pCurrMessage && m_pPacketParse->GetMessageBody() != m_pCurrMessage)
+				{
+					m_pCurrMessage->release();
+				}
+				m_pCurrMessage = NULL;
+
+				App_PacketParsePool::instance()->Delete(m_pPacketParse);
+
+				//发送客户端链接断开消息。
+				if(false == App_MakePacket::instance()->PutMessageBlock(GetConnectID(), PACKET_CDISCONNECT, NULL))
+				{
+					OUR_DEBUG((LM_ERROR, "[CProConnectHandle::open] ConnectID = %d, PACKET_CONNECT is error.\n", GetConnectID()));
+				}
+
+				return -1;
+			}
 
 			if(false == CheckMessage())
 			{
@@ -608,7 +682,7 @@ int CConnectHandler::handle_input(ACE_HANDLE fd)
 		//以流模式解析
 		while(true)
 		{
-			uint8 n1Ret = m_pPacketParse->GetPacketStream(m_pCurrMessage, (IMessageBlockManager* )App_MessageBlockManager::instance());
+			uint8 n1Ret = m_pPacketParse->GetPacketStream(GetConnectID(), m_pCurrMessage, (IMessageBlockManager* )App_MessageBlockManager::instance());
 			if(PACKET_GET_ENOUGTH == n1Ret)
 			{
 				if(false == CheckMessage())
@@ -663,7 +737,7 @@ int CConnectHandler::handle_input(ACE_HANDLE fd)
 		m_u4CurrSize = 0;
 
 		//申请头的大小对应的mb
-		m_pCurrMessage = App_MessageBlockManager::instance()->Create(m_pPacketParse->GetPacketHeadLen());
+		m_pCurrMessage = App_MessageBlockManager::instance()->Create(App_MainConfig::instance()->GetServerRecvBuff());
 		if(m_pCurrMessage == NULL)
 		{
 			AppLogManager::instance()->WriteLog(LOG_SYSTEM_CONNECT, "Close Connection from [%s:%d] RecvSize = %d, RecvCount = %d, SendSize = %d, SendCount = %d, m_u8RecvQueueTimeCost = %dws, m_u4RecvQueueCount = %d, m_u8SendQueueTimeCost = %dws.",m_addrRemote.get_host_addr(), m_addrRemote.get_port_number(), m_u4AllRecvSize, m_u4AllRecvCount, m_u4AllSendSize, m_u4AllSendCount, (uint32)m_u8RecvQueueTimeCost, m_u4RecvQueueCount, (uint32)m_u8SendQueueTimeCost);
@@ -783,7 +857,7 @@ bool CConnectHandler::SendMessage(IBuffPacket* pBuffPacket, bool blState, uint8 
 		uint32 u4SendPacketSize = 0;
 		if(u1SendType == SENDMESSAGE_NOMAL)
 		{
-			u4SendPacketSize = m_objSendPacketParse.MakePacketLength(u4PacketSize);
+			u4SendPacketSize = m_objSendPacketParse.MakePacketLength(GetConnectID(), u4PacketSize);
 		}
 		else
 		{
@@ -806,7 +880,7 @@ bool CConnectHandler::SendMessage(IBuffPacket* pBuffPacket, bool blState, uint8 
 			if(u1SendType == SENDMESSAGE_NOMAL)
 			{
 				//这里组成返回数据包
-				m_objSendPacketParse.MakePacket(pBuffPacket->GetData(), pBuffPacket->GetPacketLen(), m_pBlockMessage);
+				m_objSendPacketParse.MakePacket(GetConnectID(), pBuffPacket->GetData(), pBuffPacket->GetPacketLen(), m_pBlockMessage);
 			}
 			else
 			{

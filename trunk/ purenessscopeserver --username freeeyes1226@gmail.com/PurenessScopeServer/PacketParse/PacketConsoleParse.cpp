@@ -1,7 +1,7 @@
-#include "PacketParse.h"
+#include "PacketConsoleParse.h"
 
 
-CPacketParse::CPacketParse(void)
+CConsolePacketParse::CConsolePacketParse(void)
 {
 	//如果是包头模式，这里需要设置包头的长度
 	m_u4PacketHead      = PACKET_HEAD;
@@ -13,12 +13,12 @@ CPacketParse::CPacketParse(void)
 	m_u1PacketMode      = PACKET_WITHHEAD;
 }
 
-CPacketParse::~CPacketParse(void)
+CConsolePacketParse::~CConsolePacketParse(void)
 {
 	
 }
 
-bool CPacketParse::SetPacketHead(uint32 u4ConnectID, ACE_Message_Block* pmbHead, IMessageBlockManager* pMessageBlockManager)
+bool CConsolePacketParse::SetPacketHead(uint32 u4ConnectID, ACE_Message_Block* pmbHead, IMessageBlockManager* pMessageBlockManager)
 {
 	//这里添加自己对包头的分析，主要分析出包长度。
 	char* pData  = (char* )pmbHead->rd_ptr();
@@ -27,7 +27,8 @@ bool CPacketParse::SetPacketHead(uint32 u4ConnectID, ACE_Message_Block* pmbHead,
 	m_u4HeadSrcSize = u4Len;
 	if(u4Len == sizeof(uint32))
 	{
-		ACE_OS::memcpy(&m_u4PacketData, pData, sizeof(uint32));
+		//Console程序没有COmmandID
+		//ACE_OS::memcpy(&m_u4PacketData, pData, sizeof(uint32));
 		
 		m_pmbHead = pmbHead;
 		m_blIsHead = true;
@@ -39,7 +40,7 @@ bool CPacketParse::SetPacketHead(uint32 u4ConnectID, ACE_Message_Block* pmbHead,
 	}
 }
 
-bool CPacketParse::SetPacketBody(uint32 u4ConnectID, ACE_Message_Block* pmbBody, IMessageBlockManager* pMessageBlockManager)
+bool CConsolePacketParse::SetPacketBody(uint32 u4ConnectID, ACE_Message_Block* pmbBody, IMessageBlockManager* pMessageBlockManager)
 {
 	//这里分析出包体内的一些数据，如果包头包含了CommandID，那么包体就不必做解析。
 	char* pData  = (char* )pmbBody->rd_ptr();
@@ -48,7 +49,7 @@ bool CPacketParse::SetPacketBody(uint32 u4ConnectID, ACE_Message_Block* pmbBody,
 	m_u4BodySrcSize = u4Len;
 	if(u4Len >= sizeof(uint16))
 	{
-		ACE_OS::memcpy(&m_u2PacketCommandID, pData, sizeof(uint16));
+		//ACE_OS::memcpy(&m_u2PacketCommandID, pData, sizeof(uint16));
 		m_blIsHead = false;
 		m_pmbBody = pmbBody;
 		return true;
@@ -62,12 +63,12 @@ bool CPacketParse::SetPacketBody(uint32 u4ConnectID, ACE_Message_Block* pmbBody,
 
 
 
-uint32 CPacketParse::MakePacketLength(uint32 u4ConnectID, uint32 u4DataLen)
+uint32 CConsolePacketParse::MakePacketLength(uint32 u4ConnectID, uint32 u4DataLen)
 {
 	return u4DataLen + sizeof(uint32);
 }
 
-bool CPacketParse::MakePacket(uint32 u4ConnectID, const char* pData, uint32 u4Len, ACE_Message_Block* pMbData)
+bool CConsolePacketParse::MakePacket(uint32 u4ConnectID, const char* pData, uint32 u4Len, ACE_Message_Block* pMbData)
 {
 	if(pMbData == NULL)
 	{
@@ -84,7 +85,7 @@ bool CPacketParse::MakePacket(uint32 u4ConnectID, const char* pData, uint32 u4Le
 
 
 
-uint8 CPacketParse::GetPacketStream(uint32 u4ConnectID, ACE_Message_Block* pCurrMessage, IMessageBlockManager* pMessageBlockManager)
+uint8 CConsolePacketParse::GetPacketStream(uint32 u4ConnectID, ACE_Message_Block* pCurrMessage, IMessageBlockManager* pMessageBlockManager)
 {
 	//这里是测试代码，专门处理为数据流的数据包
 	if(NULL == pCurrMessage || NULL == pMessageBlockManager)
@@ -271,14 +272,14 @@ uint8 CPacketParse::GetPacketStream(uint32 u4ConnectID, ACE_Message_Block* pCurr
 	}
 }
 
-bool CPacketParse::Connect( uint32 u4ConnectID )
+bool CConsolePacketParse::Connect( uint32 u4ConnectID )
 {
 	//这里添加你对连接建立的逻辑处理，如果没有则不用在这里写任何代码
 	//返回false，则连接会断开
 	return true;
 }
 
-void CPacketParse::DisConnect( uint32 u4ConnectID )
+void CConsolePacketParse::DisConnect( uint32 u4ConnectID )
 {
 	//这里添加你对连接断开的逻辑处理
 }

@@ -1,5 +1,5 @@
-#ifndef _PACKETPARSE_H
-#define _PACKETPARSE_H
+#ifndef _PACKETCONSOLEPARSE_H
+#define _PACKETCONSOLEPARSE_H
 
 //这个类是完全交给开发者使用的
 //在这里开发者只要去实现下面的5个接口，就可以完成一个数据包处理过程
@@ -12,25 +12,11 @@
 
 #include "PacketParseBase.h"
 
-#ifdef WIN32
-#if defined PACKETPARSE_BUILD_DLL
-#define DLL_EXPORT __declspec(dllexport)
-#else
-#define DLL_EXPORT __declspec(dllimport)
-#endif
-#else
-#define DLL_EXPORT
-#endif 
-
-#ifdef WIN32
-class DLL_EXPORT CPacketParse : public CPacketParseBase
-#else
-class CPacketParse : public CPacketParseBase
-#endif 
+class CConsolePacketParse : public CPacketParseBase 
 {
 public:
-	CPacketParse(void);
-	virtual ~CPacketParse(void);
+	CConsolePacketParse(void);
+	virtual ~CConsolePacketParse(void);
 
 	//得到符合条件的数据包头数据块，u4ConnectID是连接ID，pmbHead是数据块，pMessageBlockManager是数据块池，如果不用解密这个参数对你无效
 	bool SetPacketHead(uint32 u4ConnectID, ACE_Message_Block* pmbHead, IMessageBlockManager* pMessageBlockManager);

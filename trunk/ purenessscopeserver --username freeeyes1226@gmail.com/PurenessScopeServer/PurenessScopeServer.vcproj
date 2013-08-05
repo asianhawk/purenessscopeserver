@@ -296,6 +296,10 @@
 					Name="headfile"
 					>
 					<File
+						RelativePath=".\PacketParse\PacketConsoleParse.h"
+						>
+					</File>
+					<File
 						RelativePath=".\PacketParse\PacketParse.h"
 						>
 					</File>
@@ -311,6 +315,10 @@
 				<Filter
 					Name="cppfile"
 					>
+					<File
+						RelativePath=".\PacketParse\PacketConsoleParse.cpp"
+						>
+					</File>
 					<File
 						RelativePath=".\PacketParse\PacketParsePool.cpp"
 						>

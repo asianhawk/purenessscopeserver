@@ -17,7 +17,7 @@
 #include "IConnectManager.h"
 #include "ConsoleMessage.h"
 #include "MessageBlockManager.h"
-#include "PacketParsePool.h"
+#include "PacketConsoleParse.h"
 #include "BuffPacketManager.h"
 #include "MessageBlockManager.h"
 
@@ -78,7 +78,7 @@ private:
 	_TimerCheckID*             m_pTCClose;
 
 	CBuffPacket                m_AlivePacket;                  //服务器生存包
-	CPacketParse*              m_pPacketParse;                 //数据包解析类
+	CConsolePacketParse*       m_pPacketParse;                 //数据包解析类
 	ACE_Message_Block*         m_pCurrMessage;                 //当前的MB对象
 	uint32                     m_u4CurrSize;                   //当前MB缓冲字符长度
 

@@ -149,7 +149,7 @@ void CProConsoleHandle::open(ACE_HANDLE h, ACE_Message_Block&)
 
 	OUR_DEBUG((LM_DEBUG,"[CProConsoleHandle::open] Open(%d).\n", GetConnectID()));	
 
-	m_pPacketParse = App_PacketParsePool::instance()->Create();
+	m_pPacketParse = new CConsolePacketParse();
 	if(NULL == m_pPacketParse)
 	{
 		OUR_DEBUG((LM_DEBUG,"[CProConsoleHandle::open] Open(%d) m_pPacketParse new error.\n", GetConnectID()));
@@ -186,7 +186,7 @@ void CProConsoleHandle::handle_read_stream(const ACE_Asynch_Read_Stream::Result 
 			//OUR_DEBUG((LM_DEBUG,"[CProConsoleHandle::handle_read_stream] Message_block release.\n"));
 			App_MessageBlockManager::instance()->Close(&mb);
 		}
-		App_PacketParsePool::instance()->Delete(m_pPacketParse);
+		SAFE_DELETE(m_pPacketParse);
 
 		OUR_DEBUG((LM_DEBUG,"[%tCConnectHandler::handle_read_stream]Connectid=[%d] error(%d)...\n", GetConnectID(), errno));
 		//AppLogManager::instance()->WriteLog(LOG_SYSTEM_CONNECT, "Close Connection from [%s:%d] RecvSize = %d, RecvCount = %d, SendSize = %d, SendCount = %d.",m_addrRemote.get_host_addr(), m_addrRemote.get_port_number(), m_u4AllRecvSize, m_u4AllRecvCount, m_u4AllSendSize, m_u4AllSendCount);
@@ -219,7 +219,7 @@ void CProConsoleHandle::handle_read_stream(const ACE_Asynch_Read_Stream::Result 
 			{
 				App_MessageBlockManager::instance()->Close(&mb);
 			}
-			App_PacketParsePool::instance()->Delete(m_pPacketParse);
+			SAFE_DELETE(m_pPacketParse);
 
 			OUR_DEBUG((LM_ERROR, "[CConnectHandler::handle_read_stream]Read Shoter error(%d).", errno));
 			//AppLogManager::instance()->WriteLog(LOG_SYSTEM_CONNECT, "Close Connection from [%s:%d] RecvSize = %d, RecvCount = %d, SendSize = %d, SendCount = %d.",m_addrRemote.get_host_addr(), m_addrRemote.get_port_number(), m_u4AllRecvSize, m_u4AllRecvCount, m_u4AllSendSize, m_u4AllSendCount);
@@ -233,7 +233,7 @@ void CProConsoleHandle::handle_read_stream(const ACE_Asynch_Read_Stream::Result 
 	else if(mb.length() == m_pPacketParse->GetPacketHeadLen() && m_pPacketParse->GetIsHead() == false)
 	{
 		//判断头的合法性
-		m_pPacketParse->SetPacketHead(&mb, App_MessageBlockManager::instance());
+		m_pPacketParse->SetPacketHead(GetConnectID(), &mb, App_MessageBlockManager::instance());
 		uint32 u4PacketBodyLen = m_pPacketParse->GetPacketBodyLen();
 
 		//如果超过了最大包长度，为非法数据
@@ -255,7 +255,7 @@ void CProConsoleHandle::handle_read_stream(const ACE_Asynch_Read_Stream::Result 
 			{
 				App_MessageBlockManager::instance()->Close(&mb);
 			}
-			App_PacketParsePool::instance()->Delete(m_pPacketParse);
+			SAFE_DELETE(m_pPacketParse);
 
 			Close(2);
 			return;
@@ -269,19 +269,12 @@ void CProConsoleHandle::handle_read_stream(const ACE_Asynch_Read_Stream::Result 
 	else
 	{
 		//接受完整数据完成，开始分析完整数据包
-		m_pPacketParse->SetPacketBody(&mb, App_MessageBlockManager::instance());
+		m_pPacketParse->SetPacketBody(GetConnectID(), &mb, App_MessageBlockManager::instance());
 
 		CheckMessage();
-		//App_PacketParsePool::instance()->Delete(m_pPacketParse);
 
-		m_pPacketParse = App_PacketParsePool::instance()->Create();
-		if(NULL == m_pPacketParse)
-		{
-			OUR_DEBUG((LM_DEBUG,"[CProConsoleHandle::handle_read_stream] Open(%d) m_pPacketParse new error.\n", GetConnectID()));
-			//因为是要关闭连接，所以要多关闭一次IO，对应Open设置的1的初始值
-			Close(2);
-			return;
-		}
+		m_pPacketParse = new CConsolePacketParse();
+
 		Close();
 
 		//接受下一个数据包
@@ -335,7 +328,7 @@ bool CProConsoleHandle::GetIsClosing()
 
 bool CProConsoleHandle::SendMessage(IBuffPacket* pBuffPacket)
 {
-	CPacketParse PacketParse;
+	CConsolePacketParse PacketParse;
 
 	if(NULL == pBuffPacket)
 	{
@@ -345,11 +338,11 @@ bool CProConsoleHandle::SendMessage(IBuffPacket* pBuffPacket)
 	}
 
 	ACE_Message_Block* pMbData = NULL;
-	int nSendLength = PacketParse.MakePacketLength(pBuffPacket->GetPacketLen());
+	int nSendLength = PacketParse.MakePacketLength(GetConnectID(), pBuffPacket->GetPacketLen());
 	pMbData = App_MessageBlockManager::instance()->Create(nSendLength);
 
 	//这里组成返回数据包
-	PacketParse.MakePacket(pBuffPacket->GetData(), pBuffPacket->GetPacketLen(), pMbData);
+	PacketParse.MakePacket(GetConnectID(), pBuffPacket->GetData(), pBuffPacket->GetPacketLen(), pMbData);
 
 	App_BuffPacketManager::instance()->Delete(pBuffPacket);
 	PutSendPacket(pMbData);
@@ -414,7 +407,7 @@ bool CProConsoleHandle::RecvClinetPacket(uint32 u4PackeLen)
 		{
 			m_pPacketParse->GetMessageBody()->release();
 		}
-		App_PacketParsePool::instance()->Delete(m_pPacketParse);
+		SAFE_DELETE(m_pPacketParse);
 		Close(2);
 		return false;
 	}
@@ -434,7 +427,7 @@ bool CProConsoleHandle::RecvClinetPacket(uint32 u4PackeLen)
 		{
 			m_pPacketParse->GetMessageBody()->release();
 		}
-		App_PacketParsePool::instance()->Delete(m_pPacketParse);
+		SAFE_DELETE(m_pPacketParse);
 		Close(2);
 		return false;
 	}
@@ -463,7 +456,7 @@ bool CProConsoleHandle::CheckMessage()
 			}
 		}
 
-		App_PacketParsePool::instance()->Delete(m_pPacketParse);
+		SAFE_DELETE(m_pPacketParse);
 	}
 	else
 	{
