@@ -122,7 +122,7 @@ bool CProactorUDPHandler::SendMessage(const char* pMessage, uint32 u4Len, const 
 		CPacketParse PacketParse;
 
 		ACE_Message_Block* pMbData = NULL;
-		uint32 u4SendLength = PacketParse.MakePacketLength(u4Len);
+		uint32 u4SendLength = PacketParse.MakePacketLength(0, u4Len);
 		pMbData = App_MessageBlockManager::instance()->Create(u4SendLength);
 		if(NULL == pMbData)
 		{
@@ -130,7 +130,7 @@ bool CProactorUDPHandler::SendMessage(const char* pMessage, uint32 u4Len, const 
 			return false;
 		}
 
-		PacketParse.MakePacket(pMessage, u4Len, pMbData);
+		PacketParse.MakePacket(0, pMessage, u4Len, pMbData);
 
 		uint32 u4DataLen = (uint32)pMbData->length();
 		int nSize = (int)m_skRemote.send(pMbData->rd_ptr(), u4DataLen, AddrRemote);
@@ -221,7 +221,7 @@ bool CProactorUDPHandler::CheckMessage(ACE_Message_Block* pMbData, uint32 u4Len)
 		ACE_OS::memcpy(pMBHead->wr_ptr(), (const void*)pMbData->rd_ptr(), m_pPacketParse->GetPacketHeadLen());
 		pMBHead->wr_ptr(m_pPacketParse->GetPacketHeadLen());
 
-		m_pPacketParse->SetPacketHead(pMBHead, App_MessageBlockManager::instance());
+		m_pPacketParse->SetPacketHead(0, pMBHead, App_MessageBlockManager::instance());
 		if(u4Len != m_pPacketParse->GetPacketHeadLen() + m_pPacketParse->GetPacketBodyLen())
 		{
 			return false;
@@ -233,7 +233,7 @@ bool CProactorUDPHandler::CheckMessage(ACE_Message_Block* pMbData, uint32 u4Len)
 		ACE_Message_Block* pMBBody = App_MessageBlockManager::instance()->Create(m_pPacketParse->GetPacketBodyLen());
 		ACE_OS::memcpy(pMBBody->wr_ptr(), (const void*)pMbData->rd_ptr(), m_pPacketParse->GetPacketBodyLen());
 		pMBBody->wr_ptr(m_pPacketParse->GetPacketBodyLen());
-		m_pPacketParse->SetPacketBody(pMBBody, App_MessageBlockManager::instance());
+		m_pPacketParse->SetPacketBody(0, pMBBody, App_MessageBlockManager::instance());
 
 		//UDP因为不是面向链接的
 		if(false == App_MakePacket::instance()->PutUDPMessageBlock(m_addrRemote, PACKET_PARSE, m_pPacketParse))
@@ -246,7 +246,7 @@ bool CProactorUDPHandler::CheckMessage(ACE_Message_Block* pMbData, uint32 u4Len)
 	else
 	{
 		//以数据流处理
-		if(PACKET_GET_ENOUGTH == m_pPacketParse->GetPacketStream(pMbData, App_MessageBlockManager::instance()))
+		if(PACKET_GET_ENOUGTH == m_pPacketParse->GetPacketStream(0, pMbData, App_MessageBlockManager::instance()))
 		{
 			//UDP因为不是面向链接的
 			if(false == App_MakePacket::instance()->PutUDPMessageBlock(m_addrRemote, PACKET_PARSE, m_pPacketParse))

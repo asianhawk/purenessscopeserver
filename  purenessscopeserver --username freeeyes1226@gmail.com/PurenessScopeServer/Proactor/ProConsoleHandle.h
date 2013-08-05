@@ -16,7 +16,7 @@
 #include "IConnectManager.h"
 #include "TimerManager.h"
 #include "ConsoleMessage.h"
-#include "PacketParsePool.h"
+#include "PacketConsoleParse.h"
 #include "BuffPacketManager.h"
 #include "Fast_Asynch_Read_Stream.h"
 #include "MessageBlockManager.h"
@@ -56,18 +56,18 @@ private:
 	ACE_Time_Value   m_atvOutput;
 	ACE_Time_Value   m_atvSendAlive;
 
-	CBuffPacket        m_AlivePacket;                  //服务器生存包
-	uint8              m_u1ConnectState;               //目前链接处理状态
-	uint8              m_u1SendBuffState;              //目前缓冲器是否有等待发送的数据
-	uint16             m_u2SendQueueMax;               //发送队列最大长度
-	uint16             m_u2MaxConnectTime;             //最大链接时间判定
-	uint32             m_u4HandlerID;                  //此Hander生成时的ID
-	uint32             m_u4ConnectID;                  //当前Connect的流水号
-	uint32             m_u4AllRecvCount;               //当前链接接收数据包的个数
-	uint32             m_u4AllSendCount;               //当前链接发送数据包的个数
-	uint32             m_u4AllRecvSize;                //当前链接接收字节总数
-	uint32             m_u4AllSendSize;                //当前链接发送字节总数 
-	CPacketParse*      m_pPacketParse;                 //数据包解析类
+	CBuffPacket          m_AlivePacket;                  //服务器生存包
+	uint8                m_u1ConnectState;               //目前链接处理状态
+	uint8                m_u1SendBuffState;              //目前缓冲器是否有等待发送的数据
+	uint16               m_u2SendQueueMax;               //发送队列最大长度
+	uint16               m_u2MaxConnectTime;             //最大链接时间判定
+	uint32               m_u4HandlerID;                  //此Hander生成时的ID
+	uint32               m_u4ConnectID;                  //当前Connect的流水号
+	uint32               m_u4AllRecvCount;               //当前链接接收数据包的个数
+	uint32               m_u4AllSendCount;               //当前链接发送数据包的个数
+	uint32               m_u4AllRecvSize;                //当前链接接收字节总数
+	uint32               m_u4AllSendSize;                //当前链接发送字节总数 
+	CConsolePacketParse* m_pPacketParse;                 //数据包解析类
 
 	ACE_Recursive_Thread_Mutex m_ThreadWriteLock;
 

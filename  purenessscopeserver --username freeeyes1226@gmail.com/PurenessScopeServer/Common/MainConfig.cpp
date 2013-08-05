@@ -30,6 +30,7 @@ CMainConfig::CMainConfig(void)
 	m_u4ConnectServerTimerout = 0;
 	m_u2ConnectServerCheck    = CONNECT_LIMIT_RETRY;
 	m_u4ConnectServerRecvBuff = MAX_BUFF_1024;
+	m_u4ServerRecvBuff        = MAX_BUFF_1024;
 
 	m_u2ValidConnectCount   = MAX_CONNECT_COUNT;
 	m_u1Valid               = 1;
@@ -316,6 +317,18 @@ bool CMainConfig::Init(const char* szConfigPath)
 	{
 		m_u2MaxConnectTime = (uint16)ACE_OS::atoi((char*)pData);
 	}
+	pData = m_MainConfig.GetData("ClientInfo", "CommandAccount");
+	if(pData != NULL)
+	{
+		m_u1CommandAccount = (uint8)ACE_OS::atoi(pData);
+	}
+	pData = m_MainConfig.GetData("ClientInfo", "MaxBuffRecv");
+	if(pData != NULL)
+	{
+		m_u4ServerRecvBuff = (uint8)ACE_OS::atoi(pData);
+	}
+
+	//接收客户端信息相关配置
 	pData = m_MainConfig.GetData("RecvInfo", "RecvQueueTimeout");
 	if(pData != NULL)
 	{
@@ -331,11 +344,7 @@ bool CMainConfig::Init(const char* szConfigPath)
 	{
 		m_u2SendQueueCount = (uint16)ACE_OS::atoi(pData);
 	}
-	pData = m_MainConfig.GetData("ClientInfo", "CommandAccount");
-	if(pData != NULL)
-	{
-		m_u1CommandAccount = (uint8)ACE_OS::atoi(pData);
-	}
+
 
 	//开始获得Console服务器相关配置信息
 	pData = m_MainConfig.GetData("Console", "support");
@@ -804,4 +813,9 @@ uint32 CMainConfig::GetConnectServerRecvBuffer()
 uint8 CMainConfig::GetMonitor()
 {
 	return m_u1Monitor;
+}
+
+uint32 CMainConfig::GetServerRecvBuff()
+{
+	return m_u4ServerRecvBuff;
 }

@@ -84,6 +84,10 @@ bool CProConnectHandle::Close(int nIOCount)
 	{
 		m_ThreadWriteLock.acquire();
 
+		//调用连接断开消息
+		CPacketParse objPacketParse;
+		objPacketParse.DisConnect(GetConnectID());
+
 		m_Reader.cancel();
 		m_Writer.cancel();
 
@@ -194,7 +198,7 @@ void CProConnectHandle::open(ACE_HANDLE h, ACE_Message_Block&)
 	//初始化检查器
 	m_TimeConnectInfo.Init(App_MainConfig::instance()->GetValid(), App_MainConfig::instance()->GetValidPacketCount(), App_MainConfig::instance()->GetValidRecvSize());
 
-
+	//写入连接日志
 	AppLogManager::instance()->WriteLog(LOG_SYSTEM_CONNECT, "Connection from [%s:%d] DisposeTime = %d.",m_addrRemote.get_host_addr(), m_addrRemote.get_port_number(), tvOpen.msec());
 
 	this->handle(h);
@@ -235,6 +239,9 @@ void CProConnectHandle::open(ACE_HANDLE h, ACE_Message_Block&)
 		return;
 	}
 
+	//告诉PacketParse连接应建立
+	m_pPacketParse->Connect(GetConnectID());
+
 	//发送链接建立消息。
 	if(false == App_MakePacket::instance()->PutMessageBlock(GetConnectID(), PACKET_CONNECT, NULL))
 	{
@@ -247,7 +254,7 @@ void CProConnectHandle::open(ACE_HANDLE h, ACE_Message_Block&)
 	}
 	else
 	{
-		RecvClinetPacket(MAX_BUFF_1024);
+		RecvClinetPacket(App_MainConfig::instance()->GetServerRecvBuff());
 	}
 
 	return;
@@ -379,7 +386,38 @@ void CProConnectHandle::handle_read_stream(const ACE_Asynch_Read_Stream::Result 
 		else if(mb.length() == m_pPacketParse->GetPacketHeadLen() && m_pPacketParse->GetIsHead() == false)
 		{
 			//判断头的合法性
-			m_pPacketParse->SetPacketHead(&mb, App_MessageBlockManager::instance());
+			bool blStateHead = m_pPacketParse->SetPacketHead(GetConnectID(), &mb, App_MessageBlockManager::instance());
+			if(false == blStateHead)
+			{
+				//如果包头是非法的，则返回错误，断开连接。
+				OUR_DEBUG((LM_ERROR, "[CConnectHandler::handle_read_stream]SetPacketHead is false.\n"));
+
+				if(m_pPacketParse->GetMessageHead() != NULL)
+				{
+					App_MessageBlockManager::instance()->Close(m_pPacketParse->GetMessageHead());
+				}
+
+				if(m_pPacketParse->GetMessageBody() != NULL)
+				{
+					App_MessageBlockManager::instance()->Close(m_pPacketParse->GetMessageBody());
+				}
+
+				if(&mb != m_pPacketParse->GetMessageHead() && &mb != m_pPacketParse->GetMessageBody())
+				{
+					App_MessageBlockManager::instance()->Close(&mb);
+				}
+				App_PacketParsePool::instance()->Delete(m_pPacketParse);
+
+				//发送服务器端链接断开消息。
+				if(false == App_MakePacket::instance()->PutMessageBlock(GetConnectID(), PACKET_SDISCONNECT, NULL))
+				{
+					OUR_DEBUG((LM_ERROR, "[CProConnectHandle::open] ConnectID = %d, PACKET_CONNECT is error.\n", GetConnectID()));
+				}
+
+				Close(2);
+				return;
+			}
+
 			uint32 u4PacketBodyLen = m_pPacketParse->GetPacketBodyLen();
 
 			//如果超过了最大包长度，为非法数据
@@ -421,7 +459,37 @@ void CProConnectHandle::handle_read_stream(const ACE_Asynch_Read_Stream::Result 
 		else
 		{
 			//接受完整数据完成，开始分析完整数据包
-			m_pPacketParse->SetPacketBody(&mb, App_MessageBlockManager::instance());
+			bool blStateBody = m_pPacketParse->SetPacketBody(GetConnectID(), &mb, App_MessageBlockManager::instance());
+			if(false == blStateBody)
+			{
+				//如果数据包体非法，断开连接
+				OUR_DEBUG((LM_ERROR, "[CConnectHandler::handle_read_stream]SetPacketBody is false.\n"));
+
+				if(m_pPacketParse->GetMessageHead() != NULL)
+				{
+					App_MessageBlockManager::instance()->Close(m_pPacketParse->GetMessageHead());
+				}
+
+				if(m_pPacketParse->GetMessageBody() != NULL)
+				{
+					App_MessageBlockManager::instance()->Close(m_pPacketParse->GetMessageBody());
+				}
+
+				if(&mb != m_pPacketParse->GetMessageHead() && &mb != m_pPacketParse->GetMessageBody())
+				{
+					App_MessageBlockManager::instance()->Close(&mb);
+				}
+				App_PacketParsePool::instance()->Delete(m_pPacketParse);
+
+				//发送服务器端链接断开消息。
+				if(false == App_MakePacket::instance()->PutMessageBlock(GetConnectID(), PACKET_SDISCONNECT, NULL))
+				{
+					OUR_DEBUG((LM_ERROR, "[CProConnectHandle::open] ConnectID = %d, PACKET_CONNECT is error.\n", GetConnectID()));
+				}
+
+				Close(2);
+				return;
+			}
 
 			if(false == CheckMessage())
 			{
@@ -454,7 +522,7 @@ void CProConnectHandle::handle_read_stream(const ACE_Asynch_Read_Stream::Result 
 		//以流模式解析
 		while(true)
 		{
-			uint8 n1Ret = m_pPacketParse->GetPacketStream(&mb, (IMessageBlockManager* )App_MessageBlockManager::instance());
+			uint8 n1Ret = m_pPacketParse->GetPacketStream(GetConnectID(), &mb, (IMessageBlockManager* )App_MessageBlockManager::instance());
 			if(PACKET_GET_ENOUGTH == n1Ret)
 			{
 				//已经接收了完整数据包，扔给工作线程去处理
@@ -510,7 +578,7 @@ void CProConnectHandle::handle_read_stream(const ACE_Asynch_Read_Stream::Result 
 
 		Close();
 		//接受下一个数据包
-		RecvClinetPacket(MAX_BUFF_1024);
+		RecvClinetPacket(App_MainConfig::instance()->GetServerRecvBuff());
 	}
 
 	return;
@@ -624,7 +692,7 @@ bool CProConnectHandle::SendMessage(IBuffPacket* pBuffPacket, bool blState, uint
 		uint32 u4SendPacketSize = 0;
 		if(u1SendType == SENDMESSAGE_NOMAL)
 		{
-			u4SendPacketSize = m_objSendPacketParse.MakePacketLength(pBuffPacket->GetPacketLen());
+			u4SendPacketSize = m_objSendPacketParse.MakePacketLength(GetConnectID(), pBuffPacket->GetPacketLen());
 		}
 		else
 		{
@@ -647,7 +715,7 @@ bool CProConnectHandle::SendMessage(IBuffPacket* pBuffPacket, bool blState, uint
 			if(u1SendType == SENDMESSAGE_NOMAL)
 			{
 				//这里组成返回数据包
-				m_objSendPacketParse.MakePacket(pBuffPacket->GetData(), pBuffPacket->GetPacketLen(), m_pBlockMessage);
+				m_objSendPacketParse.MakePacket(GetConnectID(), pBuffPacket->GetData(), pBuffPacket->GetPacketLen(), m_pBlockMessage);
 			}
 			else
 			{
