@@ -80,7 +80,7 @@ void CThreadInfo::Close()
 
 _ThreadInfo* CThreadInfo::GetThreadInfo(uint32 u4ThreadID)
 {
-	mapThreadInfo::iterator f = m_mapThreadInfo.find(u4ThreadID);
+	mapThreadInfo::iterator f = m_mapThreadInfo.find(0);
 
 	if(f != m_mapThreadInfo.end())
 	{
