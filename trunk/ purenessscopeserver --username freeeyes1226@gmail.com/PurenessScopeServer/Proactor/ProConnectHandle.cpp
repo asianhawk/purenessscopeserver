@@ -1021,7 +1021,6 @@ _ClientIPInfo CProConnectHandle::GetClientIPInfo()
 CProConnectManager::CProConnectManager(void)
 {
 	m_u4TimeCheckID      = 0;
-	m_u4ConnectCurrID    = 0;
 	m_szError[0]         = '\0';
 	m_blRun              = false;
 
@@ -1117,7 +1116,6 @@ bool CProConnectManager::AddConnect(uint32 u4ConnectID, CProConnectHandle* pConn
 	pConnectHandler->SetConnectID(u4ConnectID);
 	//加入map
 	m_mapConnectManager.insert(mapConnectManager::value_type(u4ConnectID, pConnectHandler));
-	//m_u4ConnectCurrID++;
 	m_ThreadWriteLock.release();
 
 	return true;
@@ -1558,7 +1556,8 @@ bool CProConnectManager::PostMessageAll( IBuffPacket* pBuffPacket, uint8 u1SendT
 
 CProConnectHandlerPool::CProConnectHandlerPool(void)
 {
-	m_u4CurrMaxCount = 0;
+	//ConnectID计数器从1开始
+	m_u4CurrMaxCount = 1;
 }
 
 CProConnectHandlerPool::~CProConnectHandlerPool(void)

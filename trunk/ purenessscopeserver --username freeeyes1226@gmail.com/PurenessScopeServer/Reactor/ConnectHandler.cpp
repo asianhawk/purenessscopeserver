@@ -1136,7 +1136,6 @@ _ClientIPInfo  CConnectHandler::GetClientIPInfo()
 CConnectManager::CConnectManager(void)
 {
 	m_u4TimeCheckID      = 0;
-	m_u4ConnectCurrID    = 0;
 	m_szError[0]         = '\0';
 
 	m_pTCTimeSendCheck   = NULL;
@@ -1243,14 +1242,13 @@ bool CConnectManager::AddConnect(uint32 u4ConnectID, CConnectHandler* pConnectHa
 	mapConnectManager::iterator f = m_mapConnectManager.find(u4ConnectID);
 	if(f != m_mapConnectManager.end())
 	{
-		sprintf_safe(m_szError, MAX_BUFF_500, "[CConnectManager::AddConnect] ConnectID[%d] is exist.", m_u4ConnectCurrID);
+		sprintf_safe(m_szError, MAX_BUFF_500, "[CConnectManager::AddConnect] ConnectID[%d] is exist.", u4ConnectID);
 		return false;
 	}
 
 	pConnectHandler->SetConnectID(u4ConnectID);
 	//加入map
 	m_mapConnectManager.insert(mapConnectManager::value_type(u4ConnectID, pConnectHandler));
-	//m_u4ConnectCurrID++;
 
 	return true;
 }
@@ -1731,7 +1729,8 @@ bool CConnectManager::PostMessageAll(IBuffPacket* pBuffPacket, uint8 u1SendType 
 
 CConnectHandlerPool::CConnectHandlerPool(void)
 {
-	m_u4CurrMaxCount = 0;
+	//ConnectID计数器从1开始
+	m_u4CurrMaxCount = 1;
 }
 
 CConnectHandlerPool::~CConnectHandlerPool(void)

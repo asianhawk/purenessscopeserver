@@ -20,15 +20,19 @@ CConsolePacketParse::~CConsolePacketParse(void)
 
 bool CConsolePacketParse::SetPacketHead(uint32 u4ConnectID, ACE_Message_Block* pmbHead, IMessageBlockManager* pMessageBlockManager)
 {
+	char* pData = pmbHead->rd_ptr();
+	if(u4ConnectID == 0 && pMessageBlockManager != NULL)
+	{
+		//UDP数据包，没有u4ConnectID
+	}
+
 	//这里添加自己对包头的分析，主要分析出包长度。
-	char* pData  = (char* )pmbHead->rd_ptr();
 	uint32 u4Len = pmbHead->length();
 
 	m_u4HeadSrcSize = u4Len;
 	if(u4Len == sizeof(uint32))
 	{
-		//Console程序没有COmmandID
-		//ACE_OS::memcpy(&m_u4PacketData, pData, sizeof(uint32));
+		ACE_OS::memcpy(&m_u4PacketData, pData, sizeof(uint32));
 		
 		m_pmbHead = pmbHead;
 		m_blIsHead = true;
@@ -43,7 +47,11 @@ bool CConsolePacketParse::SetPacketHead(uint32 u4ConnectID, ACE_Message_Block* p
 bool CConsolePacketParse::SetPacketBody(uint32 u4ConnectID, ACE_Message_Block* pmbBody, IMessageBlockManager* pMessageBlockManager)
 {
 	//这里分析出包体内的一些数据，如果包头包含了CommandID，那么包体就不必做解析。
-	char* pData  = (char* )pmbBody->rd_ptr();
+	if(u4ConnectID == 0 && pMessageBlockManager != NULL)
+	{
+		//UDP数据包，没有u4ConnectID
+	}
+
 	uint32 u4Len = pmbBody->length();
 
 	m_u4BodySrcSize = u4Len;
@@ -62,14 +70,23 @@ bool CConsolePacketParse::SetPacketBody(uint32 u4ConnectID, ACE_Message_Block* p
 }
 
 
-
 uint32 CConsolePacketParse::MakePacketLength(uint32 u4ConnectID, uint32 u4DataLen)
 {
+	if(u4ConnectID == 0)
+	{
+		//UDP数据包，没有u4ConnectID
+	}
+
 	return u4DataLen + sizeof(uint32);
 }
 
 bool CConsolePacketParse::MakePacket(uint32 u4ConnectID, const char* pData, uint32 u4Len, ACE_Message_Block* pMbData)
 {
+	if(u4ConnectID == 0)
+	{
+		//UDP数据包，没有u4ConnectID
+	}
+
 	if(pMbData == NULL)
 	{
 		return false;
@@ -87,6 +104,11 @@ bool CConsolePacketParse::MakePacket(uint32 u4ConnectID, const char* pData, uint
 
 uint8 CConsolePacketParse::GetPacketStream(uint32 u4ConnectID, ACE_Message_Block* pCurrMessage, IMessageBlockManager* pMessageBlockManager)
 {
+	if(u4ConnectID == 0)
+	{
+		//UDP数据包，没有u4ConnectID
+	}
+
 	//这里是测试代码，专门处理为数据流的数据包
 	if(NULL == pCurrMessage || NULL == pMessageBlockManager)
 	{
@@ -276,12 +298,21 @@ bool CConsolePacketParse::Connect( uint32 u4ConnectID )
 {
 	//这里添加你对连接建立的逻辑处理，如果没有则不用在这里写任何代码
 	//返回false，则连接会断开
+	if(u4ConnectID == 0)
+	{
+		//UDP数据包，没有u4ConnectID
+	}
+
 	return true;
 }
 
 void CConsolePacketParse::DisConnect( uint32 u4ConnectID )
 {
 	//这里添加你对连接断开的逻辑处理
+	if(u4ConnectID == 0)
+	{
+		//UDP数据包，没有u4ConnectID
+	}
 }
 
 
