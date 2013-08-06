@@ -18,11 +18,12 @@
 #include "ace/Synch.h"
 
 #include "define.h"
+#include "IMessageBlockManager.h"
 
 typedef  ACE_Malloc<ACE_LOCAL_MEMORY_POOL, ACE_SYNCH_MUTEX> MUTEX_MALLOC;
 typedef ACE_Allocator_Adapter<MUTEX_MALLOC> Mutex_Allocator;
 
-class CMessageBlockManager
+class CMessageBlockManager : public IMessageBlockManager
 {
 public:
 	CMessageBlockManager(void);

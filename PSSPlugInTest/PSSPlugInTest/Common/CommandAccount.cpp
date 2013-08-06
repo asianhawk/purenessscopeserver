@@ -3,6 +3,7 @@
 CCommandAccount::CCommandAccount()
 {
 	m_u1CommandAccount = 0;
+	m_u8PacketTimeout    =  MAX_QUEUE_TIMEOUT * 1000;
 }
 
 CCommandAccount::~CCommandAccount()
@@ -11,9 +12,10 @@ CCommandAccount::~CCommandAccount()
 	Close();
 }
 
-void CCommandAccount::Init(uint8 u1CommandAccount)
+void CCommandAccount::Init(uint8 u1CommandAccount, uint16 u2PacketTimeout)
 {
 	m_u1CommandAccount = u1CommandAccount;
+	m_u8PacketTimeout    = (uint64)(u2PacketTimeout * 1000000);
 }
 
 void CCommandAccount::Close()
@@ -30,6 +32,17 @@ void CCommandAccount::Close()
 
 bool CCommandAccount::SaveCommandData(uint16 u2CommandID, uint64 u8CommandCost, uint8 u1PacketType, uint32 u4PacketSize, uint32 u4CommandSize, uint8 u1CommandType, ACE_Time_Value tvTime)
 {
+	//统计数据到达时间，是否已经超越了限定的阀值，如果超越了，写入日志。
+	if(m_u8PacketTimeout < u8CommandCost)
+	{
+		//记录超时的命令
+		_CommandTimeOut objCommandTimeOut;
+		objCommandTimeOut.m_u2CommandID   = u2CommandID;
+		objCommandTimeOut.m_u4TimeOutTime = (uint32)(u8CommandCost / 1000000);  //转换为毫秒
+		m_vecCommandTimeOut.push_back(objCommandTimeOut);
+		//AppLogManager::instance()->WriteLog(LOG_SYSTEM_PACKETTIME, "u2CommandID=%d, Timeout=[%d].", u2CommandID, (uint32)u8CommandCost);
+	}
+
 	//如果统计开关打开，才开始记录统计信息
 	if(m_u1CommandAccount == 0)
 	{
@@ -82,6 +95,63 @@ bool CCommandAccount::SaveCommandData(uint16 u2CommandID, uint64 u8CommandCost, 
 
 bool CCommandAccount::SaveCommandDataLog()
 {
+	//如果统计开关打开，才开始记录统计信息
+	if(m_u1CommandAccount == 0)
+	{
+		return true;
+	}
+
+	//AppLogManager::instance()->WriteLog(LOG_SYSTEM_COMMANDDATA, "<Command Data Account>");
+	for(mapCommandDataList::iterator itorFreeB = m_mapCommandDataList.begin(); itorFreeB != m_mapCommandDataList.end(); itorFreeB++)
+	{
+		_CommandData* pCommandData = (_CommandData* )itorFreeB->second;
+		if(pCommandData != NULL)
+		{
+			ACE_Date_Time dtLastTime(pCommandData->m_tvCommandTime);
+			ACE_TString   strCommandType;
+			ACE_TString   strPacketType;
+
+			if(pCommandData->m_u1CommandType == COMMAND_TYPE_IN)
+			{
+				strCommandType = "Server In Data";
+			}
+			else
+			{
+				strCommandType = "Server Out Data";
+			}
+
+			if(pCommandData->m_u1PacketType == PACKET_TCP)
+			{
+				strPacketType = "TCP";
+			}
+			else
+			{
+				strPacketType = "UDP";
+			}
+
+		}
+	}
 
 	return true;
 }
+
+void CCommandAccount::ClearTimeOut()
+{
+	m_vecCommandTimeOut.clear();
+}
+
+uint32 CCommandAccount::GetTimeoutCount()
+{
+	return (uint32)m_vecCommandTimeOut.size();
+}
+
+_CommandTimeOut* CCommandAccount::GetTimeoutInfo(uint32 u4Index)
+{
+	if(u4Index >= m_vecCommandTimeOut.size())
+	{
+		return NULL;
+	}
+
+	return (_CommandTimeOut* )&m_vecCommandTimeOut[u4Index];
+}
+

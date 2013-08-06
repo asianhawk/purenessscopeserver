@@ -121,14 +121,13 @@ bool CPlugInOperation::Run()
         ACE_Message_Block* pHeadBlock = App_MessageBlockManager::instance()->Create(pPacketParse->GetPacketHeadLen());
         ACE_OS::memcpy(pHeadBlock->wr_ptr(), pCommaindInfo->m_pSendData, pPacketParse->GetPacketHeadLen());
         pHeadBlock->wr_ptr(pPacketParse->GetPacketHeadLen());
-        pPacketParse->SetPacketHead((char* )pCommaindInfo->m_pSendData, pPacketParse->GetPacketHeadLen());
-        pPacketParse->SetMessageHead(pHeadBlock);
+		
+        pPacketParse->SetPacketHead(0, pHeadBlock, App_MessageBlockManager::instance());
         uint32 u4BodySize = pCommaindInfo->m_nSendDataLen - pPacketParse->GetPacketHeadLen();
         ACE_Message_Block* pBodyBlock = App_MessageBlockManager::instance()->Create(u4BodySize);
         ACE_OS::memcpy(pBodyBlock->wr_ptr(), &pCommaindInfo->m_pSendData[pPacketParse->GetPacketHeadLen()], u4BodySize);
         pBodyBlock->wr_ptr(u4BodySize);
-        pPacketParse->SetPacketData((char* )&pCommaindInfo->m_pSendData[pPacketParse->GetPacketHeadLen()], u4BodySize);
-        pPacketParse->SetMessageBody(pBodyBlock);
+        pPacketParse->SetPacketBody(0, pBodyBlock, App_MessageBlockManager::instance());
 
         
         //开始组装数据
