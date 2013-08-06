@@ -160,7 +160,6 @@ private:
 	typedef vector<uint32> vecConnectManager;
 	mapConnectManager           m_mapConnectManager;     //当前已经存在并且激活的链接map
 	char                        m_szError[MAX_BUFF_500]; //错误信息描述
-	uint32                      m_u4ConnectCurrID;       //自增量ConnectID
 	uint32                      m_u4TimeCheckID;         //定时器检查的TimerID
 	ACE_Recursive_Thread_Mutex  m_ThreadWriteLock;       //用于循环监控和断开链接时候的数据锁
 	_TimerCheckID*              m_pTCTimeSendCheck;      //定时器的参数结构体，用于一个定时器执行不同的事件
