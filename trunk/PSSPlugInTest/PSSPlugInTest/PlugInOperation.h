@@ -30,10 +30,11 @@ public:
     delete pClientUDPMessage;
     return true; 
   };
+
   bool Close(int nServerID)                                                                        { return true; };
   bool CloseUDP(int nServerID)                                                                     { return true; };
   bool SendData(int nServerID, const char* pData, int nSize, bool blIsDelete = true)               { return true; };
-  bool SendDataUDP(int nServerID, const char* pIP, int nPort, const char* pMessage, uint32 u4Len)  
+  bool SendDataUDP(int nServerID, const char* pIP, int nPort, const char* pMessage, uint32 u4Len, bool blIsDelete = true)  
   {
     delete pMessage;
     return true; 

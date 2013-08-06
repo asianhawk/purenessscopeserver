@@ -34,6 +34,8 @@ public:
 	virtual void ReadBuffPtr(uint32 u4Size)                              = 0;    //移动指定长度的读指针
 	virtual void WriteBuffPtr(uint32 u4Size)                             = 0;    //移动指定长度的写指针
 
+	virtual void SetNetSort(bool blState)                                = 0;    //设置是否开启主机字节序，false为不开启，true为开启                               
+
 	//读取
 	virtual IBuffPacket& operator >> (uint8& u1Data)   = 0;        //读出一个uint8的1字节无符号整数
 	virtual IBuffPacket& operator >> (uint16& u2Data)  = 0;        //读出一个uint16的2字节无符号整数

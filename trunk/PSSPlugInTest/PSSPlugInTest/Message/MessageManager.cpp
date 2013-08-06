@@ -18,7 +18,7 @@ CMessageManager::CMessageManager(void)
 CMessageManager::~CMessageManager(void)
 {
 	OUR_DEBUG((LM_INFO, "[CMessageManager::~CMessageManager].\n"));
-	Close();
+	//Close();
 }
 
 bool CMessageManager::DoMessage(IMessage* pMessage, uint16& u2CommandID)
@@ -53,18 +53,11 @@ bool CMessageManager::DoMessage(IMessage* pMessage, uint16& u2CommandID)
 				pMessage->GetPacketHead(PacketInfoHead);
 				pMessage->GetPacketBody(PacketInfoBody);
 
+				pMessage->GetMessageBase()->m_ProfileTime.Start();
 				//OUR_DEBUG((LM_ERROR, "[CMessageManager::DoMessage]u2CommandID = %d Begin.\n", u2CommandID));
 				pClientCommandInfo->m_pClientCommand->DoMessage(pMessage, bDeleteFlag);
 				//OUR_DEBUG((LM_ERROR, "[CMessageManager::DoMessage]u2CommandID = %d End.\n", u2CommandID));
 				m_ThreadWriteLock.acquire();
-				uint32 u4Cost = (uint32)pMessage->GetMessageBase()->m_ProfileTime.Stop();
-
-				//添加统计信息
-				AppCommandAccount::instance()->SaveCommandData(u2CommandID, (uint64)u4Cost, 
-					                                           pMessage->GetMessageBase()->m_u1PacketType, 
-															   pMessage->GetMessageBase()->m_u4HeadSrcSize + pMessage->GetMessageBase()->m_u4BodySrcSize, 
-															   (uint32)(PacketInfoHead.m_nDataLen + PacketInfoBody.m_nDataLen), 
-															   COMMAND_TYPE_IN);
 
 				if(pClientCommandInfo->m_u4CurrUsedCount > 0)
 				{
@@ -146,6 +139,7 @@ bool CMessageManager::AddClientCommand(uint16 u2CommandID, CClientCommand* pClie
 						pModuleClient->m_vecClientCommandInfo.push_back(pClientCommandInfo);
 					}
 				}
+				OUR_DEBUG((LM_ERROR, "[CMessageManager::AddClientCommand] u2CommandID = %d Add OK***.\n", u2CommandID));
 				return true;
 			}
 			else
@@ -259,6 +253,7 @@ bool CMessageManager::UnloadModuleCommand(const char* pModuleName, uint8 u1State
 					App_ModuleLoader::instance()->UnLoadModule(pModuleName);
 					m_mapModuleClient.erase(f);
 					SAFE_DELETE(pModuleClient);
+          return true;
 				}
 
 				//如果是2，则重新加载这个模块

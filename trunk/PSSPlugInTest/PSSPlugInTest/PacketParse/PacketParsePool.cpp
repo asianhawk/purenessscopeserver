@@ -113,8 +113,7 @@ bool CPacketParsePool::Delete(CPacketParse* pPacketParse)
 		return false;
 	}
 
-	pPacketParse->SetMessageHead(NULL);
-	pPacketParse->SetMessageBody(NULL);
+	pPacketParse->Clear();
 
 	mapPacketParse::iterator f = m_mapPacketUsed.find(pBuff);
 	if(f != m_mapPacketUsed.end())

@@ -13,13 +13,13 @@ public:
 	virtual ~IPacketParse() {};
 
 	virtual uint32 GetPacketHeadLen()    = 0;
-	virtual uint32 GetPacketDataLen()    = 0;
+	virtual uint32 GetPacketBodyLen()    = 0;
 	virtual uint16 GetPacketCommandID()  = 0;
 
 	virtual bool GetIsHead()             = 0;
 
 	virtual bool SetPacketHead(char* pData, uint32 u4Len) = 0;
-	virtual bool SetPacketData(char* pData, uint32 u4Len) = 0;
+	virtual bool SetPacketBody(char* pData, uint32 u4Len) = 0;
 
 	virtual bool MakePacket(const char* pData, uint32 u4Len, ACE_Message_Block* pMbData) = 0;
 	virtual uint32 MakePacketLength(uint32 u4DataLen) = 0;
