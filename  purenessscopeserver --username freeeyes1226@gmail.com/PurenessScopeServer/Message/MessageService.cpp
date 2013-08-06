@@ -545,7 +545,7 @@ CThreadInfo* CMessageServiceGroup::GetThreadInfo()
 		if(NULL != pMessageService)
 		{
 			CThreadInfo* pThreadInfo = pMessageService->GetThreadInfo();
-			if(NULL == pThreadInfo)
+			if(NULL != pThreadInfo)
 			{
 				_ThreadInfo* pThreadInfoData = pThreadInfo->GetThreadInfo(1);
 				m_objAllThreadInfo.AddThreadInfo(i, pThreadInfoData);
