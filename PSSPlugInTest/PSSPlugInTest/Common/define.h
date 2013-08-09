@@ -462,6 +462,52 @@ inline void sprintf_safe(char* szText, int nLen, const char* fmt ...)
 	va_end(ap);
 };
 
+//为逻辑块提供一个Try catch的保护宏，用于调试，具体使用方法请参看TestTcp用例
+//目前最多支持一条2K的日志
+//************************************************************************
+#define ASSERT_LOG_PATH  "./Log/assert.log"   //如果路径想自己要，请修改这里。
+
+inline void __show__( const char* szTemp)
+{
+#ifdef WIN32
+	printf_s("[__show__]%s.\n", szTemp);
+#else
+	printf("[__show__]%s.\n", szTemp);
+#endif
+
+	FILE* f = ACE_OS::fopen(ASSERT_LOG_PATH, "a") ;
+	ACE_OS::fwrite( szTemp, 1, strlen(szTemp)*sizeof(char), f) ;
+	ACE_OS::fwrite( "\r\n", 1, 2*sizeof(char), f);
+	fclose(f) ;
+};
+
+inline void __assertspecial__(const char* file, int line, const char* func, const char* expr, const char* msg)
+{
+	char szTemp[2*MAX_BUFF_1024] = {0};
+
+	sprintf_safe( szTemp, 2*MAX_BUFF_1024, "Alert[%s][%d][%s][%s][%s]", file, line, func, expr ,msg) ;
+	__show__(szTemp) ;
+};
+
+#if defined(WIN32)
+#define AssertSpecial(expr,msg) ((void)((expr)?0:(__assertspecial__(__FILE__, __LINE__, __FUNCTION__, #expr, msg),0)))
+#else
+#define AssertSpecial(expr,msg) {if(!(expr)){__assertspecial__(__FILE__, __LINE__, __PRETTY_FUNCTION__, #expr, msg);}}
+#endif
+
+#if defined(WIN32)
+#define __ENTER_FUNCTION {try{
+#define __THROW_FUNCTION(msg) throw(msg)
+#define __LEAVE_FUNCTION() }catch(char* msg){AssertSpecial(false,msg); }}
+#define __LEAVE_FUNCTION_WITHRETURN(ret) }catch(char* msg){AssertSpecial(false,msg); return ret; }}
+#else	//linux
+#define __ENTER_FUNCTION {try{
+#define __THROW_FUNCTION(msg) throw(msg)
+#define __LEAVE_FUNCTION }catch(char* msg){AssertSpecial(FALSE,msg);}}
+#define __LEAVE_FUNCTION_WITHRETURN(ret) }catch(char* msg){AssertSpecial(false,msg); return ret; }}
+#endif 
+//************************************************************************
+
 //定义一个对64位长整形的网络字节序的转换
 inline uint64 hl64ton(uint64 u8Data)   
 {   
