@@ -93,7 +93,7 @@ void CBaseCommand::InitServer()
 	m_pPostServerData1->SetServerObject(m_pServerObject);
 
 	//初始化连接关系
-	m_pServerObject->GetClientManager()->Connect(1, "127.0.0.1", 10040, (IClientMessage* )m_pPostServerData1);
+	m_pServerObject->GetClientManager()->Connect(1, "127.0.0.1", 10040, TYPE_IPV4, (IClientMessage* )m_pPostServerData1);
 
 }
 

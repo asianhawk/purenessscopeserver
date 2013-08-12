@@ -613,7 +613,7 @@ void CPSSPlugInTestDlg::OnTimer(UINT_PTR nIDEvent)
           wchar_t szCurrData[MAX_BUFF_100] = {'\0'};
           CString strUserData;
           bool blIsFind = false;
-          for(int h = 0; h < m_lstPlugInInfo.GetItemCount(); i++)
+          for(int h = 0; h < m_lstPlugInInfo.GetItemCount(); h++)
           {
             
             strUserData = m_lstPlugInInfo.GetItemText(h, 0);

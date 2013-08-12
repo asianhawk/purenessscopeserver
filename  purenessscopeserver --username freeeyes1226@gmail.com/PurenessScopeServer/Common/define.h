@@ -102,8 +102,11 @@ using namespace std;
 #define PARM_CONNECTHANDLE_CHECK          2   //定时器发送包检测
 #define PARM_HANDLE_CLOSE                 1   //定时器句柄关闭
 
-#define HANDLE_ISCLOSE_NO                 0
-#define HANDLE_ISCLOSE_YES                1
+#define HANDLE_ISCLOSE_NO                 0      //连接已经关闭
+#define HANDLE_ISCLOSE_YES                1      //连接目前正常
+
+#define TYPE_IPV4                         1      //IPv4标准
+#define TYPE_IPV6                         2      //IPv6标准
 
 #define MAX_UDP_PACKET_LEN                1024   //UDP数据包的最大大小
 #define UDP_HANDER_ID                     0      //默认UDP的ConnectID

@@ -27,6 +27,7 @@ CMainConfig::CMainConfig(void)
 
 	m_u1ConsoleSupport        = 0;
 	m_nConsolePort            = 0;
+	m_u1ConsoleIPType         = TYPE_IPV4; 
 	m_u4ConnectServerTimerout = 0;
 	m_u2ConnectServerCheck    = CONNECT_LIMIT_RETRY;
 	m_u4ConnectServerRecvBuff = MAX_BUFF_1024;
@@ -163,14 +164,15 @@ bool CMainConfig::Init(const char* szConfigPath)
 	_ServerInfo serverinfo;
 
 	m_vecServerInfo.clear();
-	TiXmlElement* pNextTiXmlElementIP = NULL;
-	TiXmlElement* pNextTiXmlElementPort = NULL;
+	TiXmlElement* pNextTiXmlElementIP     = NULL;
+	TiXmlElement* pNextTiXmlElementPort   = NULL;
+	TiXmlElement* pNextTiXmlElementIpType = NULL;
 	while(true)
 	{
 		pData = m_MainConfig.GetData("TCPServerIP", "ip", pNextTiXmlElementIP);
 		if(pData != NULL)
 		{
-			sprintf_safe(serverinfo.m_szServerIP, MAX_BUFF_20, "%s", pData);
+			sprintf_safe(serverinfo.m_szServerIP, MAX_BUFF_50, "%s", pData);
 		}
 		else
 		{
@@ -187,6 +189,22 @@ bool CMainConfig::Init(const char* szConfigPath)
 			break;
 		}
 
+		pData = m_MainConfig.GetData("TCPServerIP", "ipType", pNextTiXmlElementIpType);
+		if(pData != NULL)
+		{
+			if(ACE_OS::strcmp(pData, "IPV6") == 0)
+			{
+				serverinfo.m_u1IPType = TYPE_IPV6;
+			}
+			else
+			{
+				serverinfo.m_u1IPType = TYPE_IPV4;
+			}
+		}
+		else
+		{
+			break;
+		}
 
 		m_vecServerInfo.push_back(serverinfo);
 	}
@@ -216,8 +234,9 @@ bool CMainConfig::Init(const char* szConfigPath)
 
 	//开始获得UDP服务器相关参数
 	m_vecUDPServerInfo.clear();
-	pNextTiXmlElementIP   = NULL;
-	pNextTiXmlElementPort = NULL;
+	pNextTiXmlElementIP     = NULL;
+	pNextTiXmlElementPort   = NULL;
+	pNextTiXmlElementIpType = NULL;
 	while(true)
 	{
 		pData = m_MainConfig.GetData("UDPServerIP", "uip", pNextTiXmlElementIP);
@@ -239,6 +258,24 @@ bool CMainConfig::Init(const char* szConfigPath)
 		{
 			break;
 		}
+
+		pData = m_MainConfig.GetData("UDPServerIP", "uipType", pNextTiXmlElementIpType);
+		if(pData != NULL)
+		{
+			if(ACE_OS::strcmp(pData, "IPV6") == 0)
+			{
+				serverinfo.m_u1IPType = TYPE_IPV6;
+			}
+			else
+			{
+				serverinfo.m_u1IPType = TYPE_IPV4;
+			}
+		}
+		else
+		{
+			break;
+		}
+
 
 		m_vecUDPServerInfo.push_back(serverinfo);
 	}
@@ -361,6 +398,18 @@ bool CMainConfig::Init(const char* szConfigPath)
 	if(pData != NULL)
 	{
 		m_nConsolePort = (int)ACE_OS::atoi(pData);
+	}
+	pData = m_MainConfig.GetData("Console", "sipType");
+	if(pData != NULL)
+	{
+		if(ACE_OS::strcmp(pData, "IPV6") == 0)
+		{
+			m_u1ConsoleIPType = TYPE_IPV6;
+		}
+		else
+		{
+			m_u1ConsoleIPType = TYPE_IPV4;
+		}
 	}
 
 	//获得Console可接受的客户端IP
@@ -818,4 +867,9 @@ uint8 CMainConfig::GetMonitor()
 uint32 CMainConfig::GetServerRecvBuff()
 {
 	return m_u4ServerRecvBuff;
+}
+
+uint8 CMainConfig::GetConsoleIPType()
+{
+	return m_u1ConsoleIPType;
 }

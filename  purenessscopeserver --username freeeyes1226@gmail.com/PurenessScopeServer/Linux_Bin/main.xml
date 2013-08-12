@@ -5,10 +5,11 @@
 	<ServerID id="1" desc="当前服务器的ID编号" />
 	<ServerName name="Freeeyes" desc="当前服务器的名称" />
 	<ServerVersion Version="0.90" desc="当前服务器版本" />
-	<TCPServerIP ip="192.168.254.129" port="10002" desc="监听TCP服务器的IP和端口，可以是多个" />
-	<!-- <TCPServerIP ip="127.0.0.1" port="10003" desc="监听TCP服务器的IP和端口，可以是多个，要用多个，只要多写几个这样的节点即可" /> -->
+	<TCPServerIP ip="192.168.254.131" port="10002" ipType="IPV4" desc="监听TCP服务器的IP和端口，可以是多个" />
+	<!-- <TCPServerIP ip="fe80::d433:372b:d0ee:edc4%12" port="10002" ipType="IPV6" desc="监听TCP服务器的IP和端口，可以是多个(IPv6地址测试)" /> -->
+	<!-- <TCPServerIP ip="127.0.0.1" port="10003" ipType="IPV4" desc="监听TCP服务器的IP和端口，可以是多个，要用多个，只要多写几个这样的节点即可" /> -->
 	
-	<Console support="1" sip="192.168.254.129" sport="10010"  desc="维护端口是否开启，support为1是开启，0是关闭，后面对应IP和端口" />
+	<Console support="1" sip="192.168.254.131" sport="10010"  desc="维护端口是否开启，support为1是开启，0是关闭，后面对应IP和端口" />
 	<ConsoleKey Key="freeeyes" desc="维护端允许登录的Key值,可以是多个，key值中不能包含空格" />
 	<ConsoleKey Key="guest" desc="维护端允许登录的Key值,可以是多个，key值中不能包含空格" />
 	<!-- <ConsoleClient cip="127.0.0.1" desc="维护端口可以访问的对应的客户端IP地址，可以支持多个" /> -->
@@ -25,5 +26,5 @@
 	<ConnectServer TimeInterval="500" TimeCheck="30" Recvbuff="1024" desc="框架连接其它远程服务器相关参数，TimeInterval是连接每个服务器之间的保护时间，单位是毫秒" />
 	<Monitor CpuAndMemory="0" desc="是否对CPU和内存定时监控，并输出日志，0为关闭监控，1是打开监控" />
 	
-	<!-- <UDPServerIP uip="127.0.0.1" uport="10003" desc="监听TCP服务器的IP和端口，可以是多个" /> -->
+	<!-- <UDPServerIP uip="127.0.0.1" uport="10003" uipType="IPV4" desc="监听TCP服务器的IP和端口，可以是多个" /> -->
 </config>

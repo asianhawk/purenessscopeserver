@@ -176,7 +176,16 @@ bool CServerManager::Start()
 			return false;
 		}
 
-		int nErr = listenAddr.set(pServerInfo->m_nPort, pServerInfo->m_szServerIP);
+		//ÅÐ¶ÏIPv4»¹ÊÇIPv6
+		int nErr = 0;
+		if(pServerInfo->m_u1IPType == TYPE_IPV4)
+		{
+			nErr = listenAddr.set(pServerInfo->m_nPort, pServerInfo->m_szServerIP);
+		}
+		else
+		{
+			nErr = listenAddr.set(pServerInfo->m_nPort, pServerInfo->m_szServerIP, 1, PF_INET6);
+		}
 		if(nErr != 0)
 		{
 			OUR_DEBUG((LM_INFO, "[CServerManager::Start](%d)set_address error[%d].\n", i, errno));
@@ -216,7 +225,15 @@ bool CServerManager::Start()
 			return false;
 		}
 
-		int nErr = listenAddr.set(pServerInfo->m_nPort, pServerInfo->m_szServerIP);
+		int nErr = 0;
+		if(pServerInfo->m_u1IPType == TYPE_IPV4)
+		{
+			nErr = listenAddr.set(pServerInfo->m_nPort, pServerInfo->m_szServerIP);
+		}
+		else
+		{
+			nErr = listenAddr.set(pServerInfo->m_nPort, pServerInfo->m_szServerIP, 1, PF_INET6);
+		}
 		if(nErr != 0)
 		{
 			OUR_DEBUG((LM_INFO, "[CServerManager::Start]UDP (%d)set_address error[%d].\n", i, errno));
@@ -246,7 +263,15 @@ bool CServerManager::Start()
 	{
 		ACE_INET_Addr listenConsoleAddr;
 
-		int nErr = listenConsoleAddr.set(App_MainConfig::instance()->GetConsolePort(), App_MainConfig::instance()->GetConsoleIP());
+		int nErr = 0;
+		if(App_MainConfig::instance()->GetConsoleIPType() == TYPE_IPV4)
+		{
+			nErr = listenConsoleAddr.set(App_MainConfig::instance()->GetConsolePort(), App_MainConfig::instance()->GetConsoleIP());
+		}
+		else
+		{
+			nErr = listenConsoleAddr.set(App_MainConfig::instance()->GetConsolePort(), App_MainConfig::instance()->GetConsoleIP(), 1, PF_INET6);
+		}
 		if(nErr != 0)
 		{
 			OUR_DEBUG((LM_INFO, "[CServerManager::Start]listenConsoleAddr set_address error[%d].\n", errno));
