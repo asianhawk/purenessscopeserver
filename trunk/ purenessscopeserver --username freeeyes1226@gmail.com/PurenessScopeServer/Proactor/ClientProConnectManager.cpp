@@ -14,10 +14,19 @@ CProactorClientInfo::~CProactorClientInfo()
 {
 }
 
-bool CProactorClientInfo::Init(const char* pIP, int nPort, int nServerID, CProAsynchConnect* pProAsynchConnect, IClientMessage* pClientMessage)
+bool CProactorClientInfo::Init(const char* pIP, int nPort, uint8 u1IPType, int nServerID, CProAsynchConnect* pProAsynchConnect, IClientMessage* pClientMessage)
 {
 	OUR_DEBUG((LM_ERROR, "[CProactorClientInfo::Init]SetAddrServer(%s:%d) Begin.\n", pIP, nPort));
-	int nRet = m_AddrServer.set(nPort, pIP);
+
+	int nRet = 0;
+	if(u1IPType == TYPE_IPV4)
+	{
+		nRet = m_AddrServer.set(nPort, pIP);
+	}
+	else
+	{
+		nRet = m_AddrServer.set(nPort, pIP, 1, PF_INET6);
+	}
 	if(-1 == nRet)
 	{
 		OUR_DEBUG((LM_ERROR, "[CProactorClientInfo::Init]nServerID = %d, adrClient(%s:%d) error.\n", nServerID, pIP, nPort));
@@ -193,7 +202,7 @@ bool CClientProConnectManager::Init(ACE_Proactor* pProactor)
 	}
 }
 
-bool CClientProConnectManager::Connect(int nServerID, const char* pIP, int nPort, IClientMessage* pClientMessage)
+bool CClientProConnectManager::Connect(int nServerID, const char* pIP, int nPort, uint8 u1IPType, IClientMessage* pClientMessage)
 {
 	ACE_Guard<ACE_Recursive_Thread_Mutex> guard(m_ThreadWritrLock);
 	mapProactorClientInfo::iterator f = m_mapClientInfo.find(nServerID);
@@ -206,7 +215,7 @@ bool CClientProConnectManager::Connect(int nServerID, const char* pIP, int nPort
 
 	//初始化链接信息
 	CProactorClientInfo* pClientInfo = new CProactorClientInfo();
-	if(false == pClientInfo->Init(pIP, nPort, nServerID, &m_ProAsynchConnect, pClientMessage))
+	if(false == pClientInfo->Init(pIP, nPort, u1IPType, nServerID, &m_ProAsynchConnect, pClientMessage))
 	{
 		delete pClientInfo;
 		pClientInfo = NULL;
@@ -232,7 +241,7 @@ bool CClientProConnectManager::Connect(int nServerID, const char* pIP, int nPort
 	return true;
 }
 
-bool CClientProConnectManager::ConnectUDP(int nServerID, const char* pIP, int nPort, IClientUDPMessage* pClientUDPMessage)
+bool CClientProConnectManager::ConnectUDP(int nServerID, const char* pIP, int nPort, uint8 u1IPType, IClientUDPMessage* pClientUDPMessage)
 {
 	ACE_Guard<ACE_Recursive_Thread_Mutex> guard(m_ThreadWritrLock);
 
@@ -252,7 +261,16 @@ bool CClientProConnectManager::ConnectUDP(int nServerID, const char* pIP, int nP
 	}
 
 	ACE_INET_Addr AddrLocal;
-	int nErr = AddrLocal.set(nPort, pIP);
+
+	int nErr = 0;
+	if(u1IPType == TYPE_IPV4)
+	{
+		nErr = AddrLocal.set(nPort, pIP);
+	}
+	else
+	{
+		nErr = AddrLocal.set(nPort, pIP, 1, PF_INET6);
+	}
 	if(nErr != 0)
 	{
 		OUR_DEBUG((LM_INFO, "[CClientProConnectManager::ConnectUDP](%d)UDP set_address error[%d].\n", nServerID, errno));

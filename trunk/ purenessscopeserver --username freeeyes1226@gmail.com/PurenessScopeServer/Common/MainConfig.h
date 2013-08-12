@@ -9,15 +9,19 @@
 
 #include "PacketParse.h"
 
+//服务器信息
+//增加对IPv4和IPv6的支持
 struct _ServerInfo
 {
-	char m_szServerIP[MAX_BUFF_20];
-	int  m_nPort;
+	char  m_szServerIP[MAX_BUFF_50];
+	int   m_nPort;
+	uint8 m_u1IPType;
 
 	_ServerInfo()
 	{
 		m_szServerIP[0] = '\0';
 		m_nPort         = 0;
+		m_u1IPType      = TYPE_IPV4;
 	}
 };
 
@@ -89,6 +93,7 @@ public:
 	uint16 GetMaxConnectTime();
 	uint8  GetConsoleSupport();
 	int    GetConsolePort();
+	uint8  GetConsoleIPType();
 	const char* GetConsoleIP();
 	vecConsoleKey* GetConsoleKey();
 	uint16 GetRecvQueueTimeout();
@@ -172,6 +177,7 @@ private:
 	uint8      m_u1ConsoleSupport;                 //是否支持Console服务，如果是1则是支持，0是不支持
 	char       m_szConsoleIP[MAX_BUFF_100];        //Console服务器IP
 	int        m_nConsolePort;                     //Console服务器的端口
+	uint8      m_u1ConsoleIPType;                  //Console的IPType
 
 	uint32     m_u4ReactorCount;                   //系统中遇到的反应器的个数
 	uint32     m_u4ConnectServerTimerout;          //连接远程服务器间隔时间  

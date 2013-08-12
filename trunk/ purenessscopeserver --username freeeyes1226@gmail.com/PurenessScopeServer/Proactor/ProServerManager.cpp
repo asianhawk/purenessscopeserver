@@ -153,6 +153,7 @@ bool CProServerManager::Start()
 	int nServerPortCount = App_MainConfig::instance()->GetServerPortCount();
 	bool blState = false;
 
+	//初始化监听远程连接
 	for(int i = 0 ; i < nServerPortCount; i++)
 	{
 		ACE_INET_Addr listenAddr;
@@ -164,7 +165,16 @@ bool CProServerManager::Start()
 			return false;
 		}
 
-		int nErr = listenAddr.set(pServerInfo->m_nPort, pServerInfo->m_szServerIP);
+		//判断IPv4还是IPv6
+		int nErr = 0;
+		if(pServerInfo->m_u1IPType == TYPE_IPV4)
+		{
+			nErr = listenAddr.set(pServerInfo->m_nPort, pServerInfo->m_szServerIP);
+		}
+		else
+		{
+			nErr = listenAddr.set(pServerInfo->m_nPort, pServerInfo->m_szServerIP, 1, PF_INET6);
+		}
 		if(nErr != 0)
 		{
 			OUR_DEBUG((LM_INFO, "[CProServerManager::Start](%d)set_address error[%d].\n", i, errno));
@@ -219,7 +229,15 @@ bool CProServerManager::Start()
 		}
 		else
 		{
-			int nErr = listenAddr.set(pServerInfo->m_nPort, pServerInfo->m_szServerIP);
+			int nErr = 0;
+			if(pServerInfo->m_u1IPType == TYPE_IPV4)
+			{
+				nErr = listenAddr.set(pServerInfo->m_nPort, pServerInfo->m_szServerIP);
+			}
+			else
+			{
+				nErr = listenAddr.set(pServerInfo->m_nPort, pServerInfo->m_szServerIP, 1, PF_INET6);
+			}
 			if(nErr != 0)
 			{
 				OUR_DEBUG((LM_INFO, "[CProServerManager::Start](%d)UDP set_address error[%d].\n", i, errno));
@@ -248,7 +266,15 @@ bool CProServerManager::Start()
 	{
 		ACE_INET_Addr listenConsoleAddr;
 
-		int nErr = listenConsoleAddr.set(App_MainConfig::instance()->GetConsolePort(), App_MainConfig::instance()->GetConsoleIP());
+		int nErr = 0;
+		if(App_MainConfig::instance()->GetConsoleIPType() == TYPE_IPV4)
+		{
+			nErr = listenConsoleAddr.set(App_MainConfig::instance()->GetConsolePort(), App_MainConfig::instance()->GetConsoleIP());
+		}
+		else
+		{
+			nErr = listenConsoleAddr.set(App_MainConfig::instance()->GetConsolePort(), App_MainConfig::instance()->GetConsoleIP(), 1, PF_INET6);
+		}
 		if(nErr != 0)
 		{
 			OUR_DEBUG((LM_INFO, "[CProServerManager::Start]listenConsoleAddr set_address error[%d].\n", errno));

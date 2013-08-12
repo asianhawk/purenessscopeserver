@@ -23,7 +23,7 @@ public:
 	CReactorClientInfo();
 	~CReactorClientInfo();
 
-	bool Init(int nServerID, const char* pIP, int nPort, ReactorConnect* pReactorConnect, IClientMessage* pClientMessage, ACE_Reactor* pReactor);  //初始化链接地址和端口
+	bool Init(int nServerID, const char* pIP, int nPort, uint8 u1IPType, ReactorConnect* pReactorConnect, IClientMessage* pClientMessage, ACE_Reactor* pReactor);  //初始化链接地址和端口
 	bool Run(bool blIsReady);                                       //开始链接
 	bool SendData(ACE_Message_Block* pmblk);                        //发送数据
 	bool ConnectError(int nError);                                  //链接错误，报错
@@ -51,8 +51,8 @@ public:
 
 public:
 	bool Init(ACE_Reactor* pReactor);
-	bool Connect(int nServerID, const char* pIP, int nPort, IClientMessage* pClientMessage);                                   //链接服务器(TCP)
-	bool ConnectUDP(int nServerID, const char* pIP, int nPort, IClientUDPMessage* pClientUDPMessage);                          //建立一个指向UDP的链接（UDP）
+	bool Connect(int nServerID, const char* pIP, int nPort, uint8 u1IPType, IClientMessage* pClientMessage);                                   //链接服务器(TCP)
+	bool ConnectUDP(int nServerID, const char* pIP, int nPort, uint8 u1IPType, IClientUDPMessage* pClientUDPMessage);                          //建立一个指向UDP的链接（UDP）
 	bool ReConnect(int nServerID);                                                                                             //重新连接一个指定的服务器(TCP) 
 	bool CloseByClient(int nServerID);                                                                                         //远程被动关闭(TCP)
 	bool Close(int nServerID);                                                                                                 //关闭连接

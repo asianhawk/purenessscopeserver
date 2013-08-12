@@ -12,9 +12,18 @@ CReactorClientInfo::~CReactorClientInfo()
 {
 }
 
-bool CReactorClientInfo::Init(int nServerID, const char* pIP, int nPort, ReactorConnect* pReactorConnect, IClientMessage* pClientMessage, ACE_Reactor* pReactor)
+bool CReactorClientInfo::Init(int nServerID, const char* pIP, int nPort, uint8 u1IPType, ReactorConnect* pReactorConnect, IClientMessage* pClientMessage, ACE_Reactor* pReactor)
 {
-	int nRet = m_AddrServer.set(nPort, pIP);
+
+	int nRet = 0;
+	if(u1IPType == TYPE_IPV4)
+	{
+		nRet = m_AddrServer.set(nPort, pIP);
+	}
+	else
+	{
+		nRet = m_AddrServer.set(nPort, pIP, 1, PF_INET6);
+	}
 	if(-1 == nRet)
 	{
 		OUR_DEBUG((LM_ERROR, "[CReactorClientInfo::Init]adrClient(%s:%d) error.\n", pIP, nPort));
@@ -165,7 +174,7 @@ bool CClientReConnectManager::Init(ACE_Reactor* pReactor)
 	return true;
 }
 
-bool CClientReConnectManager::Connect(int nServerID, const char* pIP, int nPort, IClientMessage* pClientMessage)
+bool CClientReConnectManager::Connect(int nServerID, const char* pIP, int nPort, uint8 u1IPType, IClientMessage* pClientMessage)
 {
 	ACE_Guard<ACE_Recursive_Thread_Mutex> guard(m_ThreadWritrLock);
 	mapReactorConnectInfo::iterator f = m_mapConnectInfo.find(nServerID);
@@ -178,7 +187,7 @@ bool CClientReConnectManager::Connect(int nServerID, const char* pIP, int nPort,
 
 	//初始化链接信息
 	CReactorClientInfo* pClientInfo = new CReactorClientInfo();
-	if(false == pClientInfo->Init(nServerID, pIP, nPort, &m_ReactorConnect, pClientMessage, m_pReactor))
+	if(false == pClientInfo->Init(nServerID, pIP, nPort, u1IPType, &m_ReactorConnect, pClientMessage, m_pReactor))
 	{
 		delete pClientInfo;
 		pClientInfo = NULL;
@@ -204,7 +213,7 @@ bool CClientReConnectManager::Connect(int nServerID, const char* pIP, int nPort,
 	return true;
 }
 
-bool CClientReConnectManager::ConnectUDP(int nServerID, const char* pIP, int nPort, IClientUDPMessage* pClientUDPMessage)
+bool CClientReConnectManager::ConnectUDP(int nServerID, const char* pIP, int nPort, uint8 u1IPType, IClientUDPMessage* pClientUDPMessage)
 {
 	ACE_Guard<ACE_Recursive_Thread_Mutex> guard(m_ThreadWritrLock);
 
@@ -224,7 +233,15 @@ bool CClientReConnectManager::ConnectUDP(int nServerID, const char* pIP, int nPo
 	}
 
 	ACE_INET_Addr AddrLocal;
-	int nErr = AddrLocal.set(nPort, pIP);
+	int nErr = 0;
+	if(u1IPType == TYPE_IPV4)
+	{
+		nErr = AddrLocal.set(nPort, pIP);
+	}
+	else
+	{
+		nErr = AddrLocal.set(nPort, pIP, 1, PF_INET6);
+	}
 	if(nErr != 0)
 	{
 		OUR_DEBUG((LM_INFO, "[CClientReConnectManager::ConnectUDP](%d)UDP set_address error[%d].\n", nServerID, errno));
