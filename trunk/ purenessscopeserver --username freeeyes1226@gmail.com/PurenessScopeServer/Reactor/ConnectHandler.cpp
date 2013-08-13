@@ -17,7 +17,6 @@ CConnectHandler::CConnectHandler(void)
 	m_u1ConnectState      = CONNECT_INIT;
 	m_u1SendBuffState     = CONNECT_SENDNON;
 	m_pTCClose            = NULL;
-	m_u1IsClosing         = HANDLE_ISCLOSE_NO;
 	m_pCurrMessage        = NULL;
 	m_pBlockMessage       = NULL;
 	m_pPacketParse        = NULL;
@@ -834,11 +833,6 @@ uint8 CConnectHandler::GetConnectState()
 uint8 CConnectHandler::GetSendBuffState()
 {
 	return m_u1SendBuffState;
-}
-
-uint8 CConnectHandler::GetIsClosing()
-{
-	return m_u1IsClosing;
 }
 
 bool CConnectHandler::SendMessage(IBuffPacket* pBuffPacket, bool blState, uint8 u1SendType, uint32& u4PacketSize)

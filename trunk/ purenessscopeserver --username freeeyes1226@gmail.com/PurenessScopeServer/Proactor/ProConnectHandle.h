@@ -56,8 +56,7 @@ public:
 	void               SetConnectID(uint32 u4ConnectID);                      //设置当前链接的ID
 	uint32             GetConnectID();                                        //获得当前链接的ID
 	uint8              GetConnectState();                                     //得到链接状态
-	uint8              GetSendBuffState();                                    //得到发送状态    
-	bool               GetIsClosing();                                        //链接是否应该关闭
+	uint8              GetSendBuffState();                                    //得到发送状态
 	_ClientConnectInfo GetClientInfo();                                       //得到客户端信息
 	_ClientIPInfo      GetClientIPInfo();                                     //得到客户端IP信息
 
@@ -100,8 +99,6 @@ private:
 
 	uint32              m_u4SendThresHold;              //发送阀值(消息包的个数)
 	uint32              m_u4SendCheckTime;              //发送检测时间的阀值
-	bool                m_blCanWrite;                   //上一个数据包是否发送结束
-	bool                m_blTimeClose;                  //是否正在关闭
 
 	int                 m_u4RecvPacketCount;            //接受包的个数
 	int                 m_nIOCount;                     //当前IO操作的个数

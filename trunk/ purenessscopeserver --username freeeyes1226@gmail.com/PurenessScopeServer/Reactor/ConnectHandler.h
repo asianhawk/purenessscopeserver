@@ -62,7 +62,6 @@ public:
 	uint32      GetConnectID();                                              //得到当前链接ID
 	uint8       GetConnectState();                                           //得到链接状态
 	uint8       GetSendBuffState();                                          //得到发送状态    
-	uint8       GetIsClosing();                                              //链接是否应该关闭
 	bool        CheckAlive();
 	_ClientConnectInfo GetClientInfo();                                      //得到客户端信息 
 	_ClientIPInfo      GetClientIPInfo();                                    //得到客户端IP信息
@@ -81,7 +80,6 @@ private:
 
 	uint8                      m_u1ConnectState;               //目前链接处理状态
 	uint8                      m_u1SendBuffState;              //目前缓冲器是否有等待发送的数据
-	uint8                      m_u1IsClosing;                  //是否应该关闭 0为否，1为是
 	uint16                     m_u2SendQueueMax;               //发送队列最大长度
 	uint16                     m_u2SendCount;                  //当前数据包的个数
 	uint32                     m_u4HandlerID;                  //此Hander生成时的ID
