@@ -52,6 +52,9 @@ PurenessScopeServer由4部分组成，其中两部分来协助完成。他们分别是：
 编译教程请参考http://www.cs.wustl.edu/~schmidt/ACE-install.html
 在编译完ACE后，请在对应权限的.bash_profile文件中添加
 
+这里要注意，如果你要使用IPv6，必须在ace的config.h里面添加
+#define ACE_HAS_IPV6
+
 如果想用configure去编译。
 记得先yum -y install openssl-devel (RedHat Linux) 
 否则会提示找不到ssl的库

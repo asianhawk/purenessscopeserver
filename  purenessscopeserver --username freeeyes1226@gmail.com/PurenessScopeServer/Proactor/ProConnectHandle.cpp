@@ -168,8 +168,6 @@ void CProConnectHandle::open(ACE_HANDLE h, ACE_Message_Block&)
 	m_u4AllSendCount      = 0;
 	m_u4AllRecvSize       = 0;
 	m_u4AllSendSize       = 0;
-	m_blCanWrite          = true;
-	m_blTimeClose         = false;
 	m_u4RecvPacketCount   = 0;
 	m_nIOCount            = 1;
 	m_u8RecvQueueTimeCost = 0;
@@ -603,7 +601,6 @@ void CProConnectHandle::handle_write_stream(const ACE_Asynch_Write_Stream::Resul
 	{
 		//·¢ËÍ³É¹¦
 		m_ThreadWriteLock.acquire();
-		m_blCanWrite = true;
 		m_atvOutput = ACE_OS::gettimeofday();
 		App_MessageBlockManager::instance()->Close(&result.message_block());
 		m_u4AllSendSize += (uint32)result.bytes_to_write();
@@ -662,11 +659,6 @@ uint8 CProConnectHandle::GetConnectState()
 uint8 CProConnectHandle::GetSendBuffState()
 {
 	return m_u1SendBuffState;
-}
-
-bool CProConnectHandle::GetIsClosing()
-{
-	return m_blTimeClose;
 }
 
 bool CProConnectHandle::SendMessage(IBuffPacket* pBuffPacket, bool blState, uint8 u1SendType, uint32& u4PacketSize)
