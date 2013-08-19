@@ -78,9 +78,28 @@ void CThreadInfo::Close()
 	m_mapThreadInfo.clear();
 }
 
+_ThreadInfo* CThreadInfo::GetThreadInfo()
+{
+	//这里不再单独判断ThreadID，因为一个svc目前只有一个线程ID
+
+	mapThreadInfo::iterator f = m_mapThreadInfo.find(0);
+
+	if(f != m_mapThreadInfo.end())
+	{
+		_ThreadInfo* pThreadInfo = (_ThreadInfo* )f->second;
+		return pThreadInfo;
+	}
+	else
+	{
+		return NULL;
+	}
+}
+
 _ThreadInfo* CThreadInfo::GetThreadInfo(uint32 u4ThreadID)
 {
-	mapThreadInfo::iterator f = m_mapThreadInfo.find(0);
+	//这里不再单独判断ThreadID，因为一个svc目前只有一个线程ID
+
+	mapThreadInfo::iterator f = m_mapThreadInfo.find(u4ThreadID);
 
 	if(f != m_mapThreadInfo.end())
 	{

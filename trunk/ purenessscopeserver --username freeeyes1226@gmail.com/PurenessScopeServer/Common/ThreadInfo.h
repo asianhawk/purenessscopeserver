@@ -56,6 +56,7 @@ public:
 	bool AddThreadInfo(uint32 u4ThreadID, _ThreadInfo* pOrcThreadInfo);
 	int  GetThreadCount();
 	_ThreadInfo* GetThreadInfo(uint32 u4ThreadID);
+	_ThreadInfo* GetThreadInfo();
 	bool CloseThread(uint32 u4ThreadID);
 	void Close();
 
