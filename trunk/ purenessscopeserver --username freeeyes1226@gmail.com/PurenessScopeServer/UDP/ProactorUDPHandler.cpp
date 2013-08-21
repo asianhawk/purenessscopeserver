@@ -68,27 +68,23 @@ void CProactorUDPHandler::handle_read_dgram(const ACE_Asynch_Read_Dgram::Result&
 	ACE_Message_Block* pMBBuff = NULL;
 
 	ACE_Message_Block* pMb = result.message_block();
-	int nPacketLen = (int)result.bytes_transferred();
 	int nTran = (int)result.bytes_transferred();
 
 	result.remote_address(m_addrRemote);
 
-	if(nPacketLen != 0 && nTran != 0)
+	if(nTran != 0)
 	{
 		//处理数据
 		CheckMessage(pMb, (uint32)nTran);
-
-		pMb->release();
 		m_pPacketParse = App_PacketParsePool::instance()->Create();
-
-		pMBBuff = App_MessageBlockManager::instance()->Create(MAX_UDP_PACKET_LEN);
 	}
 	else
 	{
-		OUR_DEBUG((LM_INFO, "[CProactorUDPHandler::handle_read_dgram]error=%d.\n", errno));
-		//由于连接找不到远程对象，内存块不用释放，直接滚入下次IO
-		pMBBuff = pMb;
+		OUR_DEBUG((LM_INFO, "[CProactorUDPHandler::handle_read_dgram]result.bytes_transferred() is 0.\n"));
 	}
+
+	pMb->release();
+	pMBBuff = App_MessageBlockManager::instance()->Create(MAX_UDP_PACKET_LEN);
 
 	if(NULL == pMBBuff)
 	{
@@ -99,7 +95,7 @@ void CProactorUDPHandler::handle_read_dgram(const ACE_Asynch_Read_Dgram::Result&
 	{
 		size_t stRecvLen = MAX_UDP_PACKET_LEN;
 		//OUR_DEBUG((LM_INFO, "[CProactorUDPHandler::handle_read_dgram]pMBBuff=0x%08x.\n", pMBBuff));
-		m_Read.recv(pMBBuff, stRecvLen, 0, PF_INET, m_szAct);  
+		m_Read.recv(pMBBuff, stRecvLen, 0, PF_INET, m_szAct); 
 	}
 }
 

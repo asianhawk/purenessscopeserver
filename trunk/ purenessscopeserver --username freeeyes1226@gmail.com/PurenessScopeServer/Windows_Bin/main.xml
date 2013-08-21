@@ -16,7 +16,7 @@
 	
 	<Message Msg_High_mark="64000" Msg_Low_mark="64000" Msg_Thread="3" Msg_MaxQueue="10000" desc="消息处理线程相关参数设置，" />
 	
-	<Module ModulePath="./" ModuleString="TcpTestPostd.dll" desc="模块加载配置相关参数，ModulePath是路径，ModuleString是模块名称，以逗号隔开"/>
+	<Module ModulePath="./" ModuleString="UDPTestd.dll" desc="模块加载配置相关参数，ModulePath是路径，ModuleString是模块名称，以逗号隔开"/>
 	
 	<RecvInfo RecvBuffSize="20480" RecvQueueTimeout="50" desc="接收客户端数据配置参数" />
 	<SendInfo SendQueueMax="100" SendThresHold="50" SendAliveTime="60" SendQueueTimeout="50" SendQueueCount="1" PutQueueTimeout = "100" desc="发送到客户端需要配置的参数" />
@@ -26,5 +26,5 @@
 	<ConnectServer TimeInterval="500" TimeCheck="30" Recvbuff="1024" desc="框架连接其它远程服务器相关参数，TimeInterval是连接每个服务器之间的保护时间，单位是毫秒,TimeCheck单位是秒" />
 	<Monitor CpuAndMemory="0" desc="是否对CPU和内存定时监控，并输出日志，0为关闭监控，1是打开监控" />
 	
-	<!-- <UDPServerIP uip="127.0.0.1" uport="10003" uipType="IPV4" desc="监听TCP服务器的IP和端口，可以是多个" /> -->
+	<UDPServerIP uip="127.0.0.1" uport="10003" uipType="IPV4" desc="监听TCP服务器的IP和端口，可以是多个" />
 </config>
