@@ -46,8 +46,7 @@ int CBaseCommand::DoMessage(IMessage* pMessage, bool& bDeleteFlag)
 	{
 		uint32     u4PacketLen = 0;
 		uint16     u2CommandID = 0;
-		VCHARS_STR strsName;
-		string     strName;
+		uint64     u8ClientTime = 0;
 
 		IBuffPacket* pBodyPacket = m_pServerObject->GetPacketManager()->Create();
 		if(NULL == pBodyPacket)
@@ -62,8 +61,7 @@ int CBaseCommand::DoMessage(IMessage* pMessage, bool& bDeleteFlag)
 		pBodyPacket->WriteStream(BodyPacket.m_pData, BodyPacket.m_nDataLen);
 
 		(*pBodyPacket) >> u2CommandID;
-		(*pBodyPacket) >> strsName;
-		strName.assign(strsName.text, strsName.u1Len);
+		(*pBodyPacket) >> u8ClientTime;
 
 		m_pServerObject->GetPacketManager()->Delete(pBodyPacket);
 
@@ -79,13 +77,15 @@ int CBaseCommand::DoMessage(IMessage* pMessage, bool& bDeleteFlag)
 			OUR_DEBUG((LM_INFO, "[CBaseCommand::DoMessage] m_pLogManager = NULL"));
 		}
 
+		/*
 		//²âÊÔ·µ»ØÊý¾Ý(UDP)
 		if(NULL != m_pServerObject->GetUDPConnectManager())
 		{
 			char* pReturn = new char[MAX_BUFF_100];
-			sprintf_safe(pReturn, MAX_BUFF_100, "Hello friend.");
-			m_pServerObject->GetUDPConnectManager()->SendMessage(0, pReturn, (uint32)ACE_OS::strlen(pReturn), pMessage->GetMessageBase()->m_szIP, pMessage->GetMessageBase()->m_u4Port);
+			sprintf_safe(pReturn, MAX_BUFF_100, "Hello  friend.");
+			m_pServerObject->GetUDPConnectManager()->SendMessage(0, pReturn, (uint32)ACE_OS::strlen(pReturn), pMessage->GetMessageBase()->m_szIP, 20004, false, 0x0021);
 		}
+		*/
 	}
 
 

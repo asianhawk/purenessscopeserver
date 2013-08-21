@@ -154,6 +154,7 @@ uint8 CPacketParse::GetPacketStream(uint32 u4ConnectID, ACE_Message_Block* pCurr
 			//uint32 u4NetPacketLen = ACE_HTONL(u4PacketLen);
 			uint32 u4NetPacketLen = u4PacketLen;
 			memcpy(m_pmbHead->wr_ptr(), (char*)&u4NetPacketLen, sizeof(uint32));
+			m_pmbHead->wr_ptr(sizeof(uint32));
 			
 			//从内存池申请一个包体
 			m_pmbBody = pMessageBlockManager->Create(u4PacketLen);
@@ -167,6 +168,7 @@ uint8 CPacketParse::GetPacketStream(uint32 u4ConnectID, ACE_Message_Block* pCurr
 
 			//将包内容放入包体
 			memcpy(m_pmbBody->wr_ptr(), (char*)&pData[1], u4PacketLen);
+			m_pmbBody->wr_ptr(u4PacketLen);
 
 			m_blIsHead = false;
 
@@ -246,6 +248,7 @@ uint8 CPacketParse::GetPacketStream(uint32 u4ConnectID, ACE_Message_Block* pCurr
 			//uint32 u4NetPacketLen = ACE_HTONL(m_objCurrBody.GetPacketLen());
 			uint32 u4NetPacketLen = m_objCurrBody.GetPacketLen();
 			memcpy(m_pmbHead->wr_ptr(), (char*)&u4NetPacketLen, sizeof(uint32));
+			m_pmbHead->wr_ptr(sizeof(uint32));
 
 			//从内存池申请一个包体
 			m_pmbBody = pMessageBlockManager->Create(m_objCurrBody.GetPacketLen());
@@ -260,6 +263,7 @@ uint8 CPacketParse::GetPacketStream(uint32 u4ConnectID, ACE_Message_Block* pCurr
 
 			//将包内容放入包体
 			memcpy(m_pmbBody->wr_ptr(), (char*)m_objCurrBody.GetData(), m_objCurrBody.GetPacketLen());
+			m_pmbBody->wr_ptr(u4NetPacketLen);
 
 			m_blIsHead = false;
 

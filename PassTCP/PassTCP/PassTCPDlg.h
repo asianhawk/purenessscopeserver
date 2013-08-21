@@ -5,6 +5,7 @@
 #pragma once
 #include "afxcmn.h"
 #include "ClientTcpSocket.h"
+#include "ClientUdpSocket.h"
 #include "afxwin.h"
 #include <afxpriv.h>
 #include <vector>
@@ -12,6 +13,7 @@
 using namespace std;
 
 typedef vector<CClientTcpSocket* > vecClientTcpSocket;
+typedef vector<CClientUdpSocket* > vecClientUdpSocket;
 
 // CPassTCPDlg ¶Ô»°¿ò
 class CPassTCPDlg : public CDialog
@@ -67,8 +69,10 @@ public:
   CEdit m_txtFailConnect;
   CEdit m_txtFailSend;
   CEdit m_txtFailRecv;
+  int m_nRadio;
   
   vecClientTcpSocket m_vecClientTcpSocket;
+  vecClientUdpSocket m_vecClientUdpSocket;
   afx_msg void OnClose();
   afx_msg void OnBnClickedButton2();
   afx_msg void OnTimer(UINT_PTR nIDEvent);

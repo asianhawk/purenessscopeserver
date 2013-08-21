@@ -191,6 +191,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\ClientUdpSocket.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\PassTCP.cpp"
 				>
 			</File>
@@ -226,6 +230,14 @@
 			>
 			<File
 				RelativePath=".\ClientTcpSocket.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ClientUdpSocket.h"
+				>
+			</File>
+			<File
+				RelativePath=".\define.h"
 				>
 			</File>
 			<File
