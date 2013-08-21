@@ -196,6 +196,7 @@ struct _Socket_Info
 	bool  m_blIsWriteFile;             //是否写入文件
 	bool  m_blIsSendOne;               //是否只发一次
 	int   m_nConnectType;              //链接类型，0是TCP，1是UDP
+	int   m_nUdpClientPort;            //UDP客户端接收数据端口
 
 	_Socket_Info()
 	{
@@ -215,6 +216,7 @@ struct _Socket_Info
 		m_blIsWriteFile    = false;
 		m_blIsSendOne      = false;
 		m_nConnectType     = 0;
+		m_nUdpClientPort   = 0;
 	}
 
 	~_Socket_Info()

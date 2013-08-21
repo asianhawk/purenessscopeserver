@@ -77,15 +77,13 @@ int CBaseCommand::DoMessage(IMessage* pMessage, bool& bDeleteFlag)
 			OUR_DEBUG((LM_INFO, "[CBaseCommand::DoMessage] m_pLogManager = NULL"));
 		}
 
-		/*
 		//²âÊÔ·µ»ØÊý¾Ý(UDP)
 		if(NULL != m_pServerObject->GetUDPConnectManager())
 		{
 			char* pReturn = new char[MAX_BUFF_100];
 			sprintf_safe(pReturn, MAX_BUFF_100, "Hello  friend.");
-			m_pServerObject->GetUDPConnectManager()->SendMessage(0, pReturn, (uint32)ACE_OS::strlen(pReturn), pMessage->GetMessageBase()->m_szIP, 20004, false, 0x0021);
+			m_pServerObject->GetUDPConnectManager()->SendMessage(0, pReturn, (uint32)ACE_OS::strlen(pReturn), pMessage->GetMessageBase()->m_szIP, 20002, false, 0x0021);
 		}
-		*/
 	}
 
 

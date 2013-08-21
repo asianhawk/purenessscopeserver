@@ -24,6 +24,15 @@ int CProactorUDPHandler::OpenAddress(const ACE_INET_Addr& AddrLocal, ACE_Proacto
 	sprintf_safe(m_szCompletionkey, MAX_BUFF_20, "CompUDP");
 	sprintf_safe(m_szAct, MAX_BUFF_20, "ActUDP");
 
+	//…Ë÷√wsaIoctl
+	bool blBehavior = false;
+	unsigned long lRet = 0;
+	int nStatus = ACE_OS::ioctl(m_skRemote.get_handle(), SIO_UDP_CONNRESET, &blBehavior, sizeof(blBehavior), NULL, 0, &lRet, NULL, NULL);
+	if(0 != nStatus)
+	{
+		OUR_DEBUG((LM_ERROR, "[CProactorUDPHandler::OpenAddress]ioctl SIO_UDP_CONNRESET error.\n"));
+	}
+
 	if(m_Read.open(*this, m_skRemote.get_handle(), m_szCompletionkey, pProactor) == -1)
 	{
 		OUR_DEBUG((LM_ERROR, "[CProactorUDPHandler::OpenAddress]m_Read error.\n"));

@@ -34,6 +34,7 @@
 #define IDC_CHECK7                      1024
 #define IDC_RADIO1                      1025
 #define IDC_RADIO2                      1026
+#define IDC_EDIT15                      1027
 
 // Next default values for new objects
 // 

@@ -33,6 +33,7 @@ void CClientUdpSocket::Run()
 
 	m_blRun = true;
 	SOCKET sckClient;
+	SOCKET sckServer;
 
 	if(m_pSocket_Info == NULL || m_pSocket_State_Info == NULL)
 	{
@@ -55,6 +56,17 @@ void CClientUdpSocket::Run()
 
 	DWORD TimeOut = (DWORD)m_pSocket_Info->m_nRecvTimeout;
 	::setsockopt(sckClient, SOL_SOCKET, SO_RCVTIMEO, (char *)&TimeOut, sizeof(TimeOut));
+
+	//设置接收监听端口
+	sckServer = socket(AF_INET, SOCK_DGRAM, 0);
+
+	struct sockaddr_in clientsockaddr;
+	memset(&clientsockaddr, 0, sizeof(SOCKADDR_IN));
+	clientsockaddr.sin_family = AF_INET;
+	clientsockaddr.sin_port   = htons(m_pSocket_Info->m_nUdpClientPort);
+	clientsockaddr.sin_addr.S_un.S_addr = inet_addr(m_pSocket_Info->m_szSerevrIP);
+
+	bind(sckServer, (SOCKADDR *) &clientsockaddr, sizeof(clientsockaddr));
 
 	while(m_blRun)
 	{
@@ -161,14 +173,17 @@ void CClientUdpSocket::Run()
 					int nClientAddrSize = sizeof(SOCKADDR_IN);
 
 					//socket创建的准备工作
+					struct sockaddr_in clientsockaddr1;
+					/*
 					struct sockaddr_in clientsockaddr;
 
 					memset(&clientsockaddr, 0, sizeof(SOCKADDR_IN));
 					clientsockaddr.sin_family = AF_INET;
 					clientsockaddr.sin_port   = htons(20004);
 					clientsockaddr.sin_addr.S_un.S_addr = inet_addr(m_pSocket_Info->m_szSerevrIP);
+					*/
 
-					nCurrRecvLen = recvfrom(sckClient, (char* )szRecvBuffData + nBeginRecv, nTotalRecvLen, 0, (sockaddr* )&clientsockaddr, &nClientAddrSize);
+					nCurrRecvLen = recvfrom(sckServer, (char* )szRecvBuffData + nBeginRecv, nTotalRecvLen, 0, (sockaddr* )&clientsockaddr1, &nClientAddrSize);
 					if(nCurrRecvLen <= 0)
 					{
 						DWORD dwError = GetLastError();
@@ -221,6 +236,7 @@ void CClientUdpSocket::Run()
 
 	//如果连接没断，则断开
 	closesocket(sckClient);
+	closesocket(sckServer);
 	m_pSocket_State_Info->m_nCurrectSocket = 0;
 	blIsConnect = false;
 }
