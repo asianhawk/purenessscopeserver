@@ -69,6 +69,7 @@ public:
   CEdit m_txtFailConnect;
   CEdit m_txtFailSend;
   CEdit m_txtFailRecv;
+  CEdit m_txtClientUdpPort;
   int m_nRadio;
   
   vecClientTcpSocket m_vecClientTcpSocket;

@@ -99,6 +99,7 @@ void CPassTCPDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_CHECK6, m_chkIsWriteLog);
 	DDX_Control(pDX, IDC_CHECK7, m_chkSendOne);
 	DDX_Radio(pDX, IDC_RADIO1, m_nRadio);
+	DDX_Control(pDX, IDC_EDIT15, m_txtClientUdpPort);
 }
 
 BEGIN_MESSAGE_MAP(CPassTCPDlg, CDialog)
@@ -234,8 +235,10 @@ void CPassTCPDlg::OnBnClickedButton1()
 		pSocket_Info->m_nDelaySecond = _ttoi((LPCTSTR)strData);
 		m_txtRecvLength.GetWindowText(strData);
 		pSocket_Info->m_nRecvLength = _ttoi((LPCTSTR)strData);
-		m_txtSendData.GetWindowText(strData);
+		m_txtClientUdpPort.GetWindowText(strData);
+		pSocket_Info->m_nUdpClientPort = _ttoi((LPCTSTR)strData);
 
+		m_txtSendData.GetWindowText(strData);
 
 		nSrcLen = WideCharToMultiByte(CP_ACP, 0, strData, strData.GetLength(), NULL, 0, NULL, NULL);
 		int nBufferSize = WideCharToMultiByte(CP_ACP, 0, strData, -1, NULL, 0, NULL, NULL);  
@@ -361,6 +364,7 @@ void CPassTCPDlg::InitView()
 	m_txtSocketInterval.SetWindowText(_T("10"));
 	m_txtRecvLength.SetWindowText(_T("14"));
 	m_txtSendData.SetWindowText(_T("0a 00 00 00 00 10 be cd aa 8f 3c 01 00 00"));
+	m_txtClientUdpPort.SetWindowText(_T("20002"));
 
 	m_nRadio = 1;
 
