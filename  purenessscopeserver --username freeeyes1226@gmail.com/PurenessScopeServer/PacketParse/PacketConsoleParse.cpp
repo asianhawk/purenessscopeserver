@@ -70,9 +70,9 @@ bool CConsolePacketParse::SetPacketBody(uint32 u4ConnectID, ACE_Message_Block* p
 }
 
 
-uint32 CConsolePacketParse::MakePacketLength(uint32 u4ConnectID, uint32 u4DataLen)
+uint32 CConsolePacketParse::MakePacketLength(uint32 u4ConnectID, uint32 u4DataLen, uint16 u2CommandID)
 {
-	if(u4ConnectID == 0)
+	if(u4ConnectID == 0 && u2CommandID == 0)
 	{
 		//UDP数据包，没有u4ConnectID
 	}
@@ -80,9 +80,9 @@ uint32 CConsolePacketParse::MakePacketLength(uint32 u4ConnectID, uint32 u4DataLe
 	return u4DataLen + sizeof(uint32);
 }
 
-bool CConsolePacketParse::MakePacket(uint32 u4ConnectID, const char* pData, uint32 u4Len, ACE_Message_Block* pMbData)
+bool CConsolePacketParse::MakePacket(uint32 u4ConnectID, const char* pData, uint32 u4Len, ACE_Message_Block* pMbData, uint16 u2CommandID)
 {
-	if(u4ConnectID == 0)
+	if(u4ConnectID == 0 && u2CommandID == 0)
 	{
 		//UDP数据包，没有u4ConnectID
 	}

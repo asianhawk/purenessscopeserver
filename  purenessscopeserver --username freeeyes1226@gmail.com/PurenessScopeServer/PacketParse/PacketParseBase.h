@@ -42,14 +42,14 @@ public:
 	ACE_Message_Block* GetMessageHead();         //得到数据包头内容（解密后） 
 	ACE_Message_Block* GetMessageBody();         //得到数据包体内容（解密后）
 
-	virtual bool SetPacketHead(uint32 u4ConnectID, ACE_Message_Block* pmbHead, IMessageBlockManager* pMessageBlockManager)         = 0;  //设置得到的数据包头，并在这里解密
-	virtual bool SetPacketBody(uint32 u4ConnectID, ACE_Message_Block* pmbBody, IMessageBlockManager* pMessageBlockManager)         = 0;  //设置得到的数据包体，并在这里解密 
-	virtual uint8 GetPacketStream(uint32 u4ConnectID, ACE_Message_Block* pCurrMessage, IMessageBlockManager* pMessageBlockManager) = 0;  //专门对应 Mode为0的不带包头的数据包,如果是带包头的模式，这里什么都不用做。
-	virtual bool MakePacket(uint32 u4ConnectID, const char* pData, uint32 u4Len, ACE_Message_Block* pMbData) = 0;                        //创建返回包体结构
-	virtual uint32 MakePacketLength(uint32 u4ConnectID, uint32 u4DataLen)                                    = 0;                        //预先得到返回包体的长度
+	virtual bool SetPacketHead(uint32 u4ConnectID, ACE_Message_Block* pmbHead, IMessageBlockManager* pMessageBlockManager)           = 0;  //设置得到的数据包头，并在这里解密
+	virtual bool SetPacketBody(uint32 u4ConnectID, ACE_Message_Block* pmbBody, IMessageBlockManager* pMessageBlockManager)           = 0;  //设置得到的数据包体，并在这里解密 
+	virtual uint8 GetPacketStream(uint32 u4ConnectID, ACE_Message_Block* pCurrMessage, IMessageBlockManager* pMessageBlockManager)   = 0;  //专门对应 Mode为0的不带包头的数据包,如果是带包头的模式，这里什么都不用做。
+	virtual bool MakePacket(uint32 u4ConnectID, const char* pData, uint32 u4Len, ACE_Message_Block* pMbData, uint16 u2CommandID = 0) = 0;                        //创建返回包体结构
+	virtual uint32 MakePacketLength(uint32 u4ConnectID, uint32 u4DataLen, uint16 u2CommandID = 0)                                    = 0;                        //预先得到返回包体的长度
 
-	virtual bool Connect(uint32 u4ConnectID)                                                                                       = 0;  //处理连接建立的代码
-	virtual void DisConnect(uint32 u4ConnectID)                                                                                    = 0;  //处理连接断开的代码
+	virtual bool Connect(uint32 u4ConnectID)                                                                                         = 0;  //处理连接建立的代码
+	virtual void DisConnect(uint32 u4ConnectID)                                                                                      = 0;  //处理连接断开的代码
 
 protected:
 	uint32 m_u4PacketHead;               //包头的长度

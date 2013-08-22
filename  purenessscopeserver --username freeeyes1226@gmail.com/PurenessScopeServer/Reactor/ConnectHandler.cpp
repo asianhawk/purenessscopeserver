@@ -835,7 +835,7 @@ uint8 CConnectHandler::GetSendBuffState()
 	return m_u1SendBuffState;
 }
 
-bool CConnectHandler::SendMessage(IBuffPacket* pBuffPacket, bool blState, uint8 u1SendType, uint32& u4PacketSize)
+bool CConnectHandler::SendMessage(uint16 u2CommandID, IBuffPacket* pBuffPacket, bool blState, uint8 u1SendType, uint32& u4PacketSize)
 {
 	m_ThreadLock.acquire();
 	m_nIOCount++;
@@ -851,7 +851,7 @@ bool CConnectHandler::SendMessage(IBuffPacket* pBuffPacket, bool blState, uint8 
 		uint32 u4SendPacketSize = 0;
 		if(u1SendType == SENDMESSAGE_NOMAL)
 		{
-			u4SendPacketSize = m_objSendPacketParse.MakePacketLength(GetConnectID(), u4PacketSize);
+			u4SendPacketSize = m_objSendPacketParse.MakePacketLength(GetConnectID(), u4PacketSize, u2CommandID);
 		}
 		else
 		{
@@ -874,7 +874,7 @@ bool CConnectHandler::SendMessage(IBuffPacket* pBuffPacket, bool blState, uint8 
 			if(u1SendType == SENDMESSAGE_NOMAL)
 			{
 				//这里组成返回数据包
-				m_objSendPacketParse.MakePacket(GetConnectID(), pBuffPacket->GetData(), pBuffPacket->GetPacketLen(), m_pBlockMessage);
+				m_objSendPacketParse.MakePacket(GetConnectID(), pBuffPacket->GetData(), pBuffPacket->GetPacketLen(), m_pBlockMessage, u2CommandID);
 			}
 			else
 			{
@@ -1267,7 +1267,7 @@ bool CConnectManager::SendMessage(uint32 u4ConnectID, IBuffPacket* pBuffPacket, 
 		if(NULL != pConnectHandler)
 		{
 			uint32 u4PacketSize = 0;
-			pConnectHandler->SendMessage(pBuffPacket, blSendState, u1SendType, u4PacketSize);
+			pConnectHandler->SendMessage(u2CommandID, pBuffPacket, blSendState, u1SendType, u4PacketSize);
 
 			//记录消息发送消耗时间
 			uint32 u4SendCost = (uint32)(ACE_OS::gethrtime() - tvSendBegin);

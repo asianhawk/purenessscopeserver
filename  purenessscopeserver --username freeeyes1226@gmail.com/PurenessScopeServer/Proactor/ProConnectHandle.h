@@ -48,7 +48,7 @@ public:
 	void Init(uint16 u2HandlerID);                                            //Connect Pool初始化调用的函数
 
 	bool CheckAlive();                                                        //检测当前链接是否超时的函数
-	bool SendMessage(IBuffPacket* pBuffPacket, bool blState, uint8 u1SendType, uint32& u4PacketSize);   //发送给客户端数据的函数
+	bool SendMessage(uint16 u2CommandID, IBuffPacket* pBuffPacket, bool blState, uint8 u1SendType, uint32& u4PacketSize);   //发送给客户端数据的函数
 	bool Close(int nIOCount = 1);                                            
 	bool ServerClose();                                                       //服务器关闭客户端链接的函数
 
