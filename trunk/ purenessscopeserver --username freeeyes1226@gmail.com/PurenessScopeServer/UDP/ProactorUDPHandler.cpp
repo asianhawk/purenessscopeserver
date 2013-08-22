@@ -24,6 +24,11 @@ int CProactorUDPHandler::OpenAddress(const ACE_INET_Addr& AddrLocal, ACE_Proacto
 	sprintf_safe(m_szCompletionkey, MAX_BUFF_20, "CompUDP");
 	sprintf_safe(m_szAct, MAX_BUFF_20, "ActUDP");
 
+	//设置发送超时时间（因为UDP如果客户端不存在的话，sendto会引起一个recv错误）
+	//在这里设置一个超时，让个recv不会无限等下去
+	struct timeval timeout = {MAX_RECV_UDP_TIMEOUT, 0}; 
+	ACE_OS::setsockopt(m_skRemote.get_handle(), SOL_SOCKET, SO_RCVTIMEO, (const char *)&timeout, sizeof(timeout));
+
 	//设置wsaIoctl
 	bool blBehavior = false;
 	unsigned long lRet = 0;

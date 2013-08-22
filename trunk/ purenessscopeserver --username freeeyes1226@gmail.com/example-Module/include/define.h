@@ -82,6 +82,7 @@ using namespace std;
 #define MAX_BLOCK_COUNT       3            //默认最大的Block次数
 #define MAX_BLOCK_TIME        1            //默认等待重发时间（单位是秒）
 #define MAX_QUEUE_TIMEOUT     20           //默认队列超时处理时间
+#define MAX_RECV_UDP_TIMEOUT  3            //最大接收超时时间(UDP) 
 
 #define PACKET_PARSE          1            //消息处理包标志
 #define PACKET_CONNECT        2            //链接建立事件消息标志
