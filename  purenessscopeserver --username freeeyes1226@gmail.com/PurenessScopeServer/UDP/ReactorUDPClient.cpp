@@ -23,6 +23,11 @@ int CReactorUDPClient::OpenAddress(const ACE_INET_Addr& AddrRemote, ACE_Reactor*
 
 	reactor(pReactor);
 
+	//设置发送超时时间（因为UDP如果客户端不存在的话，sendto会引起一个recv错误）
+	//在这里设置一个超时，让个recv不会无限等下去
+	struct timeval timeout = {MAX_RECV_UDP_TIMEOUT, 0}; 
+	ACE_OS::setsockopt(m_skRemote.get_handle(), SOL_SOCKET, SO_RCVTIMEO, (const char *)&timeout, sizeof(timeout));
+
 	m_pClientUDPMessage = pClientUDPMessage; 
 
 	if(-1 == this->reactor()->register_handler(this, ACE_Event_Handler::READ_MASK))

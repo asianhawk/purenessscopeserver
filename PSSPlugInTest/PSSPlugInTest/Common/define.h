@@ -82,6 +82,7 @@ using namespace std;
 #define MAX_BLOCK_COUNT       3            //默认最大的Block次数
 #define MAX_BLOCK_TIME        1            //默认等待重发时间（单位是秒）
 #define MAX_QUEUE_TIMEOUT     20           //默认队列超时处理时间
+#define MAX_RECV_UDP_TIMEOUT  3            //最大接收超时时间(UDP) 
 
 #define PACKET_PARSE          1            //消息处理包标志
 #define PACKET_CONNECT        2            //链接建立事件消息标志
@@ -102,8 +103,11 @@ using namespace std;
 #define PARM_CONNECTHANDLE_CHECK          2   //定时器发送包检测
 #define PARM_HANDLE_CLOSE                 1   //定时器句柄关闭
 
-#define HANDLE_ISCLOSE_NO                 0
-#define HANDLE_ISCLOSE_YES                1
+#define HANDLE_ISCLOSE_NO                 0      //连接已经关闭
+#define HANDLE_ISCLOSE_YES                1      //连接目前正常
+
+#define TYPE_IPV4                         1      //IPv4标准
+#define TYPE_IPV6                         2      //IPv6标准
 
 #define MAX_UDP_PACKET_LEN                1024   //UDP数据包的最大大小
 #define UDP_HANDER_ID                     0      //默认UDP的ConnectID

@@ -82,6 +82,7 @@ using namespace std;
 #define MAX_BLOCK_COUNT       3            //默认最大的Block次数
 #define MAX_BLOCK_TIME        1            //默认等待重发时间（单位是秒）
 #define MAX_QUEUE_TIMEOUT     20           //默认队列超时处理时间
+#define MAX_RECV_UDP_TIMEOUT  3            //最大接收超时时间(UDP) 
 
 #define PACKET_PARSE          1            //消息处理包标志
 #define PACKET_CONNECT        2            //链接建立事件消息标志
@@ -102,8 +103,11 @@ using namespace std;
 #define PARM_CONNECTHANDLE_CHECK          2   //定时器发送包检测
 #define PARM_HANDLE_CLOSE                 1   //定时器句柄关闭
 
-#define HANDLE_ISCLOSE_NO                 0
-#define HANDLE_ISCLOSE_YES                1
+#define HANDLE_ISCLOSE_NO                 0      //连接已经关闭
+#define HANDLE_ISCLOSE_YES                1      //连接目前正常
+
+#define TYPE_IPV4                         1      //IPv4标准
+#define TYPE_IPV6                         2      //IPv6标准
 
 #define MAX_UDP_PACKET_LEN                1024   //UDP数据包的最大大小
 #define UDP_HANDER_ID                     0      //默认UDP的ConnectID
@@ -130,6 +134,15 @@ using namespace std;
 #define MAX_PACKET_SIZE     1024*1024
 
 #define CONNECT_LIMIT_RETRY 30              //初始化中间服务器链接后定期检查，单位是秒
+
+//对应当前框架支持的网络模式
+enum
+{
+	NETWORKMODE_PRO_IOCP    = 1,
+	NETWORKMODE_RE_SELECT   = 10,
+	NETWORKMODE_RE_TPSELECT = 11,
+	NETWORKMODE_RE_EPOLL    = 12,
+};
 
 //对应链接的状态，用于设置链接时候的状态
 enum
@@ -177,6 +190,7 @@ enum
 #define LOG_SYSTEM_DEBUG_CLIENTSEND     1015
 #define LOG_SYSTEM_DEBUG_SERVERRECV     1016
 #define LOG_SYSTEM_DEBUG_SERVERSEND     1017
+#define LOG_SYSTEM_MONITOR              1018 
 
 #define DEBUG_ON  1
 #define DEBUG_OFF 0
@@ -451,6 +465,52 @@ inline void sprintf_safe(char* szText, int nLen, const char* fmt ...)
 
 	va_end(ap);
 };
+
+//为逻辑块提供一个Try catch的保护宏，用于调试，具体使用方法请参看TestTcp用例
+//目前最多支持一条2K的日志
+//************************************************************************
+#define ASSERT_LOG_PATH  "./Log/assert.log"   //如果路径想自己要，请修改这里。
+
+inline void __show__( const char* szTemp)
+{
+#ifdef WIN32
+	printf_s("[__show__]%s.\n", szTemp);
+#else
+	printf("[__show__]%s.\n", szTemp);
+#endif
+
+	FILE* f = ACE_OS::fopen(ASSERT_LOG_PATH, "a") ;
+	ACE_OS::fwrite( szTemp, 1, strlen(szTemp)*sizeof(char), f) ;
+	ACE_OS::fwrite( "\r\n", 1, 2*sizeof(char), f);
+	fclose(f) ;
+};
+
+inline void __assertspecial__(const char* file, int line, const char* func, const char* expr, const char* msg)
+{
+	char szTemp[2*MAX_BUFF_1024] = {0};
+
+	sprintf_safe( szTemp, 2*MAX_BUFF_1024, "Alert[%s][%d][%s][%s][%s]", file, line, func, expr ,msg) ;
+	__show__(szTemp) ;
+};
+
+#if defined(WIN32)
+#define AssertSpecial(expr,msg) ((void)((expr)?0:(__assertspecial__(__FILE__, __LINE__, __FUNCTION__, #expr, msg),0)))
+#else
+#define AssertSpecial(expr,msg) {if(!(expr)){__assertspecial__(__FILE__, __LINE__, __PRETTY_FUNCTION__, #expr, msg);}}
+#endif
+
+#if defined(WIN32)
+#define __ENTER_FUNCTION {try{
+#define __THROW_FUNCTION(msg) throw(msg)
+#define __LEAVE_FUNCTION() }catch(char* msg){AssertSpecial(false,msg); }}
+#define __LEAVE_FUNCTION_WITHRETURN(ret) }catch(char* msg){AssertSpecial(false,msg); return ret; }}
+#else	//linux
+#define __ENTER_FUNCTION {try{
+#define __THROW_FUNCTION(msg) throw(msg)
+#define __LEAVE_FUNCTION }catch(char* msg){AssertSpecial(FALSE,msg);}}
+#define __LEAVE_FUNCTION_WITHRETURN(ret) }catch(char* msg){AssertSpecial(false,msg); return ret; }}
+#endif 
+//************************************************************************
 
 //定义一个对64位长整形的网络字节序的转换
 inline uint64 hl64ton(uint64 u8Data)   
