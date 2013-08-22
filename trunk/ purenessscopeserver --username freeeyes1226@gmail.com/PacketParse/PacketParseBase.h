@@ -50,13 +50,13 @@ public:
 	ACE_Message_Block* GetMessageHead();
 	ACE_Message_Block* GetMessageBody();
 
-	virtual bool SetPacketHead(uint32 u4ConnectID, ACE_Message_Block* pmbHead, IMessageBlockManager* pMessageBlockManager)         = 0;
-	virtual bool SetPacketBody(uint32 u4ConnectID, ACE_Message_Block* pmbBody, IMessageBlockManager* pMessageBlockManager)         = 0;
-	virtual uint8 GetPacketStream(uint32 u4ConnectID, ACE_Message_Block* pCurrMessage, IMessageBlockManager* pMessageBlockManager) = 0;
-	virtual bool MakePacket(uint32 u4ConnectID, const char* pData, uint32 u4Len, ACE_Message_Block* pMbData)                       = 0;
-	virtual uint32 MakePacketLength(uint32 u4ConnectID, uint32 u4DataLen)                                                          = 0;
-	virtual bool Connect(uint32 u4ConnectID)                                                                                       = 0;
-	virtual void DisConnect(uint32 u4ConnectID)                                                                                    = 0;
+	virtual bool SetPacketHead(uint32 u4ConnectID, ACE_Message_Block* pmbHead, IMessageBlockManager* pMessageBlockManager)           = 0;
+	virtual bool SetPacketBody(uint32 u4ConnectID, ACE_Message_Block* pmbBody, IMessageBlockManager* pMessageBlockManager)           = 0;
+	virtual uint8 GetPacketStream(uint32 u4ConnectID, ACE_Message_Block* pCurrMessage, IMessageBlockManager* pMessageBlockManager)   = 0;
+	virtual bool MakePacket(uint32 u4ConnectID, const char* pData, uint32 u4Len, ACE_Message_Block* pMbData, uint16 u2CommandID = 0) = 0;
+	virtual uint32 MakePacketLength(uint32 u4ConnectID, uint32 u4DataLen, uint16 u2CommandID = 0)                                    = 0;
+	virtual bool Connect(uint32 u4ConnectID)                                                                                         = 0;
+	virtual void DisConnect(uint32 u4ConnectID)                                                                                      = 0;
 
 protected:
 	uint32 m_u4PacketHead;               //包头的长度

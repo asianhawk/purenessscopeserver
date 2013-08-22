@@ -49,7 +49,7 @@ public:
 
 	void Init(uint16 u2HandlerID);                                           //Connect Pool初始化调用时候调用的方法
 
-	bool SendMessage(IBuffPacket* pBuffPacket, bool blState, uint8 u1SendType, uint32& u4PacketSize);  //发送当前数据
+	bool SendMessage(uint16 u2CommandID, IBuffPacket* pBuffPacket, bool blState, uint8 u1SendType, uint32& u4PacketSize);  //发送当前数据
 
 	bool SetRecvQueueTimeCost(uint32 u4TimeCost);                            //记录当前接收数据到模块处理完成的具体时间消耗
 	bool SetSendQueueTimeCost(uint32 u4TimeCost);                            //记录当前从发送队列到数据发送完成的具体时间消耗

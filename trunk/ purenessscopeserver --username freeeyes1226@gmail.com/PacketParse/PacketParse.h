@@ -43,9 +43,9 @@ public:
 	uint8 GetPacketStream(uint32 u4ConnectID, ACE_Message_Block* pCurrMessage, IMessageBlockManager* pMessageBlockManager);   
 
 	//拼接数据返回包，所有的返回数据包都会调用这个
-	bool MakePacket(uint32 u4ConnectID, const char* pData, uint32 u4Len, ACE_Message_Block* pMbData);
+	bool MakePacket(uint32 u4ConnectID, const char* pData, uint32 u4Len, ACE_Message_Block* pMbData, uint16 u2CommandID = 0);
 	//得到返回数据包的长度
-	uint32 MakePacketLength(uint32 u4ConnectID, uint32 u4DataLen);
+	uint32 MakePacketLength(uint32 u4ConnectID, uint32 u4DataLen, uint16 u2CommandID = 0);
 	//当连接第一次建立的时候，返回的接口用于你自己的处理。
 	bool Connect(uint32 u4ConnectID);
 	//当连接断开的时候，返回你自己的处理

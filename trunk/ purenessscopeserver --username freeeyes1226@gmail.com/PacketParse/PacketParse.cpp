@@ -62,14 +62,21 @@ bool CPacketParse::SetPacketBody(uint32 u4ConnectID, ACE_Message_Block* pmbBody,
 
 
 
-uint32 CPacketParse::MakePacketLength(uint32 u4ConnectID, uint32 u4DataLen)
+uint32 CPacketParse::MakePacketLength(uint32 u4ConnectID, uint32 u4DataLen, uint16 u2CommandID)
 {
-	return u4DataLen + sizeof(uint32);
+	if(u2CommandID == 0)
+	{
+		return 0;
+	}
+	else
+	{
+		return u4DataLen + sizeof(uint32);
+	}
 }
 
-bool CPacketParse::MakePacket(uint32 u4ConnectID, const char* pData, uint32 u4Len, ACE_Message_Block* pMbData)
+bool CPacketParse::MakePacket(uint32 u4ConnectID, const char* pData, uint32 u4Len, ACE_Message_Block* pMbData, uint16 u2CommandID)
 {
-	if(pMbData == NULL)
+	if(pMbData == NULL && u2CommandID == 0)
 	{
 		return false;
 	}
