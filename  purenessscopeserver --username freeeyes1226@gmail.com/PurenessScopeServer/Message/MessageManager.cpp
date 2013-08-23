@@ -49,6 +49,7 @@ bool CMessageManager::DoMessage(IMessage* pMessage, uint16& u2CommandID)
 			{
 				m_ThreadWriteLock.acquire();
 				pClientCommandInfo->m_u4CurrUsedCount++;
+				pClientCommandInfo->m_u4Count++;
 				m_ThreadWriteLock.release();
 
 				//获得包长
