@@ -446,13 +446,7 @@ void CPassTCPDlg::OnBnClickedButton2()
 		{
 			pClientUdpSocket->Stop();
 		}
-
-		DWORD dwSleep = 100;
-		Sleep(dwSleep);
-		
-		delete pClientUdpSocket;
 	}
-	m_vecClientUdpSocket.clear();
 
 	nCount = (int)m_vecClientTcpSocket.size();
 	for(int i = 0; i < nCount; i++)
@@ -462,13 +456,7 @@ void CPassTCPDlg::OnBnClickedButton2()
 		{
 			pClientTcpSocket->Stop();
 		}
-
-		DWORD dwSleep = 100;
-		Sleep(dwSleep);
-
-		delete pClientTcpSocket;
 	}
-	m_vecClientTcpSocket.clear();
 }
 
 void CPassTCPDlg::OnTimer(UINT_PTR nIDEvent)

@@ -26,6 +26,7 @@ int CProactorUDPClient::OpenAddress(const ACE_INET_Addr& AddrLocal, ACE_Proactor
 	struct timeval timeout = {MAX_RECV_UDP_TIMEOUT, 0}; 
 	ACE_OS::setsockopt(m_skRemote.get_handle(), SOL_SOCKET, SO_RCVTIMEO, (const char *)&timeout, sizeof(timeout));
 
+#ifdef WIN32
 	//…Ë÷√wsaIoctl
 	bool blBehavior = false;
 	unsigned long lRet = 0;
@@ -34,6 +35,7 @@ int CProactorUDPClient::OpenAddress(const ACE_INET_Addr& AddrLocal, ACE_Proactor
 	{
 		OUR_DEBUG((LM_ERROR, "[CProactorUDPHandler::OpenAddress]ioctl SIO_UDP_CONNRESET error.\n"));
 	}
+#endif
 
 	char* pCompletionKey = NULL;
 	if(m_Read.open(*this, m_skRemote.get_handle(), pCompletionKey, pProactor) == -1)
