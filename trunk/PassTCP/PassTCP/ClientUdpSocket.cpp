@@ -30,7 +30,7 @@ void CClientUdpSocket::Close()
 
 void CClientUdpSocket::Run()
 {
-
+	int nPacketCount = 1;
 	m_blRun = true;
 	SOCKET sckClient;
 	SOCKET sckServer;
@@ -104,6 +104,7 @@ void CClientUdpSocket::Run()
 				{
 					memcpy(&szSendBuffData[i * m_pSocket_Info->m_nSendLength], m_pSocket_Info->m_pSendBuff, m_pSocket_Info->m_nSendLength);
 				}
+				nPacketCount = nSendCount;
 
 				//发送数据
 				pSendData     = (char* )szSendBuffData;
@@ -142,7 +143,7 @@ void CClientUdpSocket::Run()
 				if(nCurrSendLen <= 0)
 				{
 					DWORD dwError = GetLastError();
-					m_pSocket_State_Info->m_nFailSend++;
+					m_pSocket_State_Info->m_nFailSend += nPacketCount;
 					m_pSocket_State_Info->m_nCurrectSocket = 0;
 					blIsConnect = false;
 					break;
@@ -153,7 +154,7 @@ void CClientUdpSocket::Run()
 					if(nTotalSendLen == 0)
 					{
 						//发送完成
-						m_pSocket_State_Info->m_nSuccessSend++;
+						m_pSocket_State_Info->m_nSuccessSend += nPacketCount;
 						blSendFlag = true;
 						break;
 					}
@@ -187,7 +188,7 @@ void CClientUdpSocket::Run()
 					if(nCurrRecvLen <= 0)
 					{
 						DWORD dwError = GetLastError();
-						m_pSocket_State_Info->m_nFailSend++;
+						m_pSocket_State_Info->m_nFailRecv += nPacketCount;
 						//closesocket(sckClient);
 						m_pSocket_State_Info->m_nCurrectSocket = 0;
 						blIsConnect = false;
@@ -199,7 +200,7 @@ void CClientUdpSocket::Run()
 						if(nTotalRecvLen == 0)
 						{
 							//接收完成
-							m_pSocket_State_Info->m_nSuccessRecv++;
+							m_pSocket_State_Info->m_nSuccessRecv += nPacketCount;
 							blRecvFlag = true;
 
 							//如果需要记录日志，则将数据计入日志

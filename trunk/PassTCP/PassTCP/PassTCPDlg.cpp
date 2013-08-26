@@ -349,6 +349,9 @@ void CPassTCPDlg::OnBnClickedButton1()
 
 			m_vecClientUdpSocket.push_back(pClientUdpSocket);
 		}
+
+		m_tmBegin = CTime::GetCurrentTime();
+		m_blIsRun = true;
 	}
 }
 
@@ -457,6 +460,9 @@ void CPassTCPDlg::OnBnClickedButton2()
 			pClientTcpSocket->Stop();
 		}
 	}
+
+	m_tmEnd = CTime::GetCurrentTime();
+	m_blIsRun = false; 
 }
 
 void CPassTCPDlg::OnTimer(UINT_PTR nIDEvent)
@@ -566,5 +572,78 @@ void CPassTCPDlg::OnTimer(UINT_PTR nIDEvent)
 
 void CPassTCPDlg::OnBnClickedButton3()
 {
-	// TODO: Add your control notification handler code here
+	//写入压测报告
+	FILE* pFile = NULL;
+	char szFileName[20];
+	sprintf_s(szFileName, "StressTest.log");
+	fopen_s(&pFile, szFileName, "a+");
+	if(pFile == NULL)
+	{
+		MessageBox(_T("导出压测报告失败，文件不存在"), _T("提示信息"), MB_OK);
+		return;
+	}
+
+	char szLogText[1024] = {'\0'};
+
+	sprintf_s(szLogText, 1024, "=============================================\n");
+	fwrite(szLogText, strlen(szLogText), sizeof(char), pFile);
+
+	//CString strBeginTime = m_tmBegin.Format("%Y-%m-%d %H:%M:%S");
+	sprintf_s(szLogText, 1024, "压测开始时间为: %04d-%02d-%02d %02d:%02d:%02d\n", m_tmBegin.GetYear(), m_tmBegin.GetMonth(), m_tmBegin.GetDay(), m_tmBegin.GetHour(), m_tmBegin.GetMinute(), m_tmBegin.GetSecond());
+
+	fwrite(szLogText, strlen(szLogText), sizeof(char), pFile);
+
+	if(m_blIsRun == true)
+	{
+		CTime tmNow = CTime::GetCurrentTime();
+
+		//CString strNowTime = tmNow.Format("%Y-%m-%d %H:%M:%S");
+		sprintf_s(szLogText, 1024, "压测结束时间为: %04d-%02d-%02d %02d:%02d:%02d\n", tmNow.GetYear(), tmNow.GetMonth(), tmNow.GetDay(), tmNow.GetHour(), tmNow.GetMinute(), tmNow.GetSecond());
+
+		fwrite(szLogText, strlen(szLogText), sizeof(char), pFile);
+	}
+	else
+	{
+		//CString strEndTime = m_tmEnd.Format("%Y-%m-%d %H:%M:%S");
+		sprintf_s(szLogText, 1024, "压测结束时间为: %04d-%02d-%02d %02d:%02d:%02d\n", m_tmEnd.GetYear(), m_tmEnd.GetMonth(), m_tmEnd.GetDay(), m_tmEnd.GetHour(), m_tmEnd.GetMinute(), m_tmEnd.GetSecond());
+
+		fwrite(szLogText, strlen(szLogText), sizeof(char), pFile);
+	}
+
+	CString strData;
+	m_txtSuccessConnect.GetWindowText(strData);
+	sprintf_s(szLogText, 1024, "创建成功连接数:%d\n", _ttoi((LPCTSTR)strData));
+	fwrite(szLogText, strlen(szLogText), sizeof(char), pFile);
+
+	m_txtSuccessSend.GetWindowText(strData);
+	sprintf_s(szLogText, 1024, "成功发送数据包数:%d\n", _ttoi((LPCTSTR)strData));
+	fwrite(szLogText, strlen(szLogText), sizeof(char), pFile);
+
+	m_txtSuccessRecv.GetWindowText(strData);
+	sprintf_s(szLogText, 1024, "成功接收数据包数:%d\n", _ttoi((LPCTSTR)strData));
+	fwrite(szLogText, strlen(szLogText), sizeof(char), pFile);
+
+	m_txtSuccessRecv.GetWindowText(strData);
+	sprintf_s(szLogText, 1024, "成功接收数据包数:%d\n", _ttoi((LPCTSTR)strData));
+	fwrite(szLogText, strlen(szLogText), sizeof(char), pFile);
+
+	m_txtFailConnect.GetWindowText(strData);
+	sprintf_s(szLogText, 1024, "连接失败数:%d\n", _ttoi((LPCTSTR)strData));
+	fwrite(szLogText, strlen(szLogText), sizeof(char), pFile);
+
+	m_txtFailSend.GetWindowText(strData);
+	sprintf_s(szLogText, 1024, "发送失败数据包数:%d\n", _ttoi((LPCTSTR)strData));
+	fwrite(szLogText, strlen(szLogText), sizeof(char), pFile);
+
+	m_txtFailRecv.GetWindowText(strData);
+	sprintf_s(szLogText, 1024, "接收失败数据包数:%d\n", _ttoi((LPCTSTR)strData));
+	fwrite(szLogText, strlen(szLogText), sizeof(char), pFile);
+
+	sprintf_s(szLogText, 1024, "=============================================\n");
+	fwrite(szLogText, strlen(szLogText), sizeof(char), pFile);
+
+	fclose(pFile);
+
+	MessageBox(_T("导出压测报告成功"), _T("提示信息"), MB_OK);
+
 }

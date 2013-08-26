@@ -48,7 +48,7 @@ void CClientTcpSocket::Stop()
 
 void CClientTcpSocket::Run()
 {
-
+  int nPacketCount = 1;
   m_blRun = true;
   SOCKET sckClient;
 
@@ -123,6 +123,8 @@ void CClientTcpSocket::Run()
           memcpy(&szSendBuffData[i * m_pSocket_Info->m_nSendLength], m_pSocket_Info->m_pSendBuff, m_pSocket_Info->m_nSendLength);
         }
 
+		nPacketCount = nSendCount;
+
         //发送数据
         pSendData     = (char* )szSendBuffData;
         nSendLen      = m_pSocket_Info->m_nSendLength * nSendCount;
@@ -134,6 +136,8 @@ void CClientTcpSocket::Run()
         pSendData     = (char* )m_pSocket_Info->m_pSendBuff;
         nSendLen      = m_pSocket_Info->m_nSendLength;
         nTotalRecvLen = m_pSocket_Info->m_nRecvLength;
+
+		nPacketCount  = 1;
       }
 
       //记录应收字节总数
@@ -157,7 +161,7 @@ void CClientTcpSocket::Run()
         nCurrSendLen = send(sckClient, pSendData + nBeginSend, nTotalSendLen, 0);
         if(nCurrSendLen <= 0)
         {
-          m_pSocket_State_Info->m_nFailSend++;
+          m_pSocket_State_Info->m_nFailSend += nPacketCount;
           closesocket(sckClient);
           m_pSocket_State_Info->m_nCurrectSocket = 0;
           blIsConnect = false;
@@ -169,7 +173,7 @@ void CClientTcpSocket::Run()
           if(nTotalSendLen == 0)
           {
             //发送完成
-            m_pSocket_State_Info->m_nSuccessSend++;
+            m_pSocket_State_Info->m_nSuccessSend += nPacketCount;
             blSendFlag = true;
             break;
           }
@@ -189,7 +193,7 @@ void CClientTcpSocket::Run()
           nCurrRecvLen = recv(sckClient, (char* )szRecvBuffData + nBeginRecv, nTotalRecvLen, 0);
           if(nCurrRecvLen <= 0)
           {
-            m_pSocket_State_Info->m_nFailSend++;
+            m_pSocket_State_Info->m_nFailRecv += nPacketCount;
             closesocket(sckClient);
             m_pSocket_State_Info->m_nCurrectSocket = 0;
             blIsConnect = false;
@@ -201,7 +205,7 @@ void CClientTcpSocket::Run()
             if(nTotalRecvLen == 0)
             {
               //接收完成
-              m_pSocket_State_Info->m_nSuccessRecv++;
+              m_pSocket_State_Info->m_nSuccessRecv += nPacketCount;
               blRecvFlag = true;
 
               //如果需要记录日志，则将数据计入日志
