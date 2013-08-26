@@ -47,6 +47,11 @@ private:
   void ClearResult();
   void Close();
 
+private:
+  CTime m_tmBegin;             //压测开始时间
+  bool  m_blIsRun;             //压测是否在进行
+  CTime m_tmEnd;               //压测停止时间
+
 public:
   CEdit m_txtServerIP;
   CEdit m_txtPort;
