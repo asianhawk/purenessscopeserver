@@ -143,6 +143,7 @@ void CClientUdpSocket::Run()
 				if(nCurrSendLen <= 0)
 				{
 					DWORD dwError = GetLastError();
+					WriteFile_Error("sendto error", (int)dwError);
 					m_pSocket_State_Info->m_nFailSend += nPacketCount;
 					m_pSocket_State_Info->m_nCurrectSocket = 0;
 					blIsConnect = false;
@@ -188,6 +189,7 @@ void CClientUdpSocket::Run()
 					if(nCurrRecvLen <= 0)
 					{
 						DWORD dwError = GetLastError();
+						WriteFile_Error("sendto error", (int)dwError);
 						m_pSocket_State_Info->m_nFailRecv += nPacketCount;
 						//closesocket(sckClient);
 						m_pSocket_State_Info->m_nCurrectSocket = 0;
@@ -313,6 +315,34 @@ bool CClientUdpSocket::WriteFile_RecvBuff( const char* pData, int nLen )
 	strLog += "\n";
 
 	fwrite(strLog.c_str(), strLog.length(), sizeof(char), pFile);
+
+	fclose(pFile);
+	return true;
+}
+
+bool CClientUdpSocket::WriteFile_Error( const char* pError, int nErrorNumber )
+{
+	time_t ttNow    = time(NULL);
+	struct tm tmNow;
+	localtime_s(&tmNow, &ttNow);
+
+	char szTimeNow[30] = {'\0'};
+	sprintf_s(szTimeNow, 30, "[%04d-%02d-%02d %02d:%02d:%02d]", tmNow.tm_year + 1900, tmNow.tm_mon + 1, tmNow.tm_mday, tmNow.tm_hour, tmNow.tm_min, tmNow.tm_sec);
+
+	//拼接出错日志输出
+	char szError[1024] = {'\0'};
+	sprintf_s(szError, 1024, "%s %s, errno=%d.\n", szTimeNow, pError, nErrorNumber);
+
+	FILE* pFile = NULL;
+	char szFileName[30];
+	sprintf_s(szFileName, "StressTest_Error.log");
+	fopen_s(&pFile, szFileName, "a+");
+	if(pFile == NULL)
+	{
+		return false;
+	}
+
+	fwrite(szError, strlen(szError), sizeof(char), pFile);
 
 	fclose(pFile);
 	return true;

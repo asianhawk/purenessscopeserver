@@ -1,6 +1,7 @@
 #pragma once
 
 #include "define.h"
+#include <time.h>
 
 class CClientUdpSocket
 {
@@ -19,6 +20,7 @@ public:
 private:
 	bool WriteFile_SendBuff(const char* pData, int nLen);
 	bool WriteFile_RecvBuff(const char* pData, int nLen);
+	bool WriteFile_Error(const char* pError, int nErrorNumber);
 
 private:
 	_Socket_Info*       m_pSocket_Info;
