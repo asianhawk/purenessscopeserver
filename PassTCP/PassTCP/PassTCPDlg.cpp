@@ -588,9 +588,21 @@ void CPassTCPDlg::OnBnClickedButton3()
 	sprintf_s(szLogText, 1024, "=============================================\n");
 	fwrite(szLogText, strlen(szLogText), sizeof(char), pFile);
 
+	//默认TCP类型，0是TCP，1是UDP
+	switch(GetCheckedRadioButton(IDC_RADIO1, IDC_RADIO2))
+	{
+	case IDC_RADIO1:
+		sprintf_s(szLogText, 1024, "压测类型:TCP\n");
+		break;
+	case IDC_RADIO2:
+		sprintf_s(szLogText, 1024, "压测类型:UDP\n");
+		break;
+	}
+	fwrite(szLogText, strlen(szLogText), sizeof(char), pFile);
+
+
 	//CString strBeginTime = m_tmBegin.Format("%Y-%m-%d %H:%M:%S");
 	sprintf_s(szLogText, 1024, "压测开始时间为: %04d-%02d-%02d %02d:%02d:%02d\n", m_tmBegin.GetYear(), m_tmBegin.GetMonth(), m_tmBegin.GetDay(), m_tmBegin.GetHour(), m_tmBegin.GetMinute(), m_tmBegin.GetSecond());
-
 	fwrite(szLogText, strlen(szLogText), sizeof(char), pFile);
 
 	if(m_blIsRun == true)
@@ -637,6 +649,56 @@ void CPassTCPDlg::OnBnClickedButton3()
 
 	m_txtFailRecv.GetWindowText(strData);
 	sprintf_s(szLogText, 1024, "接收失败数据包数:%d\n", _ttoi((LPCTSTR)strData));
+	fwrite(szLogText, strlen(szLogText), sizeof(char), pFile);
+
+	//连接成功百分比
+	float fRote = 0.0f;
+	m_txtSuccessConnect.GetWindowText(strData);
+	int nSucccess =  _ttoi((LPCTSTR)strData);
+	m_txtFailConnect.GetWindowText(strData);
+	int nFail     = _ttoi((LPCTSTR)strData);
+	if(nSucccess + nFail == 0)
+	{
+		fRote = 0.0f;
+	}
+	else
+	{
+		fRote = (float)nSucccess/(nSucccess + nFail);
+	}
+
+	sprintf_s(szLogText, 1024, "连接成功百分比:%f%%\n", fRote*100.0);
+	fwrite(szLogText, strlen(szLogText), sizeof(char), pFile);
+
+	//发送成功百分比
+	m_txtSuccessSend.GetWindowText(strData);
+	nSucccess =  _ttoi((LPCTSTR)strData);
+	m_txtFailSend.GetWindowText(strData);
+	nFail     = _ttoi((LPCTSTR)strData);
+	if(nSucccess + nFail == 0)
+	{
+		fRote = 0.0f;
+	}
+	else
+	{
+		fRote = (float)nSucccess/(nSucccess + nFail);
+	}
+	sprintf_s(szLogText, 1024, "发送数据包成功百分比:%f%%\n", fRote*100.0);
+	fwrite(szLogText, strlen(szLogText), sizeof(char), pFile);
+
+	//接收成功百分比
+	m_txtSuccessRecv.GetWindowText(strData);
+	nSucccess =  _ttoi((LPCTSTR)strData);
+	m_txtFailRecv.GetWindowText(strData);
+	nFail     = _ttoi((LPCTSTR)strData);
+	if(nSucccess + nFail == 0)
+	{
+		fRote = 0.0f;
+	}
+	else
+	{
+		fRote = (float)nSucccess/(nSucccess + nFail);
+	}
+	sprintf_s(szLogText, 1024, "接收数据包成功百分比:%f%%\n", fRote*100.0);
 	fwrite(szLogText, strlen(szLogText), sizeof(char), pFile);
 
 	sprintf_s(szLogText, 1024, "=============================================\n");
