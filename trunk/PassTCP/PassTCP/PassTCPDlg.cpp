@@ -635,10 +635,6 @@ void CPassTCPDlg::OnBnClickedButton3()
 	sprintf_s(szLogText, 1024, "成功接收数据包数:%d\n", _ttoi((LPCTSTR)strData));
 	fwrite(szLogText, strlen(szLogText), sizeof(char), pFile);
 
-	m_txtSuccessRecv.GetWindowText(strData);
-	sprintf_s(szLogText, 1024, "成功接收数据包数:%d\n", _ttoi((LPCTSTR)strData));
-	fwrite(szLogText, strlen(szLogText), sizeof(char), pFile);
-
 	m_txtFailConnect.GetWindowText(strData);
 	sprintf_s(szLogText, 1024, "连接失败数:%d\n", _ttoi((LPCTSTR)strData));
 	fwrite(szLogText, strlen(szLogText), sizeof(char), pFile);
