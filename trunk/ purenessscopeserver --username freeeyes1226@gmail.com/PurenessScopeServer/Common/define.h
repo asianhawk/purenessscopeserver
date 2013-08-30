@@ -35,6 +35,7 @@ using namespace std;
 #define MAX_BUFF_50   50
 #define MAX_BUFF_100  100
 #define MAX_BUFF_200  200
+#define MAX_BUFF_300  300
 #define MAX_BUFF_500  500
 #define MAX_BUFF_1000 1000
 #define MAX_BUFF_1024 1024
@@ -480,9 +481,9 @@ inline void __show__( const char* szTemp)
 #endif
 
 	FILE* f = ACE_OS::fopen(ASSERT_LOG_PATH, "a") ;
-	ACE_OS::fwrite( szTemp, 1, strlen(szTemp)*sizeof(char), f) ;
+	ACE_OS::fwrite( szTemp, strlen(szTemp), sizeof(char), f) ;
 	ACE_OS::fwrite( "\r\n", 1, 2*sizeof(char), f);
-	fclose(f) ;
+	fclose(f);
 };
 
 inline void __assertspecial__(const char* file, int line, const char* func, const char* expr, const char* msg)
@@ -500,16 +501,92 @@ inline void __assertspecial__(const char* file, int line, const char* func, cons
 #endif
 
 #if defined(WIN32)
-#define __ENTER_FUNCTION {try{
+#define __ENTER_FUNCTION() {try{
 #define __THROW_FUNCTION(msg) throw(msg)
 #define __LEAVE_FUNCTION() }catch(char* msg){AssertSpecial(false,msg); }}
 #define __LEAVE_FUNCTION_WITHRETURN(ret) }catch(char* msg){AssertSpecial(false,msg); return ret; }}
 #else	//linux
-#define __ENTER_FUNCTION {try{
+#define __ENTER_FUNCTION() {try{
 #define __THROW_FUNCTION(msg) throw(msg)
-#define __LEAVE_FUNCTION }catch(char* msg){AssertSpecial(FALSE,msg);}}
+#define __LEAVE_FUNCTION() }catch(char* msg){AssertSpecial(false,msg);}}
 #define __LEAVE_FUNCTION_WITHRETURN(ret) }catch(char* msg){AssertSpecial(false,msg); return ret; }}
 #endif 
+
+//************************************************************************
+
+//增加一个统计函数处理时间的宏，这个宏可以直接统计当前函数执行时间
+//使用例子 __TIMECOST(100); 100为毫秒，超过100毫秒就会计入日志
+//************************************************************************
+#define ASSERT_TIME_PATH  "./Log/FuncTimeout.log"   //如果路径想自己要，请修改这里。
+class CTimeCost
+{
+public:
+	CTimeCost(int nMillionSecond, const char* pFunctionName, const char* pFileName, int nLine) 
+	{
+		m_nMillionSecond = nMillionSecond;
+		sprintf_safe(m_szFunctionName, MAX_BUFF_100, "%s", pFunctionName);
+		sprintf_safe(m_szFileName, MAX_BUFF_300, "%s", pFileName);
+		m_nFileLine = nLine;
+		TimeBegin();
+	};
+
+	~CTimeCost()
+	{
+		TimeEnd();
+	};
+
+	void TimeBegin()
+	{
+		m_lBegin = GetSystemTickCount();
+	};
+
+	void TimeEnd()
+	{
+		m_lEnd = GetSystemTickCount();
+		long lTimeInterval = m_lEnd - m_lBegin;  //转换成毫秒
+		if(lTimeInterval >= (long)m_nMillionSecond)
+		{
+			char szLog[MAX_BUFF_1024] = {'\0'};
+			//记录日志
+			FILE* pFile = ACE_OS::fopen(ASSERT_TIME_PATH, "a+");
+			if(pFile != NULL)
+			{
+				char szTimeNow[MAX_BUFF_50] = {'\0'};
+				time_t tNow = time(NULL);
+				struct tm* tmNow = ACE_OS::localtime(&tNow);
+				sprintf_safe(szTimeNow, MAX_BUFF_50, "%04d-%02d-%02d %02d:%02d:%02d", tmNow->tm_year + 1900, tmNow->tm_mon + 1, tmNow->tm_mday, tmNow->tm_hour, tmNow->tm_min, tmNow->tm_sec);
+				sprintf_safe(szLog, MAX_BUFF_1024, "[%s]dbTimeInterval more than (%d) < (%d), File(%s):FunName(%s):Line(%d).\n", szTimeNow, m_nMillionSecond, lTimeInterval, m_szFileName, m_szFunctionName, m_nFileLine);
+				ACE_OS::fwrite(szLog, strlen(szLog), sizeof(char), pFile);
+				ACE_OS::fclose(pFile);
+			}
+		}
+	};
+
+private:
+	unsigned long GetSystemTickCount()
+	{
+#ifdef WIN32
+		return GetTickCount();
+#else
+		struct timespec ts;
+
+		clock_gettime(CLOCK_MONOTONIC, &ts);
+
+		return (ts.tv_sec * 1000 + ts.tv_nsec / 1000000);
+#endif
+	}
+
+private:
+	long         m_lBegin;
+	long         m_lEnd;
+	unsigned int m_nMillionSecond;
+	char         m_szFunctionName[MAX_BUFF_100];
+	char         m_szFileName[MAX_BUFF_300];
+	int          m_nFileLine;
+};
+
+#define __TIMECOST(cost) CTimeCost timecost(cost, __FUNCTION__, __FILE__, __LINE__);
+
 //************************************************************************
 
 //定义一个对64位长整形的网络字节序的转换

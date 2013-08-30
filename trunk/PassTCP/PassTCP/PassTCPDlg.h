@@ -75,6 +75,7 @@ public:
   CEdit m_txtFailSend;
   CEdit m_txtFailRecv;
   CEdit m_txtClientUdpPort;
+  CEdit m_txtPacketTimewait;
   int m_nRadio;
   
   vecClientTcpSocket m_vecClientTcpSocket;
