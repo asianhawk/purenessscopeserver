@@ -221,6 +221,13 @@ void CClientUdpSocket::Run()
 				}
 			}
 
+			//如果有数据包间隔，则sleep指定的时间
+			if(m_pSocket_Info->m_nPacketTimewait > 0)
+			{
+				DWORD dwSleepTime = (DWORD)m_pSocket_Info->m_nPacketTimewait;
+				Sleep(dwSleepTime);
+			}
+
 			//如果是长连接，则不关闭连接
 			if(m_pSocket_Info->m_blIsAlwayConnect == false)
 			{

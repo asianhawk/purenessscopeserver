@@ -85,8 +85,11 @@ void CClientTcpSocket::Run()
 				dwSleepTime = (DWORD)RandomValue(1, 1000);
 			}
 
-			//挂起指定的时间
-			Sleep(dwSleepTime);
+			if(dwSleepTime > 0)
+			{
+				//挂起指定的时间
+				Sleep(dwSleepTime);
+			}
 
 			//连接远程服务器
 			int nErr = connect(sckClient, (SOCKADDR*)&sockaddr, sizeof(SOCKADDR));
@@ -229,6 +232,13 @@ void CClientTcpSocket::Run()
 						}
 					}
 				}
+			}
+
+			//如果有数据包间隔，则sleep指定的时间
+			if(m_pSocket_Info->m_nPacketTimewait > 0)
+			{
+				DWORD dwSleepTime = (DWORD)m_pSocket_Info->m_nPacketTimewait;
+				Sleep(dwSleepTime);
 			}
 
 			//如果是长连接，则不关闭连接

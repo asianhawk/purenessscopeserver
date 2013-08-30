@@ -185,6 +185,7 @@ struct _Socket_Info
 	int   m_nThreadID;                 //线程ID
 	int   m_nRecvTimeout;              //接收数据超时时间（单位是毫秒）
 	int   m_nDelaySecond;              //短连接间延时（单位是毫秒）
+	int   m_nPacketTimewait;           //数据包发送间隔(单位是毫秒)
 	int   m_nSendLength;               //发送字符串长度
 	int   m_nRecvLength;               //接收字符串长度限定
 	char* m_pSendBuff;                 //发送数据长度
@@ -204,6 +205,7 @@ struct _Socket_Info
 		m_nPort            = 0;
 		m_nThreadID        = 0;
 		m_nRecvTimeout     = 0;
+		m_nPacketTimewait  = 0;
 		m_nDelaySecond     = 0;
 		m_nSendLength      = 0;
 		m_nRecvLength      = 0;

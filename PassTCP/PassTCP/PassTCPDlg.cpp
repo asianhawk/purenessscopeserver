@@ -100,6 +100,7 @@ void CPassTCPDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_CHECK7, m_chkSendOne);
 	DDX_Radio(pDX, IDC_RADIO1, m_nRadio);
 	DDX_Control(pDX, IDC_EDIT15, m_txtClientUdpPort);
+	DDX_Control(pDX, IDC_EDIT16, m_txtPacketTimewait);
 }
 
 BEGIN_MESSAGE_MAP(CPassTCPDlg, CDialog)
@@ -237,6 +238,8 @@ void CPassTCPDlg::OnBnClickedButton1()
 		pSocket_Info->m_nRecvLength = _ttoi((LPCTSTR)strData);
 		m_txtClientUdpPort.GetWindowText(strData);
 		pSocket_Info->m_nUdpClientPort = _ttoi((LPCTSTR)strData);
+		m_txtPacketTimewait.GetWindowText(strData);
+		pSocket_Info->m_nPacketTimewait = _ttoi((LPCTSTR)strData);
 
 		m_txtSendData.GetWindowText(strData);
 
@@ -364,7 +367,8 @@ void CPassTCPDlg::InitView()
 	m_txtPort.SetWindowText(_T("10002"));
 	m_txtThreadCount.SetWindowText(_T("1"));
 	m_txtRecvTimeout.SetWindowText(_T("1000"));
-	m_txtSocketInterval.SetWindowText(_T("10"));
+	m_txtPacketTimewait.SetWindowText(_T("0"));
+	m_txtSocketInterval.SetWindowText(_T("0"));
 	m_txtRecvLength.SetWindowText(_T("14"));
 	m_txtSendData.SetWindowText(_T("0a 00 00 00 00 10 be cd aa 8f 3c 01 00 00"));
 	m_txtClientUdpPort.SetWindowText(_T("20002"));
