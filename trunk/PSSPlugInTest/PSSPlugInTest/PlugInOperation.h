@@ -20,12 +20,12 @@ public:
   CProClientManager() {};
   virtual ~CProClientManager() {};
 
-  bool Connect(int nServerID, const char* pIP, int nPort, IClientMessage* pClientMessage)          
+  bool Connect(int nServerID, const char* pIP, int nPort, uint8 u1IPType, IClientMessage* pClientMessage)          
   {
     delete pClientMessage;
     return true; 
   };
-  bool ConnectUDP(int nServerID, const char* pIP, int nPort, IClientUDPMessage* pClientUDPMessage) 
+  bool ConnectUDP(int nServerID, const char* pIP, int nPort, uint8 u1IPType, IClientUDPMessage* pClientUDPMessage) 
   {
     delete pClientUDPMessage;
     return true; 

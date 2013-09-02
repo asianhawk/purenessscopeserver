@@ -108,7 +108,6 @@ BOOL CPSSPlugInTestDlg::OnInitDialog()
 {
 	CDialog::OnInitDialog();
 
-  ACE::init();
 	// Add "About..." menu item to system menu.
 
 	// IDM_ABOUTBOX must be in the system command range.
@@ -135,7 +134,7 @@ BOOL CPSSPlugInTestDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// Set small icon
 
 	// TODO: Add extra initialization here
-  InitView();
+    InitView();
 
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
@@ -594,8 +593,10 @@ void CPSSPlugInTestDlg::OnTimer(UINT_PTR nIDEvent)
 {
   wchar_t szName[MAX_BUFF_100] = {'\0'};
   wchar_t szData[MAX_BUFF_100] = {'\0'};
+
   if(nIDEvent == 1)
   {
+    m_lstPlugInInfo.DeleteAllItems();
     int nRow = 0;
     for(int i = 0; i < (int)m_objvecPlugInOperationGroup.size(); i++)
     {
@@ -613,6 +614,7 @@ void CPSSPlugInTestDlg::OnTimer(UINT_PTR nIDEvent)
           wchar_t szCurrData[MAX_BUFF_100] = {'\0'};
           CString strUserData;
           bool blIsFind = false;
+		  /*
           for(int h = 0; h < m_lstPlugInInfo.GetItemCount(); h++)
           {
             
@@ -635,6 +637,7 @@ void CPSSPlugInTestDlg::OnTimer(UINT_PTR nIDEvent)
               break;
             }
           }
+		  */
 
           //如果没有找到则添加
           if(blIsFind == false)
@@ -647,11 +650,14 @@ void CPSSPlugInTestDlg::OnTimer(UINT_PTR nIDEvent)
             m_lstPlugInInfo.SetItemText(nRow, 2, szData);
             wsprintf(szData, _T("%d"), pCommaindInfo->m_nRecvDataCount);
             m_lstPlugInInfo.SetItemText(nRow, 3, szData);
-            wsprintf(szData, _T("0"));
+			int nSecondRecvCount = pCommaindInfo->m_nRecvDataCount - pCommaindInfo->GetBeforDataCount();
+            wsprintf(szData, _T("%d"), nSecondRecvCount);
             m_lstPlugInInfo.SetItemText(nRow, 4, szData);
+			pCommaindInfo->SetDataCount();
           }
         }
       }
+	  nRow++;
     }
   }
 
