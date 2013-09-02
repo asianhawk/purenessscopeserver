@@ -18,16 +18,28 @@ struct _CommaindInfo
   int   m_nSendDataLen;
   int   m_nSendDataCount;
   int   m_nRecvDataCount;
+  int   m_nBeforDataCount;
 
   _CommaindInfo()
   {
-    m_szCommandID[0] = '\0';
-    m_nCommandSort   = 0;
-    m_nCommandGroup  = 0;
-    m_pSendData      = NULL;
-    m_nSendDataLen   = 0;
-    m_nSendDataCount = 0;
-    m_nRecvDataCount = 0;
+    m_szCommandID[0]  = '\0';
+    m_nCommandSort    = 0;
+    m_nCommandGroup   = 0;
+    m_pSendData       = NULL;
+    m_nSendDataLen    = 0;
+    m_nSendDataCount  = 0;
+    m_nRecvDataCount  = 0;
+	m_nBeforDataCount = 0;
+  }
+
+  void SetDataCount()
+  {
+	  m_nBeforDataCount = m_nRecvDataCount;
+  }
+
+  int GetBeforDataCount()
+  {
+	  return m_nBeforDataCount;
   }
 
   void Close()

@@ -10,7 +10,6 @@
 #define new DEBUG_NEW
 #endif
 
-
 // CPSSPlugInTestApp
 
 BEGIN_MESSAGE_MAP(CPSSPlugInTestApp, CWinAppEx)
@@ -39,6 +38,8 @@ BOOL CPSSPlugInTestApp::InitInstance()
 	// InitCommonControlsEx() is required on Windows XP if an application
 	// manifest specifies use of ComCtl32.dll version 6 or later to enable
 	// visual styles.  Otherwise, any window creation will fail.
+
+	ACE::init();
 
 	INITCOMMONCONTROLSEX InitCtrls;
 	InitCtrls.dwSize = sizeof(InitCtrls);
@@ -76,5 +77,6 @@ BOOL CPSSPlugInTestApp::InitInstance()
 
 	// Since the dialog has been closed, return FALSE so that we exit the
 	//  application, rather than start the application's message pump.
+	ACE::fini();
 	return FALSE;
 }
