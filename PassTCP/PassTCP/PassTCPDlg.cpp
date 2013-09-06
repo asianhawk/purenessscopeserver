@@ -627,6 +627,10 @@ void CPassTCPDlg::OnBnClickedButton3()
 	}
 
 	CString strData;
+	m_txtThreadCount.GetWindowText(strData);
+	sprintf_s(szLogText, 1024, "压测线程数:%d\n", _ttoi((LPCTSTR)strData));
+	fwrite(szLogText, strlen(szLogText), sizeof(char), pFile);
+
 	m_txtSuccessConnect.GetWindowText(strData);
 	sprintf_s(szLogText, 1024, "创建成功连接数:%d\n", _ttoi((LPCTSTR)strData));
 	fwrite(szLogText, strlen(szLogText), sizeof(char), pFile);

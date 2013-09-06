@@ -53,7 +53,7 @@ void CiConnectCommand::InitServer()
 			iter != icServerConfig::instance()->m_mapServerInfo.end();
 			++iter)
 		{
-			m_pServerObject->GetClientManager()->Connect(iter->second.m_Serverid, iter->second.m_szServerIP, iter->second.m_nPort, pPostServerCommand);
+			m_pServerObject->GetClientManager()->Connect(iter->second.m_Serverid, iter->second.m_szServerIP, iter->second.m_nPort, TYPE_IPV4, pPostServerCommand);
 		}
 	}
 }

@@ -19,19 +19,25 @@ void CPostServerCommand::SetServerObject(CServerObject* pServerObject)
 	m_pServerObject = pServerObject;
 }
 
-bool CPostServerCommand::RecvData(IClientParse* pClientParse)
+bool CPostServerCommand::RecvData(ACE_Message_Block* mbRecv)
 {
-	if(pClientParse == NULL)
+	if(mbRecv == NULL)
 	{
 		OUR_DEBUG((LM_ERROR, "[CPostServerCommand::RecvData] pClientParse is NULL.\n"));
 		return false;
 	}
-	if(pClientParse->GetPacketCommandID() == COMMAND_KEEP_ALIVE_RESPONSE)
+
+	char* pData = mbRecv->rd_ptr();
+
+	uint16 u2CommandID = 0;
+	ACE_OS::memcpy(&u2CommandID, pData + sizeof(uint32), sizeof(uint16));
+
+	if(u2CommandID == COMMAND_KEEP_ALIVE_RESPONSE)
 	{
 		//OUR_DEBUG((LM_ERROR, "[CPostServerCommand::RecvData] 心跳回应包.\n"));
 		return true;
 	}
-	if(pClientParse->GetPacketCommandID() == COMMAND_QUERY_APP_RESPONSE)
+	if(u2CommandID == COMMAND_QUERY_APP_RESPONSE)
 	{
 		OUR_DEBUG((LM_ERROR, "[CPostServerCommand::RecvData] 更新APP.\n"));
 		IBuffPacket* pBodyPacket = m_pServerObject->GetPacketManager()->Create();
@@ -41,8 +47,8 @@ bool CPostServerCommand::RecvData(IClientParse* pClientParse)
 		}
 		//得到数据包的包体
 		_PacketInfo BodyPacket;
-		BodyPacket.m_pData = pClientParse->GetMessageBody()->rd_ptr();
-		BodyPacket.m_nDataLen = (int)pClientParse->GetMessageBody()->length();
+		BodyPacket.m_pData = pData;
+		BodyPacket.m_nDataLen = (int)mbRecv->length();
 
 		//将包体绑定给pBodyPacket流
 		pBodyPacket->WriteStream(BodyPacket.m_pData, BodyPacket.m_nDataLen);
@@ -71,13 +77,13 @@ bool CPostServerCommand::RecvData(IClientParse* pClientParse)
 		m_pServerObject->GetPacketManager()->Delete(pBodyPacket);
 		return true;
 	}
-	if(pClientParse->GetPacketCommandID() == COMMAND_SYN_APP)
+	if(u2CommandID == COMMAND_SYN_APP)
 	{
 		OUR_DEBUG((LM_ERROR, "[CPostServerCommand::RecvData] 同步APP.\n"));
 		return true;
 	}
 
-	OUR_DEBUG((LM_INFO, "[CPostServerCommand::RecvData][未处理的命令]%d",pClientParse->GetPacketCommandID()));
+	OUR_DEBUG((LM_INFO, "[CPostServerCommand::RecvData][未处理的命令]%d", u2CommandID));
 	return true;
 }
 
