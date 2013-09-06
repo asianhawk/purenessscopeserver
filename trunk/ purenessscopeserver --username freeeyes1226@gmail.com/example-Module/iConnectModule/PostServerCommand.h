@@ -16,7 +16,7 @@ public:
 	CPostServerCommand();
 	~CPostServerCommand();
 
-	bool RecvData(IClientParse* pClientParse);
+	bool RecvData(ACE_Message_Block* mbRecv);
 	bool ConnectError(int nError);
 
 	void SetServerObject(CServerObject* pServerObject);
