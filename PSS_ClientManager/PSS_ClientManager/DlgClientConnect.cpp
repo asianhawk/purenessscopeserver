@@ -29,6 +29,8 @@ void CDlgClientConnect::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_LIST1, m_lcClientConnectHistory);
 	DDX_Control(pDX, IDC_EDIT3, m_txtDebugState);
 	DDX_Control(pDX, IDC_RADIO2, m_btnDebug);
+	DDX_Control(pDX, IDC_EDIT7, m_txtFlowIn);
+	DDX_Control(pDX, IDC_EDIT9, m_txtFlowOut);
 }
 
 
@@ -100,14 +102,24 @@ void CDlgClientConnect::OnBnClickedButton1()
   }
   else
   {
-    int nStrLen       = 0;
-    int nPos          = 4;
-    int nCpuRote      = 0;
-    int nMemoryRote   = 0;
+    int  nStrLen       = 0;
+    int  nPos          = 4;
+    int  nCpuRote      = 0;
+    int  nMemoryRote   = 0;
+	char cFlow         = 0;
+	int  nFlowIn       = 0;
+	int  nFlowOut      = 0;
+
     memcpy_s(&nCpuRote, sizeof(int), &szRecvBuff[nPos], sizeof(int));
     nPos += sizeof(int);
     memcpy_s(&nMemoryRote, sizeof(int), &szRecvBuff[nPos], sizeof(int));
     nPos += sizeof(int);
+	memcpy_s(&cFlow, sizeof(char), &szRecvBuff[nPos], sizeof(char));
+	nPos += sizeof(char);
+	memcpy_s(&nFlowIn, sizeof(int), &szRecvBuff[nPos], sizeof(int));
+	nPos += sizeof(int);
+	memcpy_s(&nFlowOut, sizeof(int), &szRecvBuff[nPos], sizeof(int));
+	nPos += sizeof(int);
 
     CString strCpuRote;
     strCpuRote.Format(_T("%f"), (float)nCpuRote/100.0f);
@@ -116,6 +128,21 @@ void CDlgClientConnect::OnBnClickedButton1()
     CString strMemoryRote;
     strMemoryRote.Format(_T("%f"), (float)nMemoryRote/(1000.0f*1000.0f));
     m_txtMemory.SetWindowText(strMemoryRote);
+
+	if(cFlow == 0)
+	{
+		m_txtFlowIn.SetWindowText(_T("¹Ø±Õ"));
+		m_txtFlowOut.SetWindowText(_T("¹Ø±Õ"));
+	}
+	else
+	{
+		CString strFlowIn;
+		CString strFlowOut;
+		strFlowIn.Format(_T("%d"), nFlowIn);
+		m_txtFlowIn.SetWindowText(strFlowIn);
+		strFlowOut.Format(_T("%d"), nFlowOut);
+		m_txtFlowOut.SetWindowText(strFlowOut);
+	}
   }
 
 }

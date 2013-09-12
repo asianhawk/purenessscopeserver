@@ -28,12 +28,14 @@
 #define IDC_BUTTON9                     1006
 #define IDC_BUTTON3                     1007
 #define IDC_BUTTON10                    1007
+#define IDC_EDIT7                       1007
 #define IDC_BUTTON4                     1008
 #define IDC_BUTTON5                     1009
 #define IDC_LIST1                       1010
 #define IDC_RADIO1                      1011
 #define IDC_EDIT6                       1011
 #define IDC_LIST2                       1011
+#define IDC_EDIT9                       1011
 #define IDC_RADIO2                      1012
 #define IDC_EDIT8                       1013
 #define IDC_RADIO3                      1013

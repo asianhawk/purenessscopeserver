@@ -690,6 +690,7 @@ bool CProConnectHandle::SendMessage(uint16 u2CommandID, IBuffPacket* pBuffPacket
 		{
 			u4SendPacketSize = (uint32)m_pBlockMessage->length();
 		}
+		u4PacketSize = u4SendPacketSize;
 
 		if(u4SendPacketSize + (uint32)m_pBlockMessage->length() >= m_u4MaxPacketSize)
 		{
@@ -748,6 +749,7 @@ bool CProConnectHandle::SendMessage(uint16 u2CommandID, IBuffPacket* pBuffPacket
 	}
 	else
 	{
+		u4PacketSize = pBuffPacket->GetPacketLen();
 		//如果之前有缓冲数据，则和缓冲数据一起发送
 		if(m_pBlockMessage->length() > 0)
 		{
@@ -1134,7 +1136,7 @@ bool CProConnectManager::SendMessage(uint32 u4ConnectID, IBuffPacket* pBuffPacke
 			//uint32 u4SendCost = (uint32)(ACE_OS::gethrtime() - tvSendBegin);
 			uint32 u4SendCost = 0;
 			//pConnectHandler->SetSendQueueTimeCost(u4SendCost);
-			App_CommandAccount::instance()->SaveCommandData(u2CommandID, (uint8)u4SendCost, PACKET_TCP, u4PacketSize, u4CommandSize, COMMAND_TYPE_OUT);
+			App_CommandAccount::instance()->SaveCommandData_Mutex(u2CommandID, (uint8)u4SendCost, PACKET_TCP, u4PacketSize, u4CommandSize, COMMAND_TYPE_OUT);
 			return true;
 		}
 		else

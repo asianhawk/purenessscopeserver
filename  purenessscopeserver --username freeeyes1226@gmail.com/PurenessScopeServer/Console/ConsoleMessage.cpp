@@ -981,12 +981,21 @@ bool CConsoleMessage::DoMessage_ShowProcessInfo(_CommandInfo& CommandInfo, IBuff
 		int nMemorySize = GetProcessMemorySize();
 		(*pBuffPacket) << (uint32)nMemorySize;
 
+		(*pBuffPacket) << (uint8)App_CommandAccount::instance()->GetFLow();
+		(*pBuffPacket) << (uint32)App_CommandAccount::instance()->GetFlowIn();
+		(*pBuffPacket) << (uint32)App_CommandAccount::instance()->GetFlowOut();
+
+
 #else   //Èç¹ûÊÇlinux
 		int nCPU = GetProcessCPU_Idel_Linux();
 		(*pBuffPacket) << (uint32)nCPU;
 
 		int nMemorySize = GetProcessMemorySize_Linux();
 		(*pBuffPacket) << (uint32)nMemorySize;
+
+		(*pBuffPacket) << (uint8)App_CommandAccount::instance()->GetFLow();
+		(*pBuffPacket) << (uint32)App_CommandAccount::instance()->GetFlowIn();
+		(*pBuffPacket) << (uint32)App_CommandAccount::instance()->GetFlowOut();
 #endif
 	}
 

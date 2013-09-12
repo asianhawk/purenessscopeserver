@@ -851,12 +851,13 @@ bool CConnectHandler::SendMessage(uint16 u2CommandID, IBuffPacket* pBuffPacket, 
 		uint32 u4SendPacketSize = 0;
 		if(u1SendType == SENDMESSAGE_NOMAL)
 		{
-			u4SendPacketSize = m_objSendPacketParse.MakePacketLength(GetConnectID(), u4PacketSize, u2CommandID);
+			u4SendPacketSize = m_objSendPacketParse.MakePacketLength(GetConnectID(), pBuffPacket->GetPacketLen(), u2CommandID);
 		}
 		else
 		{
 			u4SendPacketSize = (uint32)m_pBlockMessage->length();
 		}
+		u4PacketSize = u4SendPacketSize;
 
 		if(u4SendPacketSize + (uint32)m_pBlockMessage->length() >= m_u4MaxPacketSize)
 		{
@@ -914,6 +915,7 @@ bool CConnectHandler::SendMessage(uint16 u2CommandID, IBuffPacket* pBuffPacket, 
 	else
 	{
 		//如果之前有缓冲数据，则和缓冲数据一起发送
+		u4PacketSize = m_pBlockMessage->length();
 		if(m_pBlockMessage->length() > 0)
 		{
 			ACE_OS::memcpy(m_pBlockMessage->wr_ptr(), pBuffPacket->GetData(), pBuffPacket->GetPacketLen());
@@ -1272,7 +1274,7 @@ bool CConnectManager::SendMessage(uint32 u4ConnectID, IBuffPacket* pBuffPacket, 
 			//记录消息发送消耗时间
 			uint32 u4SendCost = (uint32)(ACE_OS::gethrtime() - tvSendBegin);
 			pConnectHandler->SetSendQueueTimeCost(u4SendCost);
-			App_CommandAccount::instance()->SaveCommandData(u2CommandID, (uint8)u4SendCost, PACKET_TCP, u4PacketSize, u4CommandSize, COMMAND_TYPE_OUT);
+			App_CommandAccount::instance()->SaveCommandData_Mutex(u2CommandID, (uint8)u4SendCost, PACKET_TCP, u4PacketSize, u4CommandSize, COMMAND_TYPE_OUT);
 			return true;
 		}
 		else
