@@ -44,6 +44,8 @@ CMainConfig::CMainConfig(void)
 	m_u2SendQueuePutTime    = (uint16)MAX_MSG_PUTTIMEOUT;
 	m_u2WorkQueuePutTime    = (uint16)MAX_MSG_PUTTIMEOUT;
 
+	m_u1CommandFlow         = 0;
+
 	m_u1NetworkMode         = (uint8)NETWORKMODE_PRO_IOCP;
 
 	m_szServerName[0]         = '\0';
@@ -354,11 +356,6 @@ bool CMainConfig::Init(const char* szConfigPath)
 	{
 		m_u2MaxConnectTime = (uint16)ACE_OS::atoi((char*)pData);
 	}
-	pData = m_MainConfig.GetData("ClientInfo", "CommandAccount");
-	if(pData != NULL)
-	{
-		m_u1CommandAccount = (uint8)ACE_OS::atoi(pData);
-	}
 	pData = m_MainConfig.GetData("ClientInfo", "MaxBuffRecv");
 	if(pData != NULL)
 	{
@@ -506,6 +503,19 @@ bool CMainConfig::Init(const char* szConfigPath)
 		m_u1Monitor = (uint8)ACE_OS::atoi(pData);
 	}
 
+	//开始得到命令统计相关开关
+	pData = m_MainConfig.GetData("CommandAccount", "Account");
+	if(pData != NULL)
+	{
+		m_u1CommandAccount = (uint8)ACE_OS::atoi(pData);
+	}
+
+	pData = m_MainConfig.GetData("CommandAccount", "FlowAccount");
+	if(pData != NULL)
+	{
+		m_u1CommandFlow = (uint8)ACE_OS::atoi(pData);
+	}
+
 	return true;
 }
 
@@ -544,7 +554,6 @@ void CMainConfig::Display()
 	OUR_DEBUG((LM_INFO, "[CMainConfig::Display]m_u2RecvQueueTimeout = %d.\n", m_u2RecvQueueTimeout));
 	OUR_DEBUG((LM_INFO, "[CMainConfig::Display]m_u2SendQueueTimeout = %d.\n", m_u2SendQueueTimeout));
 	OUR_DEBUG((LM_INFO, "[CMainConfig::Display]m_u2SendQueueCount = %d.\n", m_u2SendQueueCount));
-	OUR_DEBUG((LM_INFO, "[CMainConfig::Display]m_u1CommandAccount = %d.\n", m_u1CommandAccount));
 	OUR_DEBUG((LM_INFO, "[CMainConfig::Display]m_u2SendQueuePutTime = %d.\n", m_u2SendQueuePutTime));
 	OUR_DEBUG((LM_INFO, "[CMainConfig::Display]m_u2WorkQueuePutTime = %d.\n", m_u2WorkQueuePutTime));
 	OUR_DEBUG((LM_INFO, "[CMainConfig::Display]m_u1ServerType = %d.\n", m_u1ServerType));
@@ -567,7 +576,8 @@ void CMainConfig::Display()
 	OUR_DEBUG((LM_INFO, "[CMainConfig::Display]m_u4ConnectServerTimerout = %d.\n", m_u4ConnectServerTimerout));
 	OUR_DEBUG((LM_INFO, "[CMainConfig::Display]m_u2ConnectServerCheck = %d.\n", m_u2ConnectServerCheck));
 	OUR_DEBUG((LM_INFO, "[CMainConfig::Display]m_u4ConnectServerRecvBuff = %d.\n", m_u4ConnectServerRecvBuff));
-
+	OUR_DEBUG((LM_INFO, "[CMainConfig::Display]m_u1CommandFlow = %d.\n", m_u1CommandFlow));
+	OUR_DEBUG((LM_INFO, "[CMainConfig::Display]m_u1CommandAccount = %d.\n", m_u1CommandAccount));
 }
 
 const char* CMainConfig::GetServerName()
@@ -872,4 +882,9 @@ uint32 CMainConfig::GetServerRecvBuff()
 uint8 CMainConfig::GetConsoleIPType()
 {
 	return m_u1ConsoleIPType;
+}
+
+uint8 CMainConfig::GetCommandFlow()
+{
+	return m_u1CommandFlow;
 }

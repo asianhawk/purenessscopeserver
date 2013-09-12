@@ -13,7 +13,7 @@ CProgramService::~CProgramService(void)
 int CProgramService::svc( void )
 {
 	m_blsStop = true;
-	ACE_Time_Value tvSleep(2, 0);
+	//ACE_Time_Value tvSleep(2, 0);
 
 	report_status (SERVICE_RUNNING);
 

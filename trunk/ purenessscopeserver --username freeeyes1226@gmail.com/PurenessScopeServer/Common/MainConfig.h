@@ -124,6 +124,7 @@ public:
 	uint32 GetConnectServerRecvBuffer();
 	uint8 GetMonitor();
 	uint32 GetServerRecvBuff();
+	uint8 GetCommandFlow();
 
 private:
 	CXmlOpeation m_MainConfig;
@@ -178,6 +179,8 @@ private:
 	char       m_szConsoleIP[MAX_BUFF_100];        //Console服务器IP
 	int        m_nConsolePort;                     //Console服务器的端口
 	uint8      m_u1ConsoleIPType;                  //Console的IPType
+
+	uint8      m_u1CommandFlow;                    //命令调用统计，0为不统计，1为统计
 
 	uint32     m_u4ReactorCount;                   //系统中遇到的反应器的个数
 	uint32     m_u4ConnectServerTimerout;          //连接远程服务器间隔时间  

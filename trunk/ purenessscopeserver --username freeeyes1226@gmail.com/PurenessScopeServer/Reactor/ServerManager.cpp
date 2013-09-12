@@ -133,7 +133,7 @@ bool CServerManager::Init()
 	}
 	
 	//初始化统计模块功能
-	App_CommandAccount::instance()->Init(App_MainConfig::instance()->GetCommandAccount(), App_MainConfig::instance()->GetPacketTimeOut());
+	App_CommandAccount::instance()->Init(App_MainConfig::instance()->GetCommandAccount(), App_MainConfig::instance()->GetCommandFlow(), App_MainConfig::instance()->GetPacketTimeOut());
 
 	//初始化链接管理器
 	App_ConnectManager::instance()->Init(App_MainConfig::instance()->GetSendQueueCount());
