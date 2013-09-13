@@ -119,6 +119,10 @@ int CConnectClient::handle_input(ACE_HANDLE fd)
 	{
 		OUR_DEBUG((LM_ERROR, "[CConnectClient::handle_input]fd == ACE_INVALID_HANDLE.\n"));
 		sprintf_safe(m_szError, MAX_BUFF_500, "[CConnectHandler::handle_input]fd == ACE_INVALID_HANDLE.");
+		if(NULL != m_pClientMessage)
+		{
+			m_pClientMessage->ConnectError((int)ACE_OS::last_error());
+		}
 		return -1;
 	}
 
@@ -128,7 +132,10 @@ int CConnectClient::handle_input(ACE_HANDLE fd)
 		m_u4CurrSize = 0;
 		OUR_DEBUG((LM_ERROR, "[CConnectClient::handle_input]m_pCurrMessage == NULL.\n"));
 		sprintf_safe(m_szError, MAX_BUFF_500, "[CConnectClient::handle_input]m_pCurrMessage == NULL.");
-
+		if(NULL != m_pClientMessage)
+		{
+			m_pClientMessage->ConnectError((int)ACE_OS::last_error());
+		}
 		return -1;
 	}
 
@@ -138,7 +145,10 @@ int CConnectClient::handle_input(ACE_HANDLE fd)
 		//如果剩余字节为负，说明程序出了问题
 		OUR_DEBUG((LM_ERROR, "[CConnectClient::handle_input][%d] nCurrCount < 0 m_u4CurrSize = %d.\n", GetServerID(), m_u4CurrSize));
 		m_u4CurrSize = 0;
-
+		if(NULL != m_pClientMessage)
+		{
+			m_pClientMessage->ConnectError((int)ACE_OS::last_error());
+		}
 		return -1;
 	}
 
@@ -149,7 +159,10 @@ int CConnectClient::handle_input(ACE_HANDLE fd)
 		uint32 u4Error = (uint32)errno;
 		OUR_DEBUG((LM_ERROR, "[CConnectClient::handle_input] ConnectID = %d, recv data is error nDataLen = [%d] errno = [%d].\n", GetServerID(), nDataLen, u4Error));
 		sprintf_safe(m_szError, MAX_BUFF_500, "[CConnectClient::handle_input] ConnectID = %d, recv data is error[%d].\n", GetServerID(), nDataLen);
-
+		if(NULL != m_pClientMessage)
+		{
+			m_pClientMessage->ConnectError((int)ACE_OS::last_error());
+		}
 		return -1;
 	}
 
@@ -190,8 +203,11 @@ int CConnectClient::handle_input(ACE_HANDLE fd)
 
 	m_pCurrMessage->wr_ptr(nDataLen);
 
-	//接收数据，返回给逻辑层，自己不处理整包完整性判定
-	m_pClientMessage->RecvData(m_pCurrMessage);
+	if(NULL != m_pClientMessage)
+	{
+		//接收数据，返回给逻辑层，自己不处理整包完整性判定
+		m_pClientMessage->RecvData(m_pCurrMessage);
+	}
 
 	m_pCurrMessage->reset();
 
