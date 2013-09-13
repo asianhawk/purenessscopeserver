@@ -302,7 +302,7 @@ bool CClientProConnectManager::SetHandler(int nServerID, CProConnectClient* pPro
 	if(f == m_mapClientInfo.end())
 	{
 		//如果这个链接已经存在，则不再添加到已经存在的客户端map管理中
-		OUR_DEBUG((LM_ERROR, "[CClientProConnectManager::SetHandler]nServerID =(%d) is exist.\n", nServerID));
+		OUR_DEBUG((LM_ERROR, "[CClientProConnectManager::SetHandler]nServerID =(%d) is not exist.\n", nServerID));
 		return false;
 	}
 
@@ -319,7 +319,7 @@ bool CClientProConnectManager::Close(int nServerID)
 	if(f == m_mapClientInfo.end())
 	{
 		//如果这个链接已经存在，则不创建新的链接
-		OUR_DEBUG((LM_ERROR, "[CClientProConnectManager::Close]nServerID =(%d) is exist.\n", nServerID));
+		OUR_DEBUG((LM_ERROR, "[CClientProConnectManager::Close]nServerID =(%d) is not exist.\n", nServerID));
 		return false;
 	}
 
@@ -376,7 +376,7 @@ bool CClientProConnectManager::ConnectErrorClose(int nServerID)
 	if(f == m_mapClientInfo.end())
 	{
 		//如果这个链接已经存在，则不创建新的链接
-		OUR_DEBUG((LM_ERROR, "[CClientProConnectManager::Close]nServerID =(%d) is exist.\n", nServerID));
+		OUR_DEBUG((LM_ERROR, "[CClientProConnectManager::Close]nServerID =(%d) is not exist.\n", nServerID));
 		return false;
 	}
 
