@@ -118,7 +118,10 @@ void CProConnectClient::handle_read_stream(const ACE_Asynch_Read_Stream::Result 
 	else 
 	{
 		//处理接收数据(这里不区分是不是完整包，交给上层逻辑自己去判定)
-		m_pClientMessage->RecvData(&mb);
+		if(NULL != m_pClientMessage)
+		{
+			m_pClientMessage->RecvData(&mb);
+		}
 		mb.release();
 
 		//接受下一个数据包
