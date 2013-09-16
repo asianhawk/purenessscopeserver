@@ -12,7 +12,7 @@ CReactorClientInfo::~CReactorClientInfo()
 {
 }
 
-bool CReactorClientInfo::Init(int nServerID, const char* pIP, int nPort, uint8 u1IPType, ReactorConnect* pReactorConnect, IClientMessage* pClientMessage, ACE_Reactor* pReactor)
+bool CReactorClientInfo::Init(int nServerID, const char* pIP, int nPort, uint8 u1IPType, CConnectClientConnector* pReactorConnect, IClientMessage* pClientMessage, ACE_Reactor* pReactor)
 {
 
 	int nRet = 0;
@@ -187,27 +187,32 @@ bool CClientReConnectManager::Connect(int nServerID, const char* pIP, int nPort,
 
 	//初始化链接信息
 	CReactorClientInfo* pClientInfo = new CReactorClientInfo();
+	if(NULL == pClientInfo)
+	{
+		OUR_DEBUG((LM_ERROR, "[CClientReConnectManager::Connect]pClientInfo is NULL.\n"));
+		return false;
+	}
+
+	//链接已经建立，添加进map
+	m_mapConnectInfo[nServerID] = pClientInfo;	
 	if(false == pClientInfo->Init(nServerID, pIP, nPort, u1IPType, &m_ReactorConnect, pClientMessage, m_pReactor))
 	{
+		OUR_DEBUG((LM_ERROR, "[CClientReConnectManager::Connect]pClientInfo Init Error.\n"));
 		delete pClientInfo;
 		pClientInfo = NULL;
+		Close(nServerID);
 		return false;
 	}
 
 	//开始链接
 	if(false == pClientInfo->Run(m_blReactorFinish))
 	{
+		OUR_DEBUG((LM_ERROR, "[CClientReConnectManager::Connect]Run Error.\n"));
 		delete pClientInfo;
 		pClientInfo = NULL;
+		Close(nServerID);
 		return false;
 	}
-
-	//链接已经建立，添加进map
-	m_mapConnectInfo[nServerID] = pClientInfo;
-
-	//自动休眠0.1秒
-	ACE_Time_Value tvSleep(0, m_u4ConnectServerTimeout);
-	ACE_OS::sleep(tvSleep);
 
 	OUR_DEBUG((LM_ERROR, "[CClientReConnectManager::Connect]nServerID =(%d) connect is OK.\n", nServerID));
 	return true;
@@ -231,6 +236,8 @@ bool CClientReConnectManager::ConnectUDP(int nServerID, const char* pIP, int nPo
 		OUR_DEBUG((LM_ERROR, "[CClientReConnectManager::ConnectUDP]nServerID =(%d) pProactorUDPClient is NULL.\n", nServerID));
 		return false;
 	}
+
+	m_mapReactorUDPConnectInfo[nServerID] = pReactorUDPClient;
 
 	ACE_INET_Addr AddrLocal;
 	int nErr = 0;
@@ -256,7 +263,6 @@ bool CClientReConnectManager::ConnectUDP(int nServerID, const char* pIP, int nPo
 		return false;
 	}
 
-	m_mapReactorUDPConnectInfo[nServerID] = pReactorUDPClient;
 	return true;
 }
 
