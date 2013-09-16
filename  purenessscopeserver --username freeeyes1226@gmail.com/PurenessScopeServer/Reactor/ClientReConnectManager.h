@@ -15,7 +15,7 @@
 
 using namespace std;
 
-typedef ACE_Connector<CConnectClient, ACE_SOCK_CONNECTOR> ReactorConnect;
+typedef ACE_Connector<CConnectClient, ACE_SOCK_CONNECTOR> CConnectClientConnector;
 
 class CReactorClientInfo
 {
@@ -23,7 +23,7 @@ public:
 	CReactorClientInfo();
 	~CReactorClientInfo();
 
-	bool Init(int nServerID, const char* pIP, int nPort, uint8 u1IPType, ReactorConnect* pReactorConnect, IClientMessage* pClientMessage, ACE_Reactor* pReactor);  //初始化链接地址和端口
+	bool Init(int nServerID, const char* pIP, int nPort, uint8 u1IPType, CConnectClientConnector* pReactorConnect, IClientMessage* pClientMessage, ACE_Reactor* pReactor);  //初始化链接地址和端口
 	bool Run(bool blIsReady);                                       //开始链接
 	bool SendData(ACE_Message_Block* pmblk);                        //发送数据
 	bool ConnectError(int nError);                                  //链接错误，报错
@@ -35,12 +35,12 @@ public:
 	ACE_INET_Addr GetServerAddr();                                  //获得服务器的地址 
 
 private:
-	ACE_INET_Addr      m_AddrServer;             //远程服务器的地址
-	CConnectClient*    m_pConnectClient;         //当前链接对象
-	ReactorConnect*    m_pReactorConnect;        //Connector链接对象
-	IClientMessage*    m_pClientMessage;         //回调函数类，回调返回错误和返回数据方法
-	int                m_nServerID;              //远程服务器的ID
-	ACE_Reactor*       m_pReactor;               //记录使用的反应器
+	ACE_INET_Addr              m_AddrServer;             //远程服务器的地址
+	CConnectClient*            m_pConnectClient;         //当前链接对象
+	CConnectClientConnector*   m_pReactorConnect;        //Connector链接对象
+	IClientMessage*            m_pClientMessage;         //回调函数类，回调返回错误和返回数据方法
+	int                        m_nServerID;              //远程服务器的ID
+	ACE_Reactor*               m_pReactor;               //记录使用的反应器
 };
 
 class CClientReConnectManager : public ACE_Event_Handler, public IClientManager
@@ -79,7 +79,7 @@ private:
 public:
 	mapReactorConnectInfo       m_mapConnectInfo;              //TCP连接对象管理器  
 	mapReactorUDPConnectInfo    m_mapReactorUDPConnectInfo;    //UDP连接对象管理器
-	ReactorConnect              m_ReactorConnect;              //Reactor连接客户端对象
+	CConnectClientConnector     m_ReactorConnect;              //Reactor连接客户端对象
 	ACE_Recursive_Thread_Mutex  m_ThreadWritrLock;             //线程锁
 	ActiveTimer                 m_ActiveTimer;                 //时间管理器
 	int                         m_nTaskID;                     //定时检测工具
