@@ -24,6 +24,7 @@ CMainConfig::CMainConfig(void)
 	m_u1ServerType            = 0;
 	m_u1Debug                 = DEBUG_OFF;
 	m_u1Monitor               = 0;
+	m_u4SendDatamark          = MAX_BLOCK_SIZE;
 
 	m_u1ConsoleSupport        = 0;
 	m_nConsolePort            = 0;
@@ -336,11 +337,21 @@ bool CMainConfig::Init(const char* szConfigPath)
 	{
 		m_u2SendQueuePutTime = (uint16)ACE_OS::atoi(pData);
 	}
+	pData = m_MainConfig.GetData("SendInfo", "SingleConnectionMaxSendMask");
+	if(pData != NULL)
+	{
+		m_u4SendDatamark = (int)ACE_OS::atoi(pData);
+	}
+
+
+	//线程相关
 	pData = m_MainConfig.GetData("ThreadInfo", "PutQueueTimeout");
 	if(pData != NULL)
 	{
 		m_u2WorkQueuePutTime = (uint16)ACE_OS::atoi(pData);
 	}
+
+	//连接对象缓冲相关
 	pData = m_MainConfig.GetData("ClientInfo", "HandlerCount");
 	if(pData != NULL)
 	{
@@ -557,6 +568,7 @@ void CMainConfig::Display()
 	OUR_DEBUG((LM_INFO, "[CMainConfig::Display]m_u2SendQueuePutTime = %d.\n", m_u2SendQueuePutTime));
 	OUR_DEBUG((LM_INFO, "[CMainConfig::Display]m_u2WorkQueuePutTime = %d.\n", m_u2WorkQueuePutTime));
 	OUR_DEBUG((LM_INFO, "[CMainConfig::Display]m_u1ServerType = %d.\n", m_u1ServerType));
+	OUR_DEBUG((LM_INFO, "[CMainConfig::Display]m_u4SendDatamark = %d.\n", m_u4SendDatamark));
 
 	for(int i = 0; i < (int)m_vecUDPServerInfo.size(); i++)
 	{
@@ -888,3 +900,9 @@ uint8 CMainConfig::GetCommandFlow()
 {
 	return m_u1CommandFlow;
 }
+
+uint32 CMainConfig::GetSendDataMask()
+{
+	return m_u4SendDatamark;
+}
+

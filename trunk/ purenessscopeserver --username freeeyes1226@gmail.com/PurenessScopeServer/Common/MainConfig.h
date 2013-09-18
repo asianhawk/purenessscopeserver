@@ -125,6 +125,7 @@ public:
 	uint8 GetMonitor();
 	uint32 GetServerRecvBuff();
 	uint8 GetCommandFlow();
+	uint32 GetSendDataMask();
 
 private:
 	CXmlOpeation m_MainConfig;
@@ -187,6 +188,7 @@ private:
 	uint16     m_u2ConnectServerCheck;             //服务器间连接单位检查时间
 	uint32     m_u4ConnectServerRecvBuff;          //服务器间的数据包接收缓冲大小
 	uint32     m_u4ServerRecvBuff;                 //接收从客户端到达的数据块的最大大小，只有PacketPrase流模式才会生效
+	uint32     m_u4SendDatamark;                   //发送差值的水位标（目前只有Proactor模式用这个）
 
 	uint8      m_u1NetworkMode;                    //当前可以设置的网络模式
 	uint8      m_u1Monitor;                        //设置当前的监控开关是否打开，0是关闭，1是打开
