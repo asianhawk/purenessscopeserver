@@ -7,6 +7,11 @@
 // 加油吧，你能做到的。
 // add by freeeyes
 // 2009-08-23
+//Bobo提出的一个好问题，如果IOCP下，发送和接收不对等，会造成内存无限增长的情况。
+//这个问题很好，解决方法是，设置两个水位标，如果两个水位标差距超过了一个容忍值，那么就断开连接。
+//linux下不会有这个问题，只在IOCP下出现。
+//add by freeyes
+//2013-09-18
 
 #ifndef _PROCONNECTHANDLE_H
 #define _PROCONNECTHANDLE_H
@@ -94,6 +99,9 @@ private:
 	uint32             m_u4AllRecvSize;                //当前链接接收字节总数
 	uint32             m_u4AllSendSize;                //当前链接发送字节总数 
 	CPacketParse*      m_pPacketParse;                 //数据包解析类
+
+	uint32             m_u4ReadSendSize;               //准备发送的字节数（水位标）
+	uint32             m_u4SuccessSendSize;            //实际客户端接收到的总字节数（水位标）
 
 	ACE_Recursive_Thread_Mutex m_ThreadWriteLock;
 

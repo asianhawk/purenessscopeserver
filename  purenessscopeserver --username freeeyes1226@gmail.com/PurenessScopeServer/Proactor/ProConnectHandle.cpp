@@ -22,6 +22,8 @@ CProConnectHandle::CProConnectHandle(void)
 	m_u8RecvQueueTimeCost = 0;
 	m_u4RecvQueueCount    = 0;
 	m_u8SendQueueTimeCost = 0;
+	m_u4ReadSendSize      = 0;
+	m_u4SuccessSendSize   = 0;
 	m_pBlockMessage       = NULL;
 	m_u2SendQueueTimeout  = MAX_QUEUE_TIMEOUT * 1000;  //目前因为记录的是微秒，所以这里相应的扩大1000倍
 	m_u2RecvQueueTimeout  = MAX_QUEUE_TIMEOUT * 1000;  //目前因为记录的是微秒，所以这里相应的扩大1000倍
@@ -173,6 +175,8 @@ void CProConnectHandle::open(ACE_HANDLE h, ACE_Message_Block&)
 	m_u8RecvQueueTimeCost = 0;
 	m_u4RecvQueueCount    = 0;
 	m_u8SendQueueTimeCost = 0;
+	m_u4SuccessSendSize   = 0;
+	m_u4ReadSendSize      = 0;
 
 	ACE_Time_Value tvOpenEnd(ACE_OS::gettimeofday());
 	ACE_Time_Value tvOpen(tvOpenEnd - tvOpenBegin);
@@ -605,6 +609,9 @@ void CProConnectHandle::handle_write_stream(const ACE_Asynch_Write_Stream::Resul
 		App_MessageBlockManager::instance()->Close(&result.message_block());
 		m_u4AllSendSize += (uint32)result.bytes_to_write();
 		m_ThreadWriteLock.release();
+		
+		//记录水位标
+		m_u4SuccessSendSize += (uint32)result.bytes_to_write();
 		Close();
 		return;
 	}
@@ -864,6 +871,20 @@ bool CProConnectHandle::PutSendPacket(ACE_Message_Block* pMbData)
 	//异步发送方法
 	if(NULL != pMbData)
 	{
+		//记录水位标
+		m_u4ReadSendSize += pMbData->length();
+
+		//比较水位标，是否超过一定数值，也就是说发快收慢的时候，如果超过一定数值，断开连接
+		if(m_u4ReadSendSize - m_u4SuccessSendSize >= App_MainConfig::instance()->GetSendDataMask())
+		{
+			OUR_DEBUG ((LM_ERROR, "[CConnectHandler::PutSendPacket]ConnectID = %d, SingleConnectMaxSendBuffer is more than(%d)!\n", GetConnectID(), m_u4ReadSendSize - m_u4SuccessSendSize));
+			AppLogManager::instance()->WriteLog(LOG_SYSTEM_SENDQUEUEERROR, "]ConnectID = %d,SingleConnectMaxSendBuffer is more than(%d)!.", GetConnectID(), m_u4ReadSendSize - m_u4SuccessSendSize);
+			pMbData->release();
+			//断开连接
+			Close(2);
+			return false;
+		}
+
 		if(0 != m_Writer.write(*pMbData, pMbData->length()))
 		{
 			OUR_DEBUG ((LM_ERROR, "[CConnectHandler::PutSendPacket] Connectid=%d mb=%d m_writer.write error(%d)!\n", GetConnectID(),  pMbData->length(), errno));
