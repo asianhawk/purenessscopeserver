@@ -73,21 +73,25 @@ int CBaseCommand::DoMessage(IMessage* pMessage, bool& bDeleteFlag)
 
     pBodyPacket->WriteStream(BodyPacket.m_pData, BodyPacket.m_nDataLen);
 
-    (*pBodyPacket) >> u2CommandID;
-    (*pBodyPacket) >> u8ClientTime;
+    //(*pBodyPacket) >> u2CommandID;
+    //(*pBodyPacket) >> u8ClientTime;
 
-    m_pServerObject->GetPacketManager()->Delete(pBodyPacket);
+	IBuffPacket* pResponsesPacket = m_pServerObject->GetPacketManager()->Create();
+	uint16 u2PostCommandID = COMMAND_BASE;
 
-    IBuffPacket* pResponsesPacket = m_pServerObject->GetPacketManager()->Create();
-    uint16 u2PostCommandID = COMMAND_BASE;
+	//数据原样奉还
+    (*pResponsesPacket) << (uint32)BodyPacket.m_nDataLen;
+	pResponsesPacket->WriteStream(BodyPacket.m_pData, BodyPacket.m_nDataLen);
 
-    (*pResponsesPacket) << u2PostCommandID;
-    (*pResponsesPacket) << u8ClientTime;
+    //(*pResponsesPacket) << u2PostCommandID;
+    //(*pResponsesPacket) << u8ClientTime;
+
+	m_pServerObject->GetPacketManager()->Delete(pBodyPacket);
 
     if(NULL != m_pServerObject->GetConnectManager())
     {
       //发送全部数据
-      m_pServerObject->GetConnectManager()->PostMessage(pMessage->GetMessageBase()->m_u4ConnectID, pResponsesPacket, SENDMESSAGE_NOMAL, u2PostCommandID, true);
+      m_pServerObject->GetConnectManager()->PostMessage(pMessage->GetMessageBase()->m_u4ConnectID, pResponsesPacket, SENDMESSAGE_JAMPNOMAL, u2PostCommandID, true);
     }
     else
     {

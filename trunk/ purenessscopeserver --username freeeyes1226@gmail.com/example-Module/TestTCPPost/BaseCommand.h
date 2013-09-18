@@ -31,12 +31,13 @@ public:
 			OUR_DEBUG((LM_INFO, "[CPostServerData::RecvData]Get Data(%d).\n", mbRecv->length()));
 		}
 		
+		OUR_DEBUG((LM_INFO, "[CPostServerData::RecvData]Get Data(%d).\n", mbRecv->length()));
 		if(NULL != m_pServerObject &&  mbRecv->length() > 0)
 		{
 			uint16 u2RetCommand = 0x1010;
 			char* pData = new char[mbRecv->length()];
 			ACE_OS::memcpy(pData, mbRecv->rd_ptr(), mbRecv->length());
-
+			
 			m_pServerObject->GetConnectManager()->PostMessage(m_u4ConnectID, pData, mbRecv->length(), SENDMESSAGE_JAMPNOMAL, u2RetCommand, true);
 		}
 
