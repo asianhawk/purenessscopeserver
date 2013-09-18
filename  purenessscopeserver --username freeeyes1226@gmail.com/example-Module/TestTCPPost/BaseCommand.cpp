@@ -65,16 +65,19 @@ int CBaseCommand::DoMessage(IMessage* pMessage, bool& bDeleteFlag)
 		(*pBodyPacket) >> u2CommandID;
 		//(*pBodyPacket) >> strsName;
 		//strName.assign(strsName.text, strsName.u1Len);
+		
+		//往中间服务器发送消息(测试数据透传)
+		char szPostData[2048] = {'\0'};
+		//sprintf_safe(szPostData, MAX_BUFF_100, "hello world");
+		OUR_DEBUG((LM_ERROR, "[CBaseCommand::DoMessage] CommandID= 0x%04x, m_nDataLen=%d.\n", u2CommandID, BodyPacket.m_nDataLen));
+		int nSendSize = BodyPacket.m_nDataLen;
+		ACE_OS::memcpy(szPostData, BodyPacket.m_pData, BodyPacket.m_nDataLen);		
 
 		m_pServerObject->GetPacketManager()->Delete(pBodyPacket);
 
-		//往中间服务器发送消息
-		char szPostData[MAX_BUFF_100] = {'\0'};
-		sprintf_safe(szPostData, MAX_BUFF_100, "hello world");
-		
 		//设置当前接收数据的ConnectID，用于收到远程回应信息返回
 		m_pPostServerData1->SetConnectID(pMessage->GetMessageBase()->m_u4ConnectID);
-		if(false == m_pServerObject->GetClientManager()->SendData(1, szPostData, (int)ACE_OS::strlen(szPostData), false))
+		if(false == m_pServerObject->GetClientManager()->SendData(1, szPostData, nSendSize, false))
 		{
 			OUR_DEBUG((LM_ERROR, "[CBaseCommand::DoMessage] Send Post Data Error.\n"));
 			return 0;
@@ -93,7 +96,7 @@ void CBaseCommand::InitServer()
 	m_pPostServerData1->SetServerObject(m_pServerObject);
 
 	//初始化连接关系
-	m_pServerObject->GetClientManager()->Connect(1, "127.0.0.1", 10040, TYPE_IPV4, (IClientMessage* )m_pPostServerData1);
+	m_pServerObject->GetClientManager()->Connect(1, "172.21.1.200", 10040, TYPE_IPV4, (IClientMessage* )m_pPostServerData1);
 
 }
 

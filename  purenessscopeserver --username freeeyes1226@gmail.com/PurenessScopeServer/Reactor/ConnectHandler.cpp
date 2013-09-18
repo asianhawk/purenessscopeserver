@@ -915,7 +915,7 @@ bool CConnectHandler::SendMessage(uint16 u2CommandID, IBuffPacket* pBuffPacket, 
 	else
 	{
 		//如果之前有缓冲数据，则和缓冲数据一起发送
-		u4PacketSize = m_pBlockMessage->length();
+		u4PacketSize = m_pBlockMessage->length() + pBuffPacket->GetPacketLen();
 		if(m_pBlockMessage->length() > 0)
 		{
 			ACE_OS::memcpy(m_pBlockMessage->wr_ptr(), pBuffPacket->GetData(), pBuffPacket->GetPacketLen());

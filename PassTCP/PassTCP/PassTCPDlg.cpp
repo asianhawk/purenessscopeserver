@@ -604,6 +604,18 @@ void CPassTCPDlg::OnBnClickedButton3()
 	}
 	fwrite(szLogText, strlen(szLogText), sizeof(char), pFile);
 
+	CString strData;
+	CString strDataPort;
+	m_txtServerIP.GetWindowText(strData);
+
+	char szServerIP[MAX_BUFF_20] = {'\0'};
+	int nSrcLen = WideCharToMultiByte(CP_ACP, 0, strData, strData.GetLength(), NULL, 0, NULL, NULL);
+	int nDecLen = WideCharToMultiByte(CP_ACP, 0, strData, nSrcLen, szServerIP, MAX_BUFF_20, NULL,NULL);
+	szServerIP[nDecLen] = '\0';
+
+	m_txtPort.GetWindowText(strDataPort);
+	sprintf_s(szLogText, 1024, "压测IP:%s, 压测端口:%d.\n", szServerIP, _ttoi((LPCTSTR)strDataPort));
+	fwrite(szLogText, strlen(szLogText), sizeof(char), pFile);
 
 	//CString strBeginTime = m_tmBegin.Format("%Y-%m-%d %H:%M:%S");
 	sprintf_s(szLogText, 1024, "压测开始时间为: %04d-%02d-%02d %02d:%02d:%02d\n", m_tmBegin.GetYear(), m_tmBegin.GetMonth(), m_tmBegin.GetDay(), m_tmBegin.GetHour(), m_tmBegin.GetMinute(), m_tmBegin.GetSecond());
@@ -626,7 +638,7 @@ void CPassTCPDlg::OnBnClickedButton3()
 		fwrite(szLogText, strlen(szLogText), sizeof(char), pFile);
 	}
 
-	CString strData;
+	
 	m_txtThreadCount.GetWindowText(strData);
 	sprintf_s(szLogText, 1024, "压测线程数:%d\n", _ttoi((LPCTSTR)strData));
 	fwrite(szLogText, strlen(szLogText), sizeof(char), pFile);
