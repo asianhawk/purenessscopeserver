@@ -878,7 +878,7 @@ bool CProConnectHandle::PutSendPacket(ACE_Message_Block* pMbData)
 		if(m_u4ReadSendSize - m_u4SuccessSendSize >= App_MainConfig::instance()->GetSendDataMask())
 		{
 			OUR_DEBUG ((LM_ERROR, "[CConnectHandler::PutSendPacket]ConnectID = %d, SingleConnectMaxSendBuffer is more than(%d)!\n", GetConnectID(), m_u4ReadSendSize - m_u4SuccessSendSize));
-			AppLogManager::instance()->WriteLog(LOG_SYSTEM_SENDQUEUEERROR, "]ConnectID = %d,SingleConnectMaxSendBuffer is more than(%d)!.", GetConnectID(), m_u4ReadSendSize - m_u4SuccessSendSize);
+			AppLogManager::instance()->WriteLog(LOG_SYSTEM_SENDQUEUEERROR, "]Connection from [%s:%d], SingleConnectMaxSendBuffer is more than(%d)!.", m_addrRemote.get_host_addr(), m_addrRemote.get_port_number(), m_u4ReadSendSize - m_u4SuccessSendSize);
 			pMbData->release();
 			//¶Ï¿ªÁ¬½Ó
 			Close(2);

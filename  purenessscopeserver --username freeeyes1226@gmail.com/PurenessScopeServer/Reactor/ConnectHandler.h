@@ -49,6 +49,7 @@ public:
 
 	void Init(uint16 u2HandlerID);                                           //Connect Pool初始化调用时候调用的方法
 
+	bool CheckSendMask(uint32 u4PacketLen);                                  //检测指定的连接发送数据是否超过阻塞阀值 
 	bool SendMessage(uint16 u2CommandID, IBuffPacket* pBuffPacket, bool blState, uint8 u1SendType, uint32& u4PacketSize);  //发送当前数据
 
 	bool SetRecvQueueTimeCost(uint32 u4TimeCost);                            //记录当前接收数据到模块处理完成的具体时间消耗
@@ -106,6 +107,9 @@ private:
 	int                        m_nBlockMaxCount;               //阻塞允许发生的最大次数
 	int                        m_nBlockSize;                   //阻塞发生时缓冲区的大小
 	uint32                     m_u4BlockTimerID;               //阻塞定时器的ID
+
+	uint32                     m_u4ReadSendSize;               //准备发送的字节数（水位标）
+	uint32                     m_u4SuccessSendSize;            //实际客户端接收到的总字节数（水位标）
 
 	_TimerCheckID*             m_pTCClose;                     //定时检测链接存活状态的定时器
 
