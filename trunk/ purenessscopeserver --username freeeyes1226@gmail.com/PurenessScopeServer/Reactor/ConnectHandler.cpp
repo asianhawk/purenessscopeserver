@@ -32,6 +32,8 @@ CConnectHandler::CConnectHandler(void)
 	m_u8RecvQueueTimeCost = 0;
 	m_u4RecvQueueCount    = 0;
 	m_u8SendQueueTimeCost = 0;
+	m_u4ReadSendSize      = 0;
+	m_u4SuccessSendSize   = 0;
 	m_u8SendQueueTimeout  = MAX_QUEUE_TIMEOUT * 1000 * 1000;  //目前因为记录的是纳秒
 	m_u8RecvQueueTimeout  = MAX_QUEUE_TIMEOUT * 1000 * 1000;  //目前因为记录的是纳秒
 }
@@ -229,6 +231,9 @@ int CConnectHandler::open(void*)
 	m_u8RecvQueueTimeCost = 0;
 	m_u4RecvQueueCount    = 0;
 	m_u8SendQueueTimeCost = 0;
+
+	m_u4ReadSendSize      = 0;
+	m_u4SuccessSendSize   = 0;
 
 	//设置接收缓冲池的大小
 	int nTecvBuffSize = MAX_MSG_SOCKETBUFF;
@@ -1053,8 +1058,9 @@ bool CConnectHandler::PutSendPacket(ACE_Message_Block* pMbData)
 		else if(nDataLen >= nSendPacketLen)   //当数据包全部发送完毕，清空。
 		{
 			//OUR_DEBUG((LM_ERROR, "[CConnectHandler::handle_output] ConnectID = %d, send (%d) OK.\n", GetConnectID(), msg_queue()->is_empty()));
-			m_u4AllSendCount += 1;
-			m_u4AllSendSize  += (uint32)pMbData->length();
+			m_u4AllSendCount    += 1;
+			m_u4AllSendSize     += (uint32)pMbData->length();
+			m_u4SuccessSendSize += (uint32)pMbData->length();
 			pMbData->release();
 			m_atvOutput      = ACE_OS::gettimeofday();
 			Close();
@@ -1126,6 +1132,21 @@ _ClientIPInfo  CConnectHandler::GetClientIPInfo()
 	sprintf_safe(ClientIPInfo.m_szClientIP, MAX_BUFF_20, "%s", m_addrRemote.get_host_addr());
 	ClientIPInfo.m_nPort = (int)m_addrRemote.get_port_number();
 	return ClientIPInfo;
+}
+
+bool CConnectHandler::CheckSendMask(uint32 u4PacketLen)
+{
+	m_u4ReadSendSize += u4PacketLen;
+	if(m_u4ReadSendSize - m_u4SuccessSendSize >= App_MainConfig::instance()->GetSendDataMask())
+	{
+		OUR_DEBUG ((LM_ERROR, "[CConnectHandler::CheckSendMask]ConnectID = %d, SingleConnectMaxSendBuffer is more than(%d)!\n", GetConnectID(), m_u4ReadSendSize - m_u4SuccessSendSize));
+		AppLogManager::instance()->WriteLog(LOG_SYSTEM_SENDQUEUEERROR, "]Connection from [%s:%d], SingleConnectMaxSendBuffer is more than(%d)!.", m_addrRemote.get_host_addr(), m_addrRemote.get_port_number(), m_u4ReadSendSize - m_u4SuccessSendSize);
+		return false;
+	}
+	else
+	{
+		return true;
+	}
 }
 
 //***************************************************************************
@@ -1300,6 +1321,32 @@ bool CConnectManager::PostMessage(uint32 u4ConnectID, IBuffPacket* pBuffPacket, 
 	//OUR_DEBUG((LM_INFO, "[CConnectManager::PostMessage]Begin.\n"));
 	//ACE_Message_Block* mb = App_MessageBlockManager::instance()->Create(sizeof(_SendMessage*));
 	ACE_Message_Block* mb = NULL;
+
+	//判定是否达到了发送阀值，如果达到了，则直接断开连接。
+	mapConnectManager::iterator f = m_mapConnectManager.find(u4ConnectID);
+
+	if(f != m_mapConnectManager.end())
+	{
+		CConnectHandler* pConnectHandler = (CConnectHandler* )f->second;
+		if(NULL != pConnectHandler)
+		{
+			bool blState = pConnectHandler->CheckSendMask(pBuffPacket->GetPacketLen());
+			if(false == blState)
+			{
+				//超过了阀值，则关闭连接
+				App_BuffPacketManager::instance()->Delete(pBuffPacket);
+				Close(2);
+				return false;
+			}
+		}
+	}
+	else
+	{
+		//如果连接压根就不存在，则不进入数据队列，直接丢弃发送数据，并返回失败。
+		OUR_DEBUG((LM_ERROR,"[CMessageService::PutMessage] u4ConnectID(%d) is not exist.\n", u4ConnectID));
+		App_BuffPacketManager::instance()->Delete(pBuffPacket);
+		return false;
+	}
 
 	ACE_NEW_MALLOC_NORETURN(mb, 
 		static_cast<ACE_Message_Block*>(_msg_send_mb_allocator.malloc(sizeof(ACE_Message_Block))),
@@ -1651,6 +1698,33 @@ bool CConnectManager::PostMessageAll(IBuffPacket* pBuffPacket, uint8 u1SendType 
 		pCurrBuffPacket->WriteStream(pBuffPacket->GetData(), pBuffPacket->GetPacketLen());
 
 		u4ConnectID = objvecConnectManager[i];
+
+		//判定是否达到了发送阀值，如果达到了，则直接断开连接。
+		mapConnectManager::iterator f = m_mapConnectManager.find(u4ConnectID);
+
+		if(f != m_mapConnectManager.end())
+		{
+			CConnectHandler* pConnectHandler = (CConnectHandler* )f->second;
+			if(NULL != pConnectHandler)
+			{
+				bool blState = pConnectHandler->CheckSendMask(pBuffPacket->GetPacketLen());
+				if(false == blState)
+				{
+					//超过了阀值，则关闭连接
+					App_BuffPacketManager::instance()->Delete(pBuffPacket);
+					Close(2);
+					continue;
+				}
+			}
+		}
+		else
+		{
+			//如果连接压根就不存在，则不进入数据队列，直接丢弃发送数据，并返回失败。
+			OUR_DEBUG((LM_ERROR,"[CMessageService::PutMessage] u4ConnectID(%d) is not exist.\n", u4ConnectID));
+			App_BuffPacketManager::instance()->Delete(pBuffPacket);
+			continue;
+		}
+
 		ACE_Message_Block* mb = NULL;
 
 		ACE_NEW_MALLOC_NORETURN(mb, 
