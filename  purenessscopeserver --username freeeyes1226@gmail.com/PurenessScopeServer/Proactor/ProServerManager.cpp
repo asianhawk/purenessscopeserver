@@ -367,6 +367,8 @@ bool CProServerManager::Close()
 	OUR_DEBUG((LM_INFO, "[CProServerManager::Close]Close App_TimerManager OK.\n"));
 	App_TimerManager::instance()->deactivate();
 	OUR_DEBUG((LM_INFO, "[CProServerManager::Close]Close App_ReUDPManager OK.\n"));
+	App_ClientProConnectManager::instance()->Close();
+	OUR_DEBUG((LM_INFO, "[CProServerManager::Close]Close App_ClientReConnectManager OK.\n"));
 	App_ProUDPManager::instance()->Close();
 	OUR_DEBUG((LM_INFO, "[CProServerManager::Close]Close App_ModuleLoader OK.\n"));
 	App_ModuleLoader::instance()->Close();
@@ -377,8 +379,6 @@ bool CProServerManager::Close()
 	OUR_DEBUG((LM_INFO, "[CProServerManager::Close]Close App_MessageServiceGroup OK.\n"));
 	App_ProConnectManager::instance()->CloseAll();
 	OUR_DEBUG((LM_INFO, "[CProServerManager::Close]Close App_ConnectManager OK.\n"));
-	App_ClientProConnectManager::instance()->Close();
-	OUR_DEBUG((LM_INFO, "[CProServerManager::Close]Close App_ClientReConnectManager OK.\n"));
 	App_CommandAccount::instance()->SaveCommandDataLog();
 	OUR_DEBUG((LM_INFO, "[CProServerManager::Close]Save App_CommandAccount OK.\n"));
 	AppLogManager::instance()->Close();

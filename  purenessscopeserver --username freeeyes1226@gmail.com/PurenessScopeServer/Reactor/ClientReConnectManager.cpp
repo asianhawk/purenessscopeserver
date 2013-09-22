@@ -10,6 +10,7 @@ CReactorClientInfo::CReactorClientInfo()
 
 CReactorClientInfo::~CReactorClientInfo()
 {
+	OUR_DEBUG((LM_ERROR, "[CReactorClientInfo::~CReactorClientInfo].\n"));
 }
 
 bool CReactorClientInfo::Init(int nServerID, const char* pIP, int nPort, uint8 u1IPType, CConnectClientConnector* pReactorConnect, IClientMessage* pClientMessage, ACE_Reactor* pReactor)
@@ -109,17 +110,23 @@ int CReactorClientInfo::GetServerID()
 
 bool CReactorClientInfo::Close()
 {
+	//OUR_DEBUG((LM_ERROR, "[CReactorClientInfo::Close]Begin.\n"));
 	if(NULL == m_pConnectClient)
 	{
+		OUR_DEBUG((LM_ERROR, "[CReactorClientInfo::Close]End 1.\n", m_pClientMessage));
+		m_pClientMessage = NULL;
 		return false;
 	}
 	else
 	{
+		OUR_DEBUG((LM_ERROR, "[CReactorClientInfo::Close]End 2.\n"));
+		m_pClientMessage = NULL;
+		m_pConnectClient->SetClientMessage(NULL);
 		m_pConnectClient->ClinetClose();
 		return true;
 	}
 
-	SAFE_DELETE(m_pClientMessage);
+	
 }
 
 void CReactorClientInfo::SetConnectClient(CConnectClient* pConnectClient)
@@ -483,6 +490,7 @@ void CClientReConnectManager::Close()
 {
 	ACE_Guard<ACE_Recursive_Thread_Mutex> guard(m_ThreadWritrLock);
 
+	OUR_DEBUG((LM_ERROR, "[CClientReConnectManager::Close]Begin.\n"));
 	//如果有定时器，则删除定时器
 	CancelConnectTask();
 
@@ -503,6 +511,8 @@ void CClientReConnectManager::Close()
 
 	m_mapConnectInfo.clear();
 	m_mapReactorUDPConnectInfo.clear();
+	
+	OUR_DEBUG((LM_ERROR, "[CClientReConnectManager::Close]End.\n"));
 }
 
 int CClientReConnectManager::handle_timeout(const ACE_Time_Value &tv, const void *arg)
