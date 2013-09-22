@@ -360,6 +360,8 @@ bool CServerManager::Close()
 	OUR_DEBUG((LM_INFO, "[CServerManager::Close]Close App_ReUDPManager OK.\n"));
 	App_ReUDPManager::instance()->Close();
 	OUR_DEBUG((LM_INFO, "[CServerManager::Close]Close App_ModuleLoader OK.\n"));
+	App_ClientReConnectManager::instance()->Close();
+	OUR_DEBUG((LM_INFO, "[CServerManager::Close]Close App_ClientReConnectManager OK.\n"));
 	App_ModuleLoader::instance()->Close();
 	OUR_DEBUG((LM_INFO, "[CServerManager::Close]Close App_MessageManager OK.\n"));
 	App_MessageManager::instance()->Close();
@@ -368,8 +370,6 @@ bool CServerManager::Close()
 	OUR_DEBUG((LM_INFO, "[App_MessageServiceGroup::Close]Close App_MessageServiceGroup OK.\n"));
 	App_ConnectManager::instance()->CloseAll();
 	OUR_DEBUG((LM_INFO, "[CServerManager::Close]Close App_ConnectManager OK.\n"));
-	App_ClientReConnectManager::instance()->Close();
-	OUR_DEBUG((LM_INFO, "[CServerManager::Close]Close App_ClientReConnectManager OK.\n"));
 	App_CommandAccount::instance()->SaveCommandDataLog();
 	OUR_DEBUG((LM_INFO, "[CServerManager::Close]Save App_CommandAccount OK.\n"));
 	AppLogManager::instance()->Close();
