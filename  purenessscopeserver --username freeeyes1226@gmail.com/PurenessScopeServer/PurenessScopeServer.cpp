@@ -46,6 +46,12 @@ static int daemonize()
 		return -1;
 	}
 
+	int status = chdir("/");
+	if (status < 0) {
+		printf("chdir(\"/\") failed: %s", strerror(errno));
+		return -1;
+	}
+
 	umask(0);
 
 	fd = open("/dev/null", O_RDWR);
@@ -54,7 +60,7 @@ static int daemonize()
 		return -1;
 	}
 
-	int status = dup2(fd, STDIN_FILENO);
+	status = dup2(fd, STDIN_FILENO);
 	if (status < 0) {
 		printf("[daemonize]dup2(%d, STDIN) failed: %s", fd, strerror(errno));
 		close(fd);
