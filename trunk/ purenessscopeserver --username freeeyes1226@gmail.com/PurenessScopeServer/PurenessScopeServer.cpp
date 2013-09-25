@@ -63,9 +63,10 @@ int CheckCoreLimit(int nMaxCoreFile)
 	}
 	else
 	{
+		//不需要Core文件尺寸，这里就什么都不做了
+		/*
 		if((int)rCorelimit.rlim_cur > 0)
 		{
-			//不需要Core文件尺寸，在这里把Core文件大小设置成0
 			rCorelimit.rlim_cur = (rlim_t)nMaxCoreFile;
 			rCorelimit.rlim_max = (rlim_t)nMaxCoreFile;			
 			if (setrlimit(RLIMIT_CORE, &rCorelimit)!= 0) 
@@ -73,7 +74,8 @@ int CheckCoreLimit(int nMaxCoreFile)
 				OUR_DEBUG((LM_INFO, "[Checkfilelimit]failed to setrlimit number of files.\n"));
 				return -1;
 			}
-		}		
+		}	
+		*/
 	}
 
 	//OUR_DEBUG((LM_INFO, "[CheckCoreLimit]rlim.rlim_cur=%d, nMaxOpenFile=%d, openfile is not enougth， please check [ulimit -a].\n", (int)rCorelimit.rlim_cur, nMaxCoreFile));		
@@ -123,7 +125,6 @@ int Checkfilelimit(int nMaxOpenFile)
 			}
 
 			//OUR_DEBUG((LM_INFO, "[Checkfilelimit]rlim.rlim_cur=%d, nMaxOpenFile=%d, openfile is not enougth， please check [ulimit -a].\n", (int)rfilelimit.rlim_cur, nMaxOpenFile));
-			return -1;
 		}
 	}
 
