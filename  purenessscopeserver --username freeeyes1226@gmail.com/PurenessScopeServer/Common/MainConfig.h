@@ -102,17 +102,16 @@ public:
 
 	bool CompareConsoleClinetIP(const char* pConsoleClientIP);
 
-	uint16 GetUDPServerPortCount();
 	_ServerInfo* GetUDPServerPort(int nIndex);
 
+	uint16 GetUDPServerPortCount();
 	uint32 GetReactorCount();
-
 	uint16 GetValidConnectCount();
 	uint8  GetValid();
 	uint32 GetValidPacketCount();
 	uint32 GetValidRecvSize();
 	uint16 GetForbiddenTime();
-	uint8 GetCommandAccount();
+	uint8  GetCommandAccount();
 	uint32 GetConnectServerTimeout();
 	uint16 GetConnectServerCheck();
 	uint16 GetSendQueuePutTime();
@@ -122,10 +121,11 @@ public:
 	void   SetDebug(uint8 u1Debug);
 	uint8  GetNetworkMode();
 	uint32 GetConnectServerRecvBuffer();
-	uint8 GetMonitor();
+	uint8  GetMonitor();
 	uint32 GetServerRecvBuff();
-	uint8 GetCommandFlow();
+	uint8  GetCommandFlow();
 	uint32 GetSendDataMask();
+	uint32 GetCoreFileSize();
 
 private:
 	CXmlOpeation m_MainConfig;
@@ -192,6 +192,7 @@ private:
 
 	uint8      m_u1NetworkMode;                    //当前可以设置的网络模式
 	uint8      m_u1Monitor;                        //设置当前的监控开关是否打开，0是关闭，1是打开
+	uint32     m_u4CoreFileSize;                   //Core文件的尺寸大小
 
 	typedef vector<_ServerInfo> vecServerInfo;
 	vecServerInfo m_vecServerInfo;

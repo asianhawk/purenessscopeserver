@@ -25,6 +25,7 @@ CMainConfig::CMainConfig(void)
 	m_u1Debug                 = DEBUG_OFF;
 	m_u1Monitor               = 0;
 	m_u4SendDatamark          = MAX_BLOCK_SIZE;
+	m_u4CoreFileSize          = 0;
 
 	m_u1ConsoleSupport        = 0;
 	m_nConsolePort            = 0;
@@ -295,6 +296,13 @@ bool CMainConfig::Init(const char* szConfigPath)
 	{
 		sprintf_safe(m_szResourceName, MAX_BUFF_200, "%s", pData);
 	}
+	
+	//开始获得Core相关设定(目前仅限Linux)
+	pData = m_MainConfig.GetData("CoreSetting", "CoreSize");
+	if(NULL != pData)
+	{
+		m_u4CoreFileSize = (uint16)ACE_OS::atoi(pData);
+	}		
 
 	//开始获得发送和接受阀值
 	pData = m_MainConfig.GetData("SendInfo", "SendThresHold");
@@ -590,6 +598,7 @@ void CMainConfig::Display()
 	OUR_DEBUG((LM_INFO, "[CMainConfig::Display]m_u4ConnectServerRecvBuff = %d.\n", m_u4ConnectServerRecvBuff));
 	OUR_DEBUG((LM_INFO, "[CMainConfig::Display]m_u1CommandFlow = %d.\n", m_u1CommandFlow));
 	OUR_DEBUG((LM_INFO, "[CMainConfig::Display]m_u1CommandAccount = %d.\n", m_u1CommandAccount));
+	OUR_DEBUG((LM_INFO, "[CMainConfig::Display]m_u4CoreFileSize = %d.\n", m_u4CoreFileSize));
 }
 
 const char* CMainConfig::GetServerName()
@@ -904,5 +913,10 @@ uint8 CMainConfig::GetCommandFlow()
 uint32 CMainConfig::GetSendDataMask()
 {
 	return m_u4SendDatamark;
+}
+
+uint32 CMainConfig::GetCoreFileSize()
+{
+	return m_u4CoreFileSize;
 }
 
