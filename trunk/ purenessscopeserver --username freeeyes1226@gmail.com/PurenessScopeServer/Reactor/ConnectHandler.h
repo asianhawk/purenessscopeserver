@@ -55,7 +55,7 @@ public:
 	bool SetRecvQueueTimeCost(uint32 u4TimeCost);                            //记录当前接收数据到模块处理完成的具体时间消耗
 	bool SetSendQueueTimeCost(uint32 u4TimeCost);                            //记录当前从发送队列到数据发送完成的具体时间消耗
 
-	bool Close(int nIOCount = 1);
+	bool Close(int nIOCount = 1, int nErrno = 0);                            //关闭当前连接 
 	bool ServerClose();                                                      //服务器关闭客户端链接方法
 
 	const char* GetError();                                                  //得到当前错误信息
@@ -70,6 +70,7 @@ public:
 private:
 	bool CheckMessage();                                                     //处理接收的数据
 	bool PutSendPacket(ACE_Message_Block* pMbData);                          //发送数据
+	void ClearPacketParse();                                                 //清理正在使用的PacketParse
 
 private:
 	char                       m_szError[MAX_BUFF_500];        //错误信息描述文字
