@@ -55,7 +55,7 @@ const char* CConnectHandler::GetError()
 	return m_szError;
 }
 
-bool CConnectHandler::Close(int nIOCount, int nErrno)
+bool CConnectHandler::Close(int nIOCount)
 {
 	m_ThreadLock.acquire();
 	if(nIOCount > m_nIOCount)
