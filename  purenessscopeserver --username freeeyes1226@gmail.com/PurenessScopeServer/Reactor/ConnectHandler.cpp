@@ -120,7 +120,7 @@ void CConnectHandler::Init(uint16 u2HandlerID)
 {
 	m_u4HandlerID      = u2HandlerID;
 	m_u2MaxConnectTime = App_MainConfig::instance()->GetMaxConnectTime();
-	m_u4SendThresHold  = App_MainConfig::instance()->GetSendThresHold();
+	m_u4SendThresHold  = App_MainConfig::instance()->GetSendTimeout();
 	m_u2SendQueueMax   = App_MainConfig::instance()->GetSendQueueMax();
 	m_u4MaxPacketSize  = App_MainConfig::instance()->GetRecvBuffSize();
 
@@ -864,8 +864,8 @@ bool CConnectHandler::PutSendPacket(ACE_Message_Block* pMbData)
 		}
 	}
 
-
-	ACE_Time_Value     nowait(0, MAX_QUEUE_TIMEOUT);
+	//发送超时时间设置
+	ACE_Time_Value	nowait(0, m_u4SendThresHold*MAX_BUFF_1000);
 
 	if(NULL == pMbData)
 	{
