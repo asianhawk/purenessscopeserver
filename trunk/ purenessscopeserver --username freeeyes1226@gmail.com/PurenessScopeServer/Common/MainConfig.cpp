@@ -11,7 +11,7 @@ CMainConfig::CMainConfig(void)
 	m_nEncryptFlag            = 0;
 	m_nEncryptOutFlag         = 0;
 	m_u4ReactorCount          = 3;
-	m_u4SendThresHold         = 0;
+	m_u4SendTimeout           = MAX_QUEUE_TIMEOUT;
 	m_u4RecvBuffSize          = 0;
 	m_u2ThreadTimuOut         = 0;
 	m_u2ThreadTimeCheck       = 0;
@@ -305,10 +305,10 @@ bool CMainConfig::Init(const char* szConfigPath)
 	}		
 
 	//开始获得发送和接受阀值
-	pData = m_MainConfig.GetData("SendInfo", "SendThresHold");
+	pData = m_MainConfig.GetData("SendInfo", "SendTimeout");
 	if(pData != NULL)
 	{
-		m_u4SendThresHold = (int)ACE_OS::atoi(pData);
+		m_u4SendTimeout = (int)ACE_OS::atoi(pData);
 	}
 	pData = m_MainConfig.GetData("RecvInfo", "RecvBuffSize");
 	if(pData != NULL)
@@ -561,7 +561,7 @@ void CMainConfig::Display()
 	OUR_DEBUG((LM_INFO, "[CMainConfig::Display]m_nEncryptFlag = %d.\n", m_nEncryptFlag));
 	OUR_DEBUG((LM_INFO, "[CMainConfig::Display]m_szEncryptPass = %s.\n", m_szEncryptPass));
 	OUR_DEBUG((LM_INFO, "[CMainConfig::Display]m_nEncryptOutFlag = %d.\n", m_nEncryptOutFlag));
-	OUR_DEBUG((LM_INFO, "[CMainConfig::Display]m_u4SendThresHold = %d.\n", m_u4SendThresHold));
+	OUR_DEBUG((LM_INFO, "[CMainConfig::Display]m_u4SendTimeout = %d.\n", m_u4SendTimeout));
 	OUR_DEBUG((LM_INFO, "[CMainConfig::Display]m_u4RecvBuffSize = %d.\n", m_u4RecvBuffSize));
 	OUR_DEBUG((LM_INFO, "[CMainConfig::Display]m_u2SendQueueMax = %d.\n", m_u2SendQueueMax));
 	OUR_DEBUG((LM_INFO, "[CMainConfig::Display]m_u2ThreadTimuOut = %d.\n", m_u2ThreadTimuOut));
@@ -696,9 +696,9 @@ _ServerInfo* CMainConfig::GetUDPServerPort(int nIndex)
 	return &m_vecUDPServerInfo[nIndex];
 }
 
-uint32 CMainConfig::GetSendThresHold()
+uint32 CMainConfig::GetSendTimeout()
 {
-	return m_u4SendThresHold;
+	return m_u4SendTimeout;
 }
 
 uint32 CMainConfig::GetRecvBuffSize()

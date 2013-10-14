@@ -81,7 +81,7 @@ public:
 	const char* GetEncryptPass();
 	int GetEncryptOutFlag();
 
-	uint32 GetSendThresHold();
+	uint32 GetSendTimeout();
 
 	uint32 GetRecvBuffSize();
 	uint16 GetSendQueueMax();
@@ -152,7 +152,7 @@ private:
 	int        m_nEncryptFlag;                         //0，加密方式关闭，1为加密方式开启
 	char       m_szEncryptPass[MAX_BUFF_9];            //最长8位的加密密码，3DES算法
 	int        m_nEncryptOutFlag;                      //回应数据包，0，为不加密，1为加密
-	uint32     m_u4SendThresHold;                      //发送阀值(消息包的个数)
+	uint32     m_u4SendTimeout;                        //发送超时时间
 	uint32     m_u4RecvBuffSize;                       //接收数据缓冲池的大小
 	uint16     m_u2SendQueueMax;                       //发送队列中最长的数据包个数
 	uint16     m_u2ThreadTimuOut;                      //线程超时时间判定

@@ -42,7 +42,7 @@ void CProConnectHandle::Init(uint16 u2HandlerID)
 {
 	m_u4HandlerID      = u2HandlerID;
 	m_u2MaxConnectTime = App_MainConfig::instance()->GetMaxConnectTime();
-	m_u4SendThresHold  = App_MainConfig::instance()->GetSendThresHold();
+	m_u4SendThresHold  = App_MainConfig::instance()->GetSendTimeout();
 	m_u2SendQueueMax   = App_MainConfig::instance()->GetSendQueueMax();
 	m_u4MaxPacketSize  = App_MainConfig::instance()->GetRecvBuffSize();
 
