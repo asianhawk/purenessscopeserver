@@ -282,14 +282,14 @@ uint8 CPacketParse::GetPacketStream(uint32 u4ConnectID, ACE_Message_Block* pCurr
 	}
 }
 
-bool CPacketParse::Connect( uint32 u4ConnectID )
+bool CPacketParse::Connect(uint32 u4ConnectID, _ClientIPInfo& objClientIPInfo)
 {
 	//这里添加你对连接建立的逻辑处理，如果没有则不用在这里写任何代码
 	//返回false，则连接会断开
 	return true;
 }
 
-void CPacketParse::DisConnect( uint32 u4ConnectID )
+void CPacketParse::DisConnect(uint32 u4ConnectID)
 {
 	//这里添加你对连接断开的逻辑处理
 }

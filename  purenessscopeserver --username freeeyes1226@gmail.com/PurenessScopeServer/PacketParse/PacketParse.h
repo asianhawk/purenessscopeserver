@@ -36,7 +36,7 @@ public:
 	uint32 MakePacketLength(uint32 u4ConnectID, uint32 u4DataLen, uint16 u2CommandID = 0);
 
 	//当连接第一次建立的时候，返回的接口用于你自己的处理。
-	bool Connect(uint32 u4ConnectID);
+	bool Connect(uint32 u4ConnectID, _ClientIPInfo& objClientIPInfo);
 	//当连接断开的时候，返回你自己的处理
 	void DisConnect(uint32 u4ConnectID);
 
