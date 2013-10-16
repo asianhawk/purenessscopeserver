@@ -259,7 +259,10 @@ int CConnectHandler::open(void*)
 	}
 
 	//告诉PacketParse连接应建立
-	m_pPacketParse->Connect(GetConnectID());
+	_ClientIPInfo objClientIPInfo;
+	sprintf_safe(objClientIPInfo.m_szClientIP, MAX_BUFF_20, "%s", m_addrRemote.get_host_addr());
+	objClientIPInfo.m_nPort = m_addrRemote.get_port_number();
+	m_pPacketParse->Connect(GetConnectID(), objClientIPInfo);
 
 	//申请头的大小对应的mb
 	if(m_pPacketParse->GetPacketMode() == PACKET_WITHHEAD)

@@ -48,7 +48,7 @@ public:
 	virtual bool MakePacket(uint32 u4ConnectID, const char* pData, uint32 u4Len, ACE_Message_Block* pMbData, uint16 u2CommandID = 0) = 0;                        //创建返回包体结构
 	virtual uint32 MakePacketLength(uint32 u4ConnectID, uint32 u4DataLen, uint16 u2CommandID = 0)                                    = 0;                        //预先得到返回包体的长度
 
-	virtual bool Connect(uint32 u4ConnectID)                                                                                         = 0;  //处理连接建立的代码
+	virtual bool Connect(uint32 u4ConnectID, _ClientIPInfo& objClientIPInfo)                                                         = 0;  //处理连接建立的代码
 	virtual void DisConnect(uint32 u4ConnectID)                                                                                      = 0;  //处理连接断开的代码
 
 protected:
