@@ -69,6 +69,7 @@ private:
 	void Do_Ftp_Login(IMessage* pMessage);        //处理登陆
 	void Do_Ftp_Logout(IMessage* pMessage);       //处理登出
 	void Do_Ftp_FileList(IMessage* pMessage);     //获得文件列表
+	void Do_Ftp_FileDownLoad(IMessage* pMessage); //文件下载
 
 private:
   CServerObject* m_pServerObject;

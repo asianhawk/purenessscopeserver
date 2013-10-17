@@ -58,6 +58,10 @@ int CBaseCommand::DoMessage(IMessage* pMessage, bool& bDeleteFlag)
   {
 	  Do_Ftp_FileList(pMessage);
   }
+  else if(pMessage->GetMessageBase()->m_u2Cmd == COMMAND_FILE_DOWNLOAD)
+  {
+	  Do_Ftp_FileDownLoad(pMessage);
+  }
 
   return 0;
 
@@ -244,6 +248,106 @@ void CBaseCommand::Do_Ftp_FileList( IMessage* pMessage )
 	}
 }
 
+void CBaseCommand::Do_Ftp_FileDownLoad( IMessage* pMessage )
+{
+	uint32     u4PacketLen  = 0;
+	uint16     u2CommandID  = 0;
+	VCHARS_STR strUserName;
+	VCHARM_STR strFilePath;
+	uint32     u4BlockSize;            //块大小
+	uint32     u4CurrBlockIndex;       //当前块ID
+
+	char szUserName[MAX_BUFF_100] = {'\0'};
+	char szFilePath[MAX_BUFF_500] = {'\0'};
+
+	IBuffPacket* pBodyPacket = m_pServerObject->GetPacketManager()->Create();
+	if(NULL == pBodyPacket)
+	{
+		OUR_DEBUG((LM_ERROR, "[CBaseCommand::DoMessage] pBodyPacket is NULL.\n"));
+		return;
+	}
+
+	_PacketInfo BodyPacket;
+	pMessage->GetPacketBody(BodyPacket);
+
+	pBodyPacket->WriteStream(BodyPacket.m_pData, BodyPacket.m_nDataLen);
+
+	(*pBodyPacket) >> u2CommandID;
+	(*pBodyPacket) >> strUserName;
+	(*pBodyPacket) >> strFilePath;
+	(*pBodyPacket) >> u4BlockSize;
+	(*pBodyPacket) >> u4CurrBlockIndex;
+
+	//将接收数据转换为字符串
+	ACE_OS::memcpy(szUserName, strUserName.text, strUserName.u1Len);
+	ACE_OS::memcpy(szFilePath, strFilePath.text, strFilePath.u2Len);
+
+	m_pServerObject->GetPacketManager()->Delete(pBodyPacket);
+
+	bool blState = CheckOnlineUser(szUserName, pMessage->GetMessageBase()->m_u4ConnectID);
+	if(blState == true)
+	{
+		//获得文件块
+		CDirView objDirView;
+		uint32 u4BufferCount = 0;
+		objDirView.GetFileBufferCount(szFilePath, u4BlockSize, u4BufferCount);
+		if(u4CurrBlockIndex > u4BufferCount)
+		{
+			return;
+		}
+
+		uint32 u4FileBlockSize = 0;
+		char* pBuffer = new char[u4BlockSize];
+		bool blRet = objDirView.GetFileBuffer(szFilePath, pBuffer, u4FileBlockSize, u4BlockSize, u4CurrBlockIndex);
+		if(blRet == true)
+		{
+			//组成发送包
+			IBuffPacket* pResponsesPacket = m_pServerObject->GetPacketManager()->Create();
+			uint16 u2PostCommandID = COMMAND_RETURN_FILE_DOWNLOAD;
+			VCHARB_STR strFileBlock;
+
+			strFileBlock.text  = pBuffer;
+			strFileBlock.u4Len = (uint32)u4FileBlockSize;
+
+			(*pResponsesPacket) << (uint16)u2PostCommandID;   //拼接应答命令ID
+			(*pResponsesPacket) << (uint32)OP_OK;
+			(*pResponsesPacket) << u4BufferCount;             //文件块个数
+			(*pResponsesPacket) << u4CurrBlockIndex;          //当前文件块index
+			(*pResponsesPacket) << strFileBlock;              //文件块内容
+
+			if(NULL != m_pServerObject->GetConnectManager())
+			{
+				//发送全部数据
+				m_pServerObject->GetConnectManager()->PostMessage(pMessage->GetMessageBase()->m_u4ConnectID, pResponsesPacket, SENDMESSAGE_NOMAL, u2PostCommandID, true);
+			}
+			else
+			{
+				OUR_DEBUG((LM_INFO, "[CBaseCommand::DoMessage] m_pConnectManager = NULL"));
+			}
+		}
+
+		SAFE_DELETE_ARRAY(pBuffer);
+	}
+	else
+	{
+		IBuffPacket* pResponsesPacket = m_pServerObject->GetPacketManager()->Create();
+		uint16 u2PostCommandID = COMMAND_RETURN_FILE_DOWNLOAD;
+
+		(*pResponsesPacket) << (uint16)u2PostCommandID;   //拼接应答命令ID
+		(*pResponsesPacket) << (uint32)OP_FAIL;
+
+		if(NULL != m_pServerObject->GetConnectManager())
+		{
+			//发送全部数据
+			m_pServerObject->GetConnectManager()->PostMessage(pMessage->GetMessageBase()->m_u4ConnectID, pResponsesPacket, SENDMESSAGE_NOMAL, u2PostCommandID, true);
+		}
+		else
+		{
+			OUR_DEBUG((LM_INFO, "[CBaseCommand::DoMessage] m_pConnectManager = NULL"));
+		}
+	}
+}
+
 void CBaseCommand::InitUserList()
 {
 	//初始化允许的用户名和密码
@@ -323,6 +427,7 @@ void CBaseCommand::LeaveFtpUser( const char* pUserName )
 	{
 		_UserInfo* pUserInfo = (_UserInfo* )f->second;
 		pUserInfo->m_blOnline    = false;
+		pUserInfo->m_u4ConnectID = 0;
 	}
 }
 

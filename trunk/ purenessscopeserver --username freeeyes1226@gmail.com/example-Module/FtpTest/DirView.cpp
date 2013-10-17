@@ -58,3 +58,58 @@ uint32 CDirView::GetDir( const char* pPath, vevFileInfo& objvevFileInfo )
 	return DIR_OK;
 }
 
+bool CDirView::GetFileBuffer( const char* pPath, char* pFileBuffer, uint32& u4FileBlockSize, uint32 u4BlockSize, uint32 u4BlockIndex )
+{
+	if(NULL == pFileBuffer)
+	{
+		return false;
+	}
+
+	//判断获得文件位置是否越界
+	u4FileBlockSize = u4BlockSize;
+	uint32 u4FileSize = (int)ACE_OS::filesize(pPath);
+	if(u4FileSize <= u4BlockSize * u4BlockIndex)
+	{
+		return false;
+	}
+
+	//如果文件块小于规定的文件尺寸，则赋值为实际尺寸
+	if(u4BlockSize * (u4BlockIndex + 1) > u4FileSize)
+	{
+		u4FileBlockSize = u4FileSize - u4BlockSize * u4BlockIndex;
+	}
+
+	FILE* pFile = fopen(pPath, "rb");
+	if(NULL == pFile)
+	{
+		return false;
+	}
+
+	//设置读取位置
+	fseek(pFile, (long)(u4BlockSize * u4BlockIndex), SEEK_CUR);
+
+	//读取相应位置的文件块
+	uint32 u4ReadSize = (uint32)fread(pFileBuffer, sizeof(char), u4FileBlockSize, pFile);
+	if(u4ReadSize != u4FileBlockSize)
+	{
+		fclose(pFile);
+		return false;
+	}
+
+	fclose(pFile);
+	return true;
+}
+
+bool CDirView::GetFileBufferCount( const char* pPath, uint32 u4BlockSize, uint32& u4BlockCount )
+{
+	uint32 u4FileSize = (int)ACE_OS::filesize(pPath);
+	if(u4FileSize % u4BlockSize != 0)
+	{
+		u4BlockCount = u4FileSize / u4BlockSize + 1;
+	}
+	else
+	{
+		u4BlockCount = u4FileSize / u4BlockSize;
+	}
+	return true;
+}
