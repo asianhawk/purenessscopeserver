@@ -9,7 +9,7 @@
 
 #define MAX_BUFF_50    50
 #define MAX_BUFF_500   500 
-#define MAX_BUFF_20480 10240
+#define MAX_BUFF_10240 10240
 
 #define COMMAND_LOGIN                  0x2000     //µÇÂ½
 #define COMMAND_LOGOUT                 0x2001     //ÍË³ö 
@@ -49,6 +49,13 @@ struct _ClientFTPInfo
 	}
 };
 
+struct _DownloadFileInfo
+{
+	char szLocalPath[MAX_BUFF_500];
+	char szFileName[MAX_BUFF_500];
+	char szRemotePath[MAX_BUFF_500];
+	int  nSize;
+};
 
 // CPssFtpClientDlg ¶Ô»°¿ò
 class CPssFtpClientDlg : public CDialog
