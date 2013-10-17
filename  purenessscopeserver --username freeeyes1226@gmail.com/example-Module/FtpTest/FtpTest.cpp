@@ -7,9 +7,9 @@
 #include "BaseCommand.h"
 #include "IObject.h"
 
-static const char *g_szDesc      = "样例TCP模块";       //模块的描述文字
-static const char *g_szName      = "TCP测试";           //模块的名字
-static const char *g_szModuleKey = "BaseTCP";           //模块的Key
+static const char *g_szDesc      = "样例FTP模块";       //模块的描述文字
+static const char *g_szName      = "FTP测试";           //模块的名字
+static const char *g_szModuleKey = "BaseFCP";           //模块的Key
 
 #ifdef WIN32
 #ifdef TEST_TCP_BUILD_DLL

@@ -4,6 +4,20 @@
 #include "define.h"
 #include <ace/Dirent.h>
 
+#ifndef WIN32
+#include <ace/OS_main.h>
+#include <ace/OS_NS_stdio.h>
+#include <sys/stat.h>
+#include <stdio.h>  
+#include <string.h> 
+#include <stdlib.h>  
+#include <dirent.h>  
+#include <sys/stat.h>  
+#include <unistd.h>  
+#include <vector>
+#include <sys/types.h>
+#endif
+
 #define DIR_OK             0
 #define DIR_ERR_ISFILE     1
 #define DIR_ERR_ISNOEXIST  2

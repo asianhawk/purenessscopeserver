@@ -11,6 +11,8 @@ CDirView::~CDirView()
 uint32 CDirView::GetDir( const char* pPath, vevFileInfo& objvevFileInfo )
 {
 	objvevFileInfo.clear();
+#ifdef WIN32
+	//Windows目录遍历
 	//查看当前路径是否为一个目录
 	struct ACE_DIR* objopendir = ACE_OS::opendir(pPath);
 	if(!objopendir)
@@ -31,9 +33,9 @@ uint32 CDirView::GetDir( const char* pPath, vevFileInfo& objvevFileInfo )
 		while(objreaddir)     
 		{
 			char szFilePath[500] = {'\0'};
-			sprintf_s(szFilePath, "%s%s", pPath, objreaddir->d_name);
+			sprintf_safe(szFilePath, MAX_BUFF_500, "%s%s", pPath, objreaddir->d_name);
 			_FileInfo objFileInfo;
-			sprintf_s(objFileInfo.m_szFileName, 500, "%s", objreaddir->d_name);
+			sprintf_safe(objFileInfo.m_szFileName, MAX_BUFF_500, "%s", objreaddir->d_name);
 
 			struct ACE_DIR* objIsdir = ACE_OS::opendir(szFilePath);
 			if(objIsdir == NULL)
@@ -53,7 +55,38 @@ uint32 CDirView::GetDir( const char* pPath, vevFileInfo& objvevFileInfo )
 		}
 		ACE_OS::closedir_emulation(objopendir);
 	}
+#else
+	//Linux目录遍历部分
+	struct dirent *objreaddir = NULL;  
+	DIR *pDir = opendir(pPath);
+	while((objreaddir=readdir(pDir))!=NULL)  
+	{
+		if(strcmp(objreaddir->d_name,".")==0 || strcmp(objreaddir->d_name,"..")==0)
+		{  
+			continue;
+		}
 
+		char szFilePath[500] = {'\0'};
+		sprintf(szFilePath, "%s%s", pPath, objreaddir->d_name);		 
+
+		_FileInfo objFileInfo;	
+		if(objreaddir->d_type & DT_DIR)
+		{
+			//如果是目录
+			sprintf(objFileInfo.m_szFileName, "%s", objreaddir->d_name);
+			objFileInfo.m_u4FileType = IS_DIRRNT;
+			objFileInfo.m_u4FileSize = 0;			
+		}
+		else
+		{
+			//如果是文件
+			sprintf(objFileInfo.m_szFileName, "%s", objreaddir->d_name);
+			objFileInfo.m_u4FileType = IS_FILE;
+			objFileInfo.m_u4FileSize = (int)ACE_OS::filesize(szFilePath);		  	 	  
+		}
+		objvevFileInfo.push_back(objFileInfo);
+	}
+#endif
 
 	return DIR_OK;
 }

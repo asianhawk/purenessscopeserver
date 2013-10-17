@@ -9,6 +9,15 @@
 #define new DEBUG_NEW
 #endif
 
+//线程执行
+DWORD WINAPI ThreadProc(LPVOID argv)
+{
+	_DownloadFileInfo* pDownloadFileInfo = (_DownloadFileInfo* )argv;
+
+
+
+	return 0;
+}
 
 // 用于应用程序“关于”菜单项的 CAboutDlg 对话框
 
@@ -915,8 +924,20 @@ void CPssFtpClientDlg::OnBnClickedButton4()
 			nDecLen = WideCharToMultiByte(CP_ACP, 0, strLocalPath, nSrcLen, szLocalPath, MAX_BUFF_500, NULL, NULL);
 			szLocalPath[nDecLen] = '\0';
 
+			_DownloadFileInfo objDownloadFileInfo;
+
+			//这里要注意，如果要设置更大的数据块，需要修改PSS的数据包最大大小的配置文件
+			//默认PSS支持最大单数据包是20K，如果需要可以改的更大
+			int nSize  = MAX_BUFF_10240; 
+
+			sprintf_s(objDownloadFileInfo.szLocalPath, MAX_BUFF_500, "%s", szLocalPath);
+			sprintf_s(objDownloadFileInfo.szFileName, MAX_BUFF_500, "%s", szFileName);
+			sprintf_s(objDownloadFileInfo.szRemotePath, MAX_BUFF_500, "%s", szRemotePath);
+			objDownloadFileInfo.nSize = nSize;
+
+			//未来这里可以是多线程下载，改造先放一放，以后再说。
+
 			int nIndex = 0;
-			int nSize  = MAX_BUFF_20480;
 
 			bool blState = Send_Download(szLocalPath, szFileName, szRemotePath, nIndex, nSize, nBufferCount);
 			if(blState == false)
