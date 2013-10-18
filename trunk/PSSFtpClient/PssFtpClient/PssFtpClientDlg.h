@@ -92,6 +92,7 @@ public:
 	CButton m_btnLogout;
 	CEdit m_txtLocalPath;
 	CEdit m_txtRemotePath;
+	CButton m_btnDownLoadFile;
 
 private:
 	void Init();
@@ -107,7 +108,8 @@ private:
 	SOCKET         m_sckClient;
 	_ClientFTPInfo m_ClientFTPInfo;
 
-private:
+public:
+	void DownLoadListFile();
 
 public:
 	afx_msg void OnClose();
