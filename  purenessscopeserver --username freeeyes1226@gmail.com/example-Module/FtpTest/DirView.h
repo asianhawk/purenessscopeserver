@@ -50,6 +50,7 @@ public:
 
 	uint32 GetDir(const char* pPath, vevFileInfo& objvevFileInfo);   //得到目录结构
 	bool GetFileBuffer(const char* pPath, char* pFileBuffer, uint32& u4FileBlockSize, uint32 u4BlockSize, uint32 u4BlockIndex); //得到文件块
+	bool SetFileBuffer(const char* pPath, char* pFileBuffer, uint32& u4FileBlockSize, uint32 u4BlockIndex);                     //上传文件块 
 	bool GetFileBufferCount(const char* pPath, uint32 u4BlockSize, uint32& u4BlockCount);
 };
 

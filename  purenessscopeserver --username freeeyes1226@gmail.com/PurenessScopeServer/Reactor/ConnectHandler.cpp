@@ -711,6 +711,7 @@ bool CConnectHandler::SendMessage(uint16 u2CommandID, IBuffPacket* pBuffPacket, 
 	m_nIOCount++;
 	m_ThreadLock.release();	
 	//OUR_DEBUG((LM_DEBUG,"[CConnectHandler::SendMessage]Connectid=%d,m_nIOCount=%d.\n", GetConnectID(), m_nIOCount));
+	uint32 u4SendSuc = pBuffPacket->GetPacketLen();
 
 	ACE_Message_Block* pMbData = NULL;
 
@@ -826,7 +827,14 @@ bool CConnectHandler::SendMessage(uint16 u2CommandID, IBuffPacket* pBuffPacket, 
 		App_BuffPacketManager::instance()->Delete(pBuffPacket);
 	}
 
-	return PutSendPacket(pMbData);
+	bool blRet = PutSendPacket(pMbData);
+	if(true == blRet)
+	{
+		//记录成功发送字节
+		m_u4SuccessSendSize += u4SendSuc;
+	}
+
+	return blRet;
 }
 
 bool CConnectHandler::PutSendPacket(ACE_Message_Block* pMbData)
@@ -925,7 +933,6 @@ bool CConnectHandler::PutSendPacket(ACE_Message_Block* pMbData)
 			//OUR_DEBUG((LM_ERROR, "[CConnectHandler::handle_output] ConnectID = %d, send (%d) OK.\n", GetConnectID(), msg_queue()->is_empty()));
 			m_u4AllSendCount    += 1;
 			m_u4AllSendSize     += (uint32)pMbData->length();
-			m_u4SuccessSendSize += (uint32)pMbData->length();
 			pMbData->release();
 			m_atvOutput      = ACE_OS::gettimeofday();
 			Close();
@@ -1002,6 +1009,7 @@ _ClientIPInfo  CConnectHandler::GetClientIPInfo()
 bool CConnectHandler::CheckSendMask(uint32 u4PacketLen)
 {
 	m_u4ReadSendSize += u4PacketLen;
+	//OUR_DEBUG ((LM_ERROR, "[CConnectHandler::CheckSendMask]GetSendDataMask = %d, m_u4ReadSendSize=%d, m_u4SuccessSendSize=%d.\n", App_MainConfig::instance()->GetSendDataMask(), m_u4ReadSendSize, m_u4SuccessSendSize));
 	if(m_u4ReadSendSize - m_u4SuccessSendSize >= App_MainConfig::instance()->GetSendDataMask())
 	{
 		OUR_DEBUG ((LM_ERROR, "[CConnectHandler::CheckSendMask]ConnectID = %d, SingleConnectMaxSendBuffer is more than(%d)!\n", GetConnectID(), m_u4ReadSendSize - m_u4SuccessSendSize));

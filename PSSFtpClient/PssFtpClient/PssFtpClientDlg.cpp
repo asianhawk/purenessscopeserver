@@ -76,6 +76,7 @@ void CPssFtpClientDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_EDIT5, m_txtLocalPath);
 	DDX_Control(pDX, IDC_EDIT6, m_txtRemotePath);
 	DDX_Control(pDX, IDC_BUTTON4, m_btnDownLoadFile);
+	DDX_Control(pDX, IDC_EDIT7, m_txtUpFileName);
 }
 
 BEGIN_MESSAGE_MAP(CPssFtpClientDlg, CDialog)
@@ -89,6 +90,7 @@ BEGIN_MESSAGE_MAP(CPssFtpClientDlg, CDialog)
 	ON_BN_CLICKED(IDC_BUTTON3, &CPssFtpClientDlg::OnBnClickedButton3)
 	ON_NOTIFY(NM_CLICK, IDC_LIST1, &CPssFtpClientDlg::OnNMClickList1)
 	ON_BN_CLICKED(IDC_BUTTON4, &CPssFtpClientDlg::OnBnClickedButton4)
+	ON_BN_CLICKED(IDC_BUTTON5, &CPssFtpClientDlg::OnBnClickedButton5)
 END_MESSAGE_MAP()
 
 
@@ -764,7 +766,7 @@ bool CPssFtpClientDlg::Send_Download(const char* pLocalPath, const char* pFileNa
 	if(nCurrRecvLen != 4)
 	{
 		DWORD dwError = GetLastError();
-		MessageBox(_T("远程服务器发送数据失败"), _T("错误信息"), MB_OK);
+		MessageBox(_T("远程服务器接收数据失败"), _T("错误信息"), MB_OK);
 		return false;
 	}
 
@@ -785,7 +787,7 @@ bool CPssFtpClientDlg::Send_Download(const char* pLocalPath, const char* pFileNa
 		if(nCurrRecvLen <= 0)
 		{
 			DWORD dwError = GetLastError();
-			MessageBox(_T("远程服务器发送数据失败"), _T("错误信息"), MB_OK);
+			MessageBox(_T("远程服务器接收数据失败"), _T("错误信息"), MB_OK);
 			return false;
 		}
 		else
@@ -827,7 +829,7 @@ bool CPssFtpClientDlg::Send_Download(const char* pLocalPath, const char* pFileNa
 		if(nFileCurrIndex == 0)
 		{
 			//如果是初始包，则删除当前文件。
-			DeleteFileA(szLocalFilePath);
+			remove(szLocalFilePath);
 		}
 
 		FILE* pFile = NULL;
@@ -848,6 +850,225 @@ bool CPssFtpClientDlg::Send_Download(const char* pLocalPath, const char* pFileNa
 		MessageBox(_T("远程文件获得失败"), _T("错误信息"), MB_OK);
 		return false;
 	}
+
+	return true;
+}
+
+bool CPssFtpClientDlg::Send_Upload( const char* pLocalPath, const char* pFileName, const char* pRemotePath )
+{
+	int nBufferSize = MAX_BUFF_10240;
+	int nCommand = COMMAND_FILE_UPLOAD;
+	char szSendBuff[MAX_BUFF_10240 + MAX_BUFF_500] = {'\0'};
+	if(m_sckClient == INVALID_SOCKET)
+	{
+		return false;
+	}
+
+	char szLoaclFilePath[MAX_BUFF_500] = {'\0'};
+	sprintf_s(szLoaclFilePath, MAX_BUFF_500, "%s%s", pLocalPath, pFileName);
+
+	//得到当前文件大小
+	FILE* pFile = NULL;
+	fopen_s(&pFile, szLoaclFilePath, "rb");
+	if(NULL == pFile)
+	{
+		return false;
+	}
+
+	fseek(pFile, 0L, SEEK_END);
+	int nFileLen        = (int)ftell(pFile);
+	int nBlockCount     = 0;
+	int nLastBufferSize = 0;
+
+	if(nFileLen % nBufferSize != 0)
+	{
+		nBlockCount     = nFileLen / nBufferSize + 1;
+		nLastBufferSize = nFileLen % nBufferSize;
+	}
+	else
+	{
+		nBlockCount     = nFileLen / nBufferSize;
+		nLastBufferSize = nBufferSize;
+	}
+
+	fclose(pFile);
+	pFile = NULL;
+
+	for(int i = 0; i < nBlockCount; i++)
+	{
+		fopen_s(&pFile, szLoaclFilePath, "rb");
+		if(NULL == pFile)
+		{
+			return false;
+		}
+
+		int nPos = 0;
+		char szBuffer[MAX_BUFF_10240] = {'\0'};
+		if(i != nBlockCount - 1)
+		{
+			//如果不是最后一个块
+			fseek(pFile, (long)(i * nBufferSize), SEEK_CUR);
+
+			int nReadSize = fread((char* )szBuffer, sizeof(char), nBufferSize, pFile);
+			
+			int nLen = 2 + 3 + 4 + (int)strlen(m_ClientFTPInfo.szUserName) + (int)strlen(pRemotePath) + 8 + nBufferSize;
+
+			memcpy_s(&szSendBuff[nPos], sizeof(int), (char*)&nLen, sizeof(int));
+			nPos += sizeof(int);
+			memcpy_s(&szSendBuff[nPos], sizeof(short), (char*)&nCommand, sizeof(short));
+			nPos += sizeof(short);
+
+			int nStrLen = (int)strlen(m_ClientFTPInfo.szUserName);
+			memcpy_s(&szSendBuff[nPos], sizeof(char), (char*)&nStrLen, sizeof(char));
+			nPos += sizeof(char);
+			memcpy_s(&szSendBuff[nPos], nStrLen, (char*)m_ClientFTPInfo.szUserName, nStrLen);
+			nPos += nStrLen;
+
+			nStrLen = (int)strlen(pRemotePath);
+			memcpy_s(&szSendBuff[nPos], sizeof(short), (char*)&nStrLen, sizeof(short));
+			nPos += sizeof(short);
+			memcpy_s(&szSendBuff[nPos], nStrLen, (char*)pRemotePath, nStrLen);
+			nPos += nStrLen;
+
+			memcpy_s(&szSendBuff[nPos], sizeof(int), (char*)&nBufferSize, sizeof(int));
+			nPos += sizeof(int);
+			memcpy_s(&szSendBuff[nPos], sizeof(int), (char*)&i, sizeof(int));
+			nPos += sizeof(int);
+
+			memcpy_s(&szSendBuff[nPos], sizeof(int), (char*)&nBufferSize, sizeof(int));
+			nPos += sizeof(int);
+			memcpy_s(&szSendBuff[nPos], nBufferSize, (char*)szBuffer, nBufferSize);
+			nPos += nBufferSize;
+		}
+		else
+		{
+			//如果是最后一个块
+			fseek(pFile, (long)(i * nBufferSize), SEEK_CUR);
+
+			int nReadSize = fread((char* )szBuffer, sizeof(char), nLastBufferSize, pFile);
+
+			int nLen = 2 + 3 + 4 + (int)strlen(m_ClientFTPInfo.szUserName) + (int)strlen(pRemotePath) + 8 + nLastBufferSize;
+
+			memcpy_s(&szSendBuff[nPos], sizeof(int), (char*)&nLen, sizeof(int));
+			nPos += sizeof(int);
+			memcpy_s(&szSendBuff[nPos], sizeof(short), (char*)&nCommand, sizeof(short));
+			nPos += sizeof(short);
+
+			int nStrLen = (int)strlen(m_ClientFTPInfo.szUserName);
+			memcpy_s(&szSendBuff[nPos], sizeof(char), (char*)&nStrLen, sizeof(char));
+			nPos += sizeof(char);
+			memcpy_s(&szSendBuff[nPos], nStrLen, (char*)m_ClientFTPInfo.szUserName, nStrLen);
+			nPos += nStrLen;
+
+			nStrLen = (int)strlen(pRemotePath);
+			memcpy_s(&szSendBuff[nPos], sizeof(short), (char*)&nStrLen, sizeof(short));
+			nPos += sizeof(short);
+			memcpy_s(&szSendBuff[nPos], nStrLen, (char*)pRemotePath, nStrLen);
+			nPos += nStrLen;
+
+			memcpy_s(&szSendBuff[nPos], sizeof(int), (char*)&nLastBufferSize, sizeof(int));
+			nPos += sizeof(int);
+			memcpy_s(&szSendBuff[nPos], sizeof(int), (char*)&i, sizeof(int));
+			nPos += sizeof(int);
+
+			memcpy_s(&szSendBuff[nPos], sizeof(int), (char*)&nLastBufferSize, sizeof(int));
+			nPos += sizeof(int);
+			memcpy_s(&szSendBuff[nPos], nLastBufferSize, (char*)szBuffer, nLastBufferSize);
+			nPos += nLastBufferSize;
+		}
+
+		int nTotalSendLen = nPos;
+		int nBeginSend    = 0;
+		int nCurrSendLen  = 0;
+		bool blSendFlag   = false;
+		int nBeginRecv    = 0;
+		int nCurrRecvLen  = 0;
+		bool blRecvFlag   = false;
+		while(true)
+		{
+			nCurrSendLen = send(m_sckClient, szSendBuff + nBeginSend, nTotalSendLen, 0);
+			if(nCurrSendLen <= 0)
+			{
+				DWORD dwError = GetLastError();
+				MessageBox(_T("远程服务器接收数据失败"), _T("错误信息"), MB_OK);
+				fclose(pFile);
+				return false;
+			}
+			else
+			{
+				nTotalSendLen -= nCurrSendLen;
+				if(nTotalSendLen == 0)
+				{
+					//发送完成
+					blSendFlag = true;
+					break;
+				}
+				else
+				{
+					nBeginSend += nCurrSendLen;
+				}
+			}
+		}
+
+		//先接收四字节的数据包长度
+		char szRecvLength[4] = {'\0'};
+		nCurrRecvLen = recv(m_sckClient, (char* )szRecvLength, 4, 0);
+		if(nCurrRecvLen != 4)
+		{
+			DWORD dwError = GetLastError();
+			MessageBox(_T("远程服务器接收数据失败"), _T("错误信息"), MB_OK);
+			fclose(pFile);
+			return false;
+		}
+
+		int nRecvLength = 0;
+		memcpy_s(&nRecvLength, sizeof(int), szRecvLength, sizeof(int));
+		char* pRecvBuff = new char[nRecvLength];
+		int nRecvBegin  = 0;
+
+		while(true)
+		{
+			if(nRecvLength - nRecvBegin == 0)
+			{
+				break;
+			}
+
+			//如果发送成功了，则处理接收数据
+			nCurrRecvLen = recv(m_sckClient, (char* )pRecvBuff + nRecvBegin, nRecvLength - nRecvBegin, 0);
+			if(nCurrRecvLen <= 0)
+			{
+				DWORD dwError = GetLastError();
+				MessageBox(_T("远程服务器发送数据失败"), _T("错误信息"), MB_OK);
+				fclose(pFile);
+				return false;
+			}
+			else
+			{
+				nRecvBegin += nCurrRecvLen;
+			}
+		}
+
+		int nRecvCommandID = 0;
+		int nRet           = 0;
+		nPos               = 0;
+
+		memcpy_s((char*)&nRecvCommandID,  sizeof(short), &pRecvBuff[nPos], sizeof(short));
+		nPos += sizeof(short);
+		memcpy_s((char*)&nRet,  sizeof(int), &pRecvBuff[nPos], sizeof(int));
+		nPos += sizeof(int);
+
+		if(nRet != OP_OK)
+		{
+			DWORD dwError = GetLastError();
+			MessageBox(_T("远程服务器接收数据失败"), _T("错误信息"), MB_OK);
+			fclose(pFile);
+			return false;
+		}
+
+		fclose(pFile);
+	}
+
+	MessageBox(_T("上传文件成功"), _T("错误信息"), MB_OK);
 
 	return true;
 }
@@ -968,4 +1189,39 @@ void CPssFtpClientDlg::DownLoadListFile()
 
 	MessageBox(_T("下载文件完成"), _T("提示信息"), MB_OK);
 	m_btnDownLoadFile.EnableWindow(TRUE);
+}
+void CPssFtpClientDlg::OnBnClickedButton5()
+{
+	//上传文件
+	char szFileName[MAX_BUFF_500]   = {'\0'};
+	char szRemotePath[MAX_BUFF_500] = {'\0'};
+	char szLocalPath[MAX_BUFF_500]  = {'\0'};
+	char szLocalFile[MAX_BUFF_500]  = {'\0'};
+	char szRemoteFile[MAX_BUFF_500] = {'\0'};
+
+	//得到文件名
+	CString strData;
+	CString strRomoteFilePath;
+	CString strLocalPath;
+	CString strLocalFile;
+
+	m_txtRemotePath.GetWindowText(strRomoteFilePath);
+	int nSrcLen = WideCharToMultiByte(CP_ACP, 0, strRomoteFilePath, strRomoteFilePath.GetLength(), NULL, 0, NULL, NULL);
+	int nDecLen = WideCharToMultiByte(CP_ACP, 0, strRomoteFilePath, nSrcLen, szRemotePath, MAX_BUFF_500, NULL, NULL);
+	szRemotePath[nDecLen] = '\0';
+
+	m_txtLocalPath.GetWindowText(strLocalPath);
+	nSrcLen = WideCharToMultiByte(CP_ACP, 0, strLocalPath, strLocalPath.GetLength(), NULL, 0, NULL, NULL);
+	nDecLen = WideCharToMultiByte(CP_ACP, 0, strLocalPath, nSrcLen, szLocalPath, MAX_BUFF_500, NULL, NULL);
+	szLocalPath[nDecLen] = '\0';
+
+	m_txtUpFileName.GetWindowText(strLocalFile);
+	nSrcLen = WideCharToMultiByte(CP_ACP, 0, strLocalFile, strLocalFile.GetLength(), NULL, 0, NULL, NULL);
+	nDecLen = WideCharToMultiByte(CP_ACP, 0, strLocalFile, nSrcLen, szLocalFile, MAX_BUFF_500, NULL, NULL);
+	szLocalFile[nDecLen] = '\0';
+
+	sprintf_s(szRemoteFile, MAX_BUFF_500, "%s/%s", strRomoteFilePath, szLocalFile);
+
+	Send_Upload(szLocalPath, szLocalFile, szRemoteFile);
+
 }

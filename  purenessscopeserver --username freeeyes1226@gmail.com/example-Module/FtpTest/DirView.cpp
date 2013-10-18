@@ -146,3 +146,29 @@ bool CDirView::GetFileBufferCount( const char* pPath, uint32 u4BlockSize, uint32
 	}
 	return true;
 }
+
+bool CDirView::SetFileBuffer( const char* pPath, char* pFileBuffer, uint32& u4FileBlockSize, uint32 u4BlockIndex )
+{
+	//如果是文件的第一个包，则删除当前文件
+	if(u4BlockIndex == 0)
+	{
+		remove(pPath);
+	}
+
+	FILE* pFile = fopen(pPath, "ab+");
+	if(NULL == pFile)
+	{
+		return false;
+	}
+
+	//写入相应位置的文件块
+	uint32 u4WriteSize = (uint32)fwrite(pFileBuffer, sizeof(char), u4FileBlockSize, pFile);
+	if(u4WriteSize != u4FileBlockSize)
+	{
+		fclose(pFile);
+		return false;
+	}
+
+	fclose(pFile);
+	return true; 
+}

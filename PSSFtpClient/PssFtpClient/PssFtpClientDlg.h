@@ -93,6 +93,7 @@ public:
 	CEdit m_txtLocalPath;
 	CEdit m_txtRemotePath;
 	CButton m_btnDownLoadFile;
+	CEdit m_txtUpFileName;
 
 private:
 	void Init();
@@ -103,6 +104,7 @@ private:
 	bool Send_Logout();
 	bool Send_FileList(const char* pRemotePath);
 	bool Send_Download(const char* pLocalPath, const char* pFileName, const char* pRemotePath, int nIndex, int nSize, int& nBockCount);
+	bool Send_Upload(const char* pLocalPath, const char* pFileName, const char* pRemotePath);
 
 private:
 	SOCKET         m_sckClient;
@@ -117,4 +119,5 @@ public:
 	afx_msg void OnBnClickedButton3();
 	afx_msg void OnNMClickList1(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnBnClickedButton4();
+	afx_msg void OnBnClickedButton5();
 };
