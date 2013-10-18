@@ -314,7 +314,7 @@ bool CConnectClient::SendData(ACE_Message_Block* pmblk)
 			return false;
 		}
 
-		int nDataLen = this->peer().send(pmblk->rd_ptr(), nSendLen, &nowait);
+		int nDataLen = this->peer().send(pmblk->rd_ptr(), nSendLen - nIsSendSize, &nowait);
 		int nErr = ACE_OS::last_error();
 		if(nDataLen <= 0)
 		{
@@ -331,7 +331,7 @@ bool CConnectClient::SendData(ACE_Message_Block* pmblk)
 			Close();
 			return false;
 		}
-		else if(nDataLen >= nSendLen)   //当数据包全部发送完毕，清空。
+		else if(nDataLen + nIsSendSize >= nSendLen)   //当数据包全部发送完毕，清空。
 		{
 			//OUR_DEBUG((LM_ERROR, "[CConnectHandler::handle_output] ConnectID = %d, send (%d) OK.\n", GetConnectID(), msg_queue()->is_empty()));
 			pmblk->release();

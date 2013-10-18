@@ -12,9 +12,11 @@
 //线程执行
 DWORD WINAPI ThreadProc(LPVOID argv)
 {
-	_DownloadFileInfo* pDownloadFileInfo = (_DownloadFileInfo* )argv;
-
-
+	CPssFtpClientDlg* pPssFtpClientDlg = (CPssFtpClientDlg *)argv;
+	if(NULL != pPssFtpClientDlg)
+	{
+		pPssFtpClientDlg->DownLoadListFile();
+	}
 
 	return 0;
 }
@@ -73,6 +75,7 @@ void CPssFtpClientDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_BUTTON2, m_btnLogout);
 	DDX_Control(pDX, IDC_EDIT5, m_txtLocalPath);
 	DDX_Control(pDX, IDC_EDIT6, m_txtRemotePath);
+	DDX_Control(pDX, IDC_BUTTON4, m_btnDownLoadFile);
 }
 
 BEGIN_MESSAGE_MAP(CPssFtpClientDlg, CDialog)
@@ -891,8 +894,15 @@ void CPssFtpClientDlg::OnNMClickList1(NMHDR *pNMHDR, LRESULT *pResult)
 
 void CPssFtpClientDlg::OnBnClickedButton4()
 {
+	//启动后台线程下载
+	DWORD  ThreadID = 0;
+	CreateThread(NULL, NULL, ThreadProc, (LPVOID)this, NULL, &ThreadID);
+}
+
+void CPssFtpClientDlg::DownLoadListFile()
+{
+	m_btnDownLoadFile.EnableWindow(FALSE);
 	//下载文件
-	CString str;
 	for(int i = 0; i < m_lcPath.GetItemCount(); i++)
 	{
 		if( m_lcPath.GetItemState(i, LVIS_SELECTED) == LVIS_SELECTED || m_lcPath.GetCheck(i))
@@ -910,7 +920,7 @@ void CPssFtpClientDlg::OnBnClickedButton4()
 			CString StrPathName = m_lcPath.GetItemText(i, 0);
 			m_txtRemotePath.GetWindowText(strData);
 			strRomoteFilePath = strData + StrPathName;
-			
+
 			int nSrcLen = WideCharToMultiByte(CP_ACP, 0, strRomoteFilePath, strRomoteFilePath.GetLength(), NULL, 0, NULL, NULL);
 			int nDecLen = WideCharToMultiByte(CP_ACP, 0, strRomoteFilePath, nSrcLen, szRemotePath, MAX_BUFF_500, NULL, NULL);
 			szRemotePath[nDecLen] = '\0';
@@ -935,15 +945,13 @@ void CPssFtpClientDlg::OnBnClickedButton4()
 			sprintf_s(objDownloadFileInfo.szRemotePath, MAX_BUFF_500, "%s", szRemotePath);
 			objDownloadFileInfo.nSize = nSize;
 
-			//未来这里可以是多线程下载，改造先放一放，以后再说。
-
 			int nIndex = 0;
 
 			bool blState = Send_Download(szLocalPath, szFileName, szRemotePath, nIndex, nSize, nBufferCount);
 			if(blState == false)
 			{
 				MessageBox(_T("远程文件下载失败"), _T("错误信息"), MB_OK);
-				return;
+				continue;
 			}
 
 			for(int i = 1; i < nBufferCount; i++)
@@ -959,4 +967,5 @@ void CPssFtpClientDlg::OnBnClickedButton4()
 	}
 
 	MessageBox(_T("下载文件完成"), _T("提示信息"), MB_OK);
+	m_btnDownLoadFile.EnableWindow(TRUE);
 }
