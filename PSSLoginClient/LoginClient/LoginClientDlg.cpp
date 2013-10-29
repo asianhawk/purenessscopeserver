@@ -9,6 +9,18 @@
 #define new DEBUG_NEW
 #endif
 
+//线程执行
+DWORD WINAPI ThreadProc(LPVOID argv)
+{
+	CLoginClientDlg* pLoginClientDlg = (CLoginClientDlg *)argv;
+	if(NULL != pLoginClientDlg)
+	{
+		pLoginClientDlg->Send_Multiple_Login();
+	}
+
+	return 0;
+}
+
 
 // 用于应用程序“关于”菜单项的 CAboutDlg 对话框
 
@@ -73,6 +85,8 @@ BEGIN_MESSAGE_MAP(CLoginClientDlg, CDialog)
 	ON_BN_CLICKED(IDC_BUTTON1, &CLoginClientDlg::OnBnClickedButton1)
 	ON_BN_CLICKED(IDC_BUTTON2, &CLoginClientDlg::OnBnClickedButton2)
 	ON_WM_CLOSE()
+	ON_BN_CLICKED(IDC_BUTTON3, &CLoginClientDlg::OnBnClickedButton3)
+	ON_WM_TIMER()
 END_MESSAGE_MAP()
 
 
@@ -207,13 +221,48 @@ void CLoginClientDlg::OnBnClickedButton1()
 
 	Close();
 
-	Show_Send_List();
+	Show_Send_List(false);
 
 }
 
 void CLoginClientDlg::OnBnClickedButton2()
 {
 	//压力测试
+	CString strData;
+
+	//获得相关服务器连接信息
+	m_txtServerIP.GetWindowText(strData);
+	int nSrcLen = WideCharToMultiByte(CP_ACP, 0, strData, strData.GetLength(), NULL, 0, NULL, NULL);
+	int nDecLen = WideCharToMultiByte(CP_ACP, 0, strData, nSrcLen, m_objServerInfo.m_szServerIP, MAX_BUFF_50, NULL,NULL);
+	m_objServerInfo.m_szServerIP[nDecLen] = '\0';
+
+	m_txtServerPort.GetWindowText(strData);
+	m_objServerInfo.m_nServerPort = _ttoi((LPCTSTR)strData);
+
+	//获得相关测试信息
+	m_txtUserName.GetWindowText(strData);
+	nSrcLen = WideCharToMultiByte(CP_ACP, 0, strData, strData.GetLength(), NULL, 0, NULL, NULL);
+	nDecLen = WideCharToMultiByte(CP_ACP, 0, strData, nSrcLen, m_objLoginClient.m_szUserName, MAX_BUFF_50, NULL,NULL);
+	m_objLoginClient.m_szUserName[nDecLen] = '\0';
+
+	m_txtUserPass.GetWindowText(strData);
+	nSrcLen = WideCharToMultiByte(CP_ACP, 0, strData, strData.GetLength(), NULL, 0, NULL, NULL);
+	nDecLen = WideCharToMultiByte(CP_ACP, 0, strData, nSrcLen, m_objLoginClient.m_szUserPass, MAX_BUFF_50, NULL,NULL);
+	m_objLoginClient.m_szUserPass[nDecLen] = '\0';
+
+	m_txtIDFrom.GetWindowText(strData);
+	m_objLoginClient.m_nUserIDFrom = _ttoi((LPCTSTR)strData);
+
+	m_txtIDTo.GetWindowText(strData);
+	m_objLoginClient.m_nUserIDTo = _ttoi((LPCTSTR)strData);
+
+	m_blMultiple = true;
+	m_nSendCount = 0;
+
+	SetTimer(1, 1000, NULL);
+
+	DWORD  ThreadID = 0;
+	CreateThread(NULL, NULL, ThreadProc, (LPVOID)this, NULL, &ThreadID);
 }
 
 void CLoginClientDlg::Init()
@@ -223,7 +272,7 @@ void CLoginClientDlg::Init()
 	m_txtUserName.SetWindowText(_T("freeeyes"));
 	m_txtUserPass.SetWindowText(_T("123456"));
 	m_txtIDFrom.SetWindowText(_T("1"));
-	m_txtIDTo.SetWindowText(_T("100"));
+	m_txtIDTo.SetWindowText(_T("5"));
 
 	m_lcServer.InsertColumn(0, _T("用户名"), LVCFMT_CENTER, 100);
 	m_lcServer.InsertColumn(1, _T("密码"), LVCFMT_CENTER, 100);
@@ -245,6 +294,10 @@ void CLoginClientDlg::Init()
 		MessageBox(_T("本机socket库加载失败，请检查本机socket库版本"), _T("错误信息"), MB_OK);
 	}
 
+	m_blMultiple = false;
+	m_nSendCount = 0;
+
+	srand(unsigned(time(0)));
 }
 
 bool CLoginClientDlg::Connect()
@@ -292,15 +345,8 @@ void CLoginClientDlg::OnClose()
 	CDialog::OnClose();
 }
 
-bool CLoginClientDlg::Send_Single_Login()
+bool CLoginClientDlg::Send_Login(_LoginInfo& objLoginInfo)
 {
-	m_vecLoginInfo.clear();
-
-	_LoginInfo objLoginInfo;
-
-	sprintf_s(objLoginInfo.m_szUserName, MAX_BUFF_50, "%s", m_objLoginClient.m_szUserName);
-	sprintf_s(objLoginInfo.m_szUserPass, MAX_BUFF_50, "%s", m_objLoginClient.m_szUserPass);
-
 	int nCommand = COMMAND_LOGIN;
 	char szSendBuff[MAX_BUFF_500] = {'\0'};
 	if(m_sckClient == INVALID_SOCKET)
@@ -416,13 +462,65 @@ bool CLoginClientDlg::Send_Single_Login()
 		objLoginInfo.m_nServerFail++;
 	}
 
+	return true;
+}
+
+bool CLoginClientDlg::Send_Single_Login()
+{
+	m_vecLoginInfo.clear();
+
+	_LoginInfo objLoginInfo;
+
+	sprintf_s(objLoginInfo.m_szUserName, MAX_BUFF_50, "%s", m_objLoginClient.m_szUserName);
+	sprintf_s(objLoginInfo.m_szUserPass, MAX_BUFF_50, "%s", m_objLoginClient.m_szUserPass);
+
 	m_vecLoginInfo.push_back(objLoginInfo);
+
+	Send_Login(m_vecLoginInfo[0]);
 
 	return true;
 }
 
-void CLoginClientDlg::Show_Send_List()
+bool CLoginClientDlg::Send_Multiple_Login()
 {
+	if(m_sckClient != INVALID_SOCKET)
+	{
+		Close();
+	}
+
+	if(Connect() == false)
+	{
+		return false;
+	}
+
+	//初始化要发送的数据
+	m_vecLoginInfo.clear();
+
+	for(int i = m_objLoginClient.m_nUserIDFrom; i < m_objLoginClient.m_nUserIDTo; i++)
+	{
+		_LoginInfo objLoginInfo;
+
+		sprintf_s(objLoginInfo.m_szUserName, MAX_BUFF_50, "%s%d", m_objLoginClient.m_szUserName, i);
+		sprintf_s(objLoginInfo.m_szUserPass, MAX_BUFF_50, "%s", m_objLoginClient.m_szUserPass);
+
+		m_vecLoginInfo.push_back(objLoginInfo);
+	}
+
+	while(m_blMultiple)
+	{
+		int nIndex = Random(m_objLoginClient.m_nUserIDFrom, m_objLoginClient.m_nUserIDTo);
+
+		Send_Login(m_vecLoginInfo[nIndex - 1]);
+	}
+
+	Close();
+
+	return true;
+}
+
+void CLoginClientDlg::Show_Send_List(bool blAccount)
+{
+	int nAllCount = 0;
 	m_lcServer.DeleteAllItems();
 	for(int i = 0; i < (int)m_vecLoginInfo.size(); i++)
 	{
@@ -444,5 +542,44 @@ void CLoginClientDlg::Show_Send_List()
 		m_lcServer.SetItemText(i, 3, strData);
 		strData.Format(_T("%d"),  m_vecLoginInfo[i].m_nServerFail);
 		m_lcServer.SetItemText(i, 4, strData);
+		nAllCount += m_vecLoginInfo[i].m_nSendCount;
 	}
+
+	if(blAccount == true)
+	{
+		CString steData;
+		steData.Format(_T("每秒发送[%d]个请求"), nAllCount - m_nSendCount);
+		m_txtClientCost.SetWindowText(steData);
+
+		m_nSendCount = nAllCount;
+	}
+}
+
+
+
+void CLoginClientDlg::OnBnClickedButton3()
+{
+	//停止压测
+	m_blMultiple = false;
+
+	KillTimer(1);
+
+	Show_Send_List(false);
+}
+
+int CLoginClientDlg::Random( int nStart, int nEnd )
+{
+	return nStart + (nEnd - nStart)*rand()/(RAND_MAX + 1);
+}
+
+void CLoginClientDlg::OnTimer(UINT_PTR nIDEvent)
+{
+	// TODO: 在此添加消息处理程序代码和/或调用默认值
+	switch(nIDEvent)
+	{
+	case 1:
+		Show_Send_List(true);
+	}
+
+	CDialog::OnTimer(nIDEvent);
 }

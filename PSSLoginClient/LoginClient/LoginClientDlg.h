@@ -95,20 +95,27 @@ protected:
 	afx_msg HCURSOR OnQueryDragIcon();
 	DECLARE_MESSAGE_MAP()
 
+public:
+	bool Send_Multiple_Login();
+
 private:
 	void Init();
 	void Close();
 	bool Connect();
+	int  Random(int nStart, int nEnd);
 
+	bool Send_Login(_LoginInfo& objLoginInfo);
 	bool Send_Single_Login();
-
-	void Show_Send_List();
+	
+	void Show_Send_List(bool blAccount = false);
 
 private:
 	vecLoginInfo m_vecLoginInfo;
 	_ServerInfo  m_objServerInfo;
 	_LoginClient m_objLoginClient; 
 	SOCKET       m_sckClient;
+	bool         m_blMultiple;
+	int          m_nSendCount;
 
 public:
 	CEdit m_txtServerIP;
@@ -122,4 +129,6 @@ public:
 	afx_msg void OnBnClickedButton1();
 	afx_msg void OnBnClickedButton2();
 	afx_msg void OnClose();
+	afx_msg void OnBnClickedButton3();
+	afx_msg void OnTimer(UINT_PTR nIDEvent);
 };
