@@ -4,12 +4,12 @@ include Makefile.define
 default:all
 
 # 主应用文件列表
-PATS = BaseCommand.o FtpTest.o DirView.o
+PATS = BaseCommand.o Login.o ../Common/SMOption.o ../Common/UserValidManager.o
 
-LIB_BASE_OBJS = BaseCommand.o FtpTest.o DirView.o
-LIB_BASE = libFtpTest.so
+LIB_BASE_OBJS = BaseCommand.o Login.o SMOption.o UserValidManager.o
+LIB_BASE = libLogin.so
 
-all: libFtpTest.so clear
+all: libLogin.so clear
 			
 # 主应用程序
 all:$(LIB_BASE) Makefile
@@ -21,6 +21,6 @@ $(LIB_BASE):$(PATS)
 clean:
 	rm -rf *.o  $(LIB_BASE) $(LIB_BASE_OBJS)
 clear:	
-	mv libFtpTest.so ../../PurenessScopeServer/Linux_Bin/	
+	mv libLogin.so ../../../PurenessScopeServer/Linux_Bin/	
 cl:	
 	rm -rf *.o 

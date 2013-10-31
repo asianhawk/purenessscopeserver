@@ -1,6 +1,6 @@
 #include "UserValidManager.h"
 
-#include "ace/os_main.h"
+#include "ace/OS_main.h"
 #include "ace/Reactor.h"
 #include "ace/SOCK_Connector.h" 
 #include "ace/SOCK_Acceptor.h" 
@@ -31,6 +31,12 @@ public:
 
 	virtual int handle_input (ACE_HANDLE fd )
 	{
+		if(fd == ACE_INVALID_HANDLE)
+		{
+			OUR_DEBUG((LM_ERROR, "[handle_input]fd is ACE_INVALID_HANDLE.\n"));
+			return -1;
+		}
+		
 		ACE_Time_Value nowait(0, MAX_QUEUE_TIMEOUT);
 
 		//处理接收逻辑
@@ -86,7 +92,7 @@ public:
 
 		//处理接收数据
 		bool blState = App_UserValidManager::instance()->Load_File(pUserName);
-		if(blState = false)
+		if(blState == false)
 		{
 			//没有找到这个用户数据，组成返回包
 			int nSendPacketSize = 2 + nUserNameSize + 2 + nUserPassSize + 1 + 4;
@@ -182,6 +188,11 @@ public:
 
 	virtual int handle_input (ACE_HANDLE fd )
 	{
+		if(fd == ACE_INVALID_HANDLE)
+		{
+			return -1;
+		}		
+		
 		CClientService *client = new CClientService();
 		auto_ptr<CClientService> p(client);
 
@@ -199,10 +210,10 @@ public:
 		return 0;
 	}
 
-	virtual int handle_close (ACE_HANDLE handle,
-		ACE_Reactor_Mask close_mask)
+	virtual int handle_close (ACE_HANDLE handle, ACE_Reactor_Mask close_mask)
 	{
-		if (this->m_objAcceptor.get_handle () != ACE_INVALID_HANDLE)
+		OUR_DEBUG((LM_ERROR, "[handle_close]close_mask=%d.\n", (int)close_mask));
+		if (handle != ACE_INVALID_HANDLE)
 		{
 			ACE_Reactor_Mask m = ACE_Event_Handler::ACCEPT_MASK |
 				ACE_Event_Handler::DONT_CALL;
@@ -218,6 +229,11 @@ protected:
 
 void* worker(void *arg) 
 {
+	if(NULL != arg)
+	{
+		OUR_DEBUG((LM_INFO, "[worker]have param.\n"));
+	}
+	
 	while(true)
 	{
 		OUR_DEBUG((LM_INFO, "[Watch]Valid Begin.\n"));
@@ -233,6 +249,15 @@ void* worker(void *arg)
 
 int ACE_TMAIN(int argc, ACE_TCHAR* argv[])
 {
+	if(argc > 0)
+	{
+		OUR_DEBUG((LM_INFO, "[main]argc = %d.\n", argc));
+		for(int i = 0; i < argc; i++)
+		{
+			OUR_DEBUG((LM_INFO, "[main]argc(%d) = %s.\n", argc, argv[i]));
+		}
+	}	
+	
 	ACE_thread_t  threadId;
 	ACE_hthread_t threadHandle;
 
