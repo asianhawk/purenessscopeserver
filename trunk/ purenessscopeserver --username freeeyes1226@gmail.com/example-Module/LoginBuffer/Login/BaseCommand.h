@@ -27,23 +27,126 @@
 
 using namespace std;
 
-//用户登陆情况结构体
-struct _UserInfo
+typedef ACE_Singleton<CUserValidManager, ACE_Null_Mutex> App_UserValidManager;
+
+class CPostServerData : public IClientMessage
 {
-	char   m_szUserPass[MAX_BUFF_100];   //用户密码
-	bool   m_blOnline;                   //是否在线 false为不在线，true为在线
-	uint32 m_u4ConnectID;                //ConnectID
+public:
+	CPostServerData() 
+	{ 
+		m_pServerObject = NULL;
+	};
 
-	_UserInfo()
+	~CPostServerData() {};
+
+	bool RecvData(ACE_Message_Block* mbRecv)
 	{
-		m_szUserPass[0] = '\0';
-		m_blOnline      = false;
-		m_u4ConnectID   = 0;
+		//判断返回数据块是否小于0
+		uint32 u4SendPacketSize = (uint32)mbRecv->length();
+		if(u4SendPacketSize <= 0)
+		{
+			OUR_DEBUG((LM_INFO, "[CPostServerData::RecvData]Get Data(%d).\n", u4SendPacketSize));
+		}
+
+		OUR_DEBUG((LM_INFO, "[CPostServerData::RecvData]Get Data(%d).\n", u4SendPacketSize));
+		if(NULL != m_pServerObject)
+		{
+			//解析获得的数据
+			uint16 u2RetCommand = 0x1010;
+			char* pData = new char[u4SendPacketSize];
+			ACE_OS::memcpy(pData, mbRecv->rd_ptr(), u4SendPacketSize);
+
+			//解析获得的数据块
+			//4字节包长+2字节名称长度+名称+ConnectID
+			uint32 u4PacketSize = 0;
+			int    nPos = 0;
+			ACE_OS::memcpy(&u4PacketSize, (char* )&pData[nPos], sizeof(uint32));
+			nPos += sizeof(uint32);
+			uint16 u2UserName = 0;
+			ACE_OS::memcpy(&u2UserName, (char* )&pData[nPos], sizeof(uint16));
+			nPos += sizeof(uint16);
+			char* pUserName = new char[u2UserName + 1];
+			ACE_OS::memset(pUserName, 0, u2UserName + 1);
+			ACE_OS::memcpy(pUserName, (char* )&pData[nPos], u2UserName);
+			nPos += u2UserName;
+			uint16 u2UserPass = 0;
+			ACE_OS::memcpy(&u2UserPass, (char* )&pData[nPos], sizeof(uint16));
+			nPos += sizeof(uint16);
+			char* pUserPass = new char[u2UserPass + 1];
+			ACE_OS::memset(pUserPass, 0, u2UserPass + 1);
+			ACE_OS::memcpy(pUserPass, (char* )&pData[nPos], u2UserPass);
+			nPos += u2UserPass;
+			uint8 u1Ret = 0;
+			ACE_OS::memcpy(&u1Ret, (char* )&pData[nPos], sizeof(uint8));
+			nPos += sizeof(uint8);
+			uint32 u4ConnectID = 0;
+			ACE_OS::memcpy(&u4ConnectID, (char* )&pData[nPos], sizeof(uint32));
+			nPos += sizeof(uint32);
+
+			//重新加载一下缓冲
+			App_UserValidManager::instance()->GetFreeValid();
+
+			uint32 u4Ret = LOGIN_SUCCESS;
+			//在重新找一下
+			_UserValid* pUserValid = App_UserValidManager::instance()->GetUserValid(pUserName);
+			if(NULL != pUserValid)
+			{
+				//比较用户密码是否正确
+				if(ACE_OS::strcmp(pUserValid->m_szUserPass, pUserPass) == 0)
+				{
+					pUserValid->m_blOnline = true;
+					pUserValid->m_u4LoginCount++;
+					u4Ret = LOGIN_SUCCESS;
+				}
+				else
+				{
+					u4Ret = LOGIN_FAIL_PASSWORD;
+				}
+			}
+			else
+			{
+				u4Ret = LOGIN_FAIL_NOEXIST;
+			}
+
+			SAFE_DELETE_ARRAY(pUserPass);
+			SAFE_DELETE_ARRAY(pUserName);
+			SAFE_DELETE_ARRAY(pData);
+
+			IBuffPacket* pResponsesPacket = m_pServerObject->GetPacketManager()->Create();
+			uint16 u2PostCommandID = COMMAND_RETURN_LOGIN;
+
+			//返回验证结果
+			(*pResponsesPacket) << (uint16)u2PostCommandID;   //拼接应答命令ID
+			(*pResponsesPacket) << (uint32)u4Ret;
+
+			if(NULL != m_pServerObject->GetConnectManager())
+			{
+				//发送全部数据
+				m_pServerObject->GetConnectManager()->PostMessage(u4ConnectID, pResponsesPacket, SENDMESSAGE_NOMAL, u2PostCommandID, true);
+			}
+			else
+			{
+				OUR_DEBUG((LM_INFO, "[CBaseCommand::DoMessage] m_pConnectManager = NULL"));
+			}
+		}
+
+		return true;
+	};
+
+	bool ConnectError(int nError)
+	{
+		OUR_DEBUG((LM_ERROR, "[CPostServerData::ConnectError]Get Error(%d).\n", nError));
+		return true;
+	};
+
+	void SetServerObject(CServerObject* pServerObject)
+	{
+		m_pServerObject = pServerObject;
 	}
+
+private:
+	CServerObject* m_pServerObject;
 };
-
-
-typedef map<string, _UserInfo*> mapUserList; //用户列表
 
 class CBaseCommand : public CClientCommand
 {
@@ -63,5 +166,7 @@ private:
 
 private:
   CServerObject*    m_pServerObject;
-  CUserValidManager m_UserValidManager;            //用户身份验证
+  CPostServerData*  m_pPostServerData;
 };
+
+

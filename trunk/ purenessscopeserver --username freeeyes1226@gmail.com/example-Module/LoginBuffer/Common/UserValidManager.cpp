@@ -459,3 +459,117 @@ void CUserValidManager::GetFreeValid()
 		}
 	}
 }
+
+bool CUserValidManager::Load_File( const char* pUserName )
+{
+	bool m_blUpdate = false; 
+	char szFileName[MAX_BUFF_200] = {'\0'};
+	sprintf_safe(szFileName, MAX_BUFF_200, "%s", SOURCE_FILE_PATH);
+	FILE* pFile = fopen((char* )szFileName, "r");
+	if(pFile == NULL)
+	{
+		//文件不存在
+		return false;
+	}
+
+	fseek(pFile, 0l, SEEK_END);
+
+	uint32 u4FileSize = ftell(pFile);
+
+	if(u4FileSize == 0)
+	{
+		//文件长度为0
+		return false;
+	}
+
+	fclose(pFile);
+
+	//m_mapUserValid.clear();
+	//m_vecFreeValid.clear();
+
+	pFile = fopen((char* )szFileName, "r");
+	fseek(pFile, 0l, SEEK_SET);
+
+	char* pFileBuffer = new char[u4FileSize + 1];
+	memset(pFileBuffer, 0, u4FileSize);
+
+	//读取文件,一次读不完循环读，直到全部读完为止
+	uint32 u4ReadSize = (uint32)fread((char* )pFileBuffer, sizeof(char), u4FileSize, pFile);
+	if(u4ReadSize >= u4FileSize)
+	{
+		//读完了
+	}
+	else if(u4ReadSize == 0)
+	{
+		//读取文件失败了
+		SAFE_DELETE_ARRAY(pFileBuffer);
+		fclose(pFile);
+		return false;
+	}
+
+	char szUserName[MAX_BUFF_50] = {'\0'};
+	char szUserPass[MAX_BUFF_50] = {'\0'};
+
+	char szFind[2] = {'\0'};
+	sprintf_safe(szFind, 2, ";");
+
+	char* pLine = strtok((char* )pFileBuffer, szFind);
+
+	while(pLine != NULL) 
+	{
+		bool blState = GetFileInfo(pLine, szUserName, szUserPass);
+		
+		//从数据源中寻找指定的用户，并加载在共享内存中
+		if(true == blState && ACE_OS::strcmp(szUserName, pUserName) == 0)
+		{
+			_UserValid* pUserValid = (_UserValid* )GetUserValid(szUserName);
+			if(NULL != pUserValid)
+			{
+				//初始化共享内存数据
+				sprintf_safe(pUserValid->m_szUserName, MAX_BUFF_50, "%s", szUserName);
+				sprintf_safe(pUserValid->m_szUserPass, MAX_BUFF_50, "%s", szUserPass);
+				pUserValid->m_blDelete     = false;
+				pUserValid->m_u1State      = CHECKS_HIT;
+				pUserValid->m_u4LoginCount = 0;
+			}
+			else
+			{
+				//如果没有命中，则是新数据，从空闲池里取出数据放在里面
+				if(m_vecFreeValid.size() <= 0)
+				{
+					SAFE_DELETE_ARRAY(pFileBuffer);
+					fclose(pFile);
+					return false;
+				}
+
+				_UserValid* pUserValid = (_UserValid* )m_vecFreeValid[0];
+				if(NULL != pUserValid)
+				{
+					//初始化共享内存数据
+					sprintf_safe(pUserValid->m_szUserName, MAX_BUFF_50, "%s", szUserName);
+					sprintf_safe(pUserValid->m_szUserPass, MAX_BUFF_50, "%s", szUserPass);
+					pUserValid->m_blDelete     = false;
+					pUserValid->m_blOnline     = false;
+					pUserValid->m_u1State      = CHECKS_HIT;
+					pUserValid->m_u4LoginCount = 0;
+
+					string strUserName;
+					strUserName = (string)pUserValid->m_szUserName;
+
+					m_mapUserValid.insert(mapUserValid::value_type(strUserName, pUserValid));
+
+					vecValid::iterator b = m_vecFreeValid.begin();
+					m_vecFreeValid.erase(b);
+				}
+			}
+
+			break;
+		}
+		pLine = strtok(NULL, szFind);
+	}
+
+	SAFE_DELETE_ARRAY(pFileBuffer);
+	fclose(pFile);
+
+	return true;
+}
