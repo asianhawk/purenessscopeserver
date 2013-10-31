@@ -368,7 +368,7 @@
 				>
 			</File>
 			<File
-				RelativePath="UserValidManager.cpp"
+				RelativePath="..\Common\UserValidManager.cpp"
 				>
 			</File>
 			<File
@@ -385,7 +385,7 @@
 				>
 			</File>
 			<File
-				RelativePath="UserValidManager.h"
+				RelativePath="..\Common\UserValidManager.h"
 				>
 			</File>
 		</Filter>

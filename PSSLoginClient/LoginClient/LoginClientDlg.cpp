@@ -312,7 +312,7 @@ bool CLoginClientDlg::Connect()
 
 	m_sckClient = socket(AF_INET, SOCK_STREAM, 0);
 
-	DWORD TimeOut = (DWORD)100;
+	DWORD TimeOut = (DWORD)1000;
 	::setsockopt(m_sckClient, SOL_SOCKET, SO_RCVTIMEO, (char *)&TimeOut, sizeof(TimeOut));
 
 	int nErr = connect(m_sckClient, (SOCKADDR*)&sockaddr, sizeof(SOCKADDR));
@@ -388,6 +388,7 @@ bool CLoginClientDlg::Send_Login(_LoginInfo& objLoginInfo)
 		{
 			DWORD dwError = GetLastError();
 			MessageBox(_T("远程服务器发送数据失败"), _T("错误信息"), MB_OK);
+			objLoginInfo.m_nServerFail++;
 			return false;
 		}
 		else
@@ -415,6 +416,7 @@ bool CLoginClientDlg::Send_Login(_LoginInfo& objLoginInfo)
 	{
 		DWORD dwError = GetLastError();
 		MessageBox(_T("远程服务器接收数据失败"), _T("错误信息"), MB_OK);
+		objLoginInfo.m_nServerFail++;
 		return false;
 	}
 
@@ -436,6 +438,7 @@ bool CLoginClientDlg::Send_Login(_LoginInfo& objLoginInfo)
 		{
 			DWORD dwError = GetLastError();
 			MessageBox(_T("远程服务器发送数据失败"), _T("错误信息"), MB_OK);
+			objLoginInfo.m_nServerFail++;
 			return false;
 		}
 		else

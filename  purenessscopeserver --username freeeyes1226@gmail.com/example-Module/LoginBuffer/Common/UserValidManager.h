@@ -57,7 +57,9 @@ public:
 
 	_UserValid* GetUserValid(const char* pUserName);      //根据名称得到用户状态
 	void Check_File2Memory();                             //同步文件和共享内存
-	void GetFreeValid();                                  //从空闲数据块中寻找已经新加载的数据        
+	void GetFreeValid();                                  //从空闲数据块中寻找已经新加载的数据
+
+	bool Load_File(const char* pUserName);                //从文件里面寻找指定的用户名  
 
 private:
 	bool ReadFile();                //从文件加载共享内存，并加载列表
