@@ -37,7 +37,7 @@ bool CSMOption::Init(key_t key, uint32 u4Size, uint16 u2ObjectCount, bool& blIsC
 			nError = m_pShareMemory->open(key, u4MemorySize, ACE_Shared_Memory_SV::ACE_CREATE);
 			if(nError != 0)
 			{
-				PRINTF("[CSMOption::Init]create share memory fail(%d).\n", errno);
+				OUR_DEBUG((LM_ERROR, "[CSMOption::Init]create share memory fail(%d).\n", errno));
 			}
 			blIsLinuxFirst = true;
 		}
@@ -186,7 +186,9 @@ uint8 CSMOption::GetMemoryState()
 {
 	if(NULL != m_pData)
 	{
-		return (uint8)m_pData;
+		uint8 u1Ret = 0;
+		ACE_OS::memcpy((char* )&u1Ret, m_pData, sizeof(uint8));
+		return u1Ret;
 	}
 	else
 	{
@@ -204,12 +206,14 @@ void CSMOption::SetMemoryVersion(uint32 u4Version)
 
 uint32 CSMOption::GetMemoryVersion()
 {
+	uint32 u4Version = 0;
 	if(NULL != m_pData)
 	{
-		return (uint32)&m_pData[sizeof(uint8)];
+		ACE_OS::memcpy((char* )&u4Version, (char* )&m_pData[sizeof(uint8)], sizeof(uint32));
+		return (uint32)u4Version;
 	}
 	else
 	{
-		return (uint32)0;
+		return (uint32)u4Version;
 	}
 }

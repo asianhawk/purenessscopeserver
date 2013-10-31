@@ -285,7 +285,6 @@ _UserValid* CUserValidManager::GetUserValid( const char* pUserName )
 
 void CUserValidManager::Check_File2Memory()
 {
-	bool m_blUpdate = false; 
 	char szFileName[MAX_BUFF_200] = {'\0'};
 	sprintf_safe(szFileName, MAX_BUFF_200, "%s", SOURCE_FILE_PATH);
 	FILE* pFile = fopen((char* )szFileName, "r");
@@ -462,7 +461,6 @@ void CUserValidManager::GetFreeValid()
 
 bool CUserValidManager::Load_File( const char* pUserName )
 {
-	bool m_blUpdate = false; 
 	char szFileName[MAX_BUFF_200] = {'\0'};
 	sprintf_safe(szFileName, MAX_BUFF_200, "%s", SOURCE_FILE_PATH);
 	FILE* pFile = fopen((char* )szFileName, "r");

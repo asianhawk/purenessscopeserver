@@ -3,11 +3,8 @@ project(Watch):aceexe{
   includes += ../../include ../Common
   specific (prop:microsoft){
 	exeout=”../../../PurenessScopeServer/Windows_Bin”
-  }
-  } else {
-	exeout=”../../../PurenessScopeServer/Linux_Bin”
-  }
-
+  } 
+  
   Source_Files {
    ../Common/*.cpp 
    *.cpp
