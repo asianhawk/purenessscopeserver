@@ -107,7 +107,6 @@ void CBaseCommand::Do_User_Login( IMessage* pMessage )
 		//比较用户密码是否正确
 		if(ACE_OS::strcmp(pUserValid->m_szUserPass, szUserPass) == 0)
 		{
-			pUserValid->m_blOnline = true;
 			pUserValid->m_u4LoginCount++;
 			u4Ret = LOGIN_SUCCESS;
 		}
@@ -128,7 +127,6 @@ void CBaseCommand::Do_User_Login( IMessage* pMessage )
 			//比较用户密码是否正确
 			if(ACE_OS::strcmp(pUserValid->m_szUserPass, szUserPass) == 0)
 			{
-				pUserValid->m_blOnline = true;
 				pUserValid->m_u4LoginCount++;
 				u4Ret = LOGIN_SUCCESS;
 			}
@@ -233,7 +231,6 @@ void CBaseCommand::Do_User_Logout( IMessage* pMessage )
 	if(NULL != pUserValid)
 	{
 		//比较用户密码是否正确
-		pUserValid->m_blOnline = false;
 		u4Ret = LOGIN_SUCCESS;
 	}
 	else
@@ -265,7 +262,7 @@ void CBaseCommand::Do_User_Info( IMessage* pMessage )
 
 void CBaseCommand::InitUserList()
 {
-	App_UserValidManager::instance()->Init();
+	App_UserValidManager::instance()->Init((uint32)MAX_LOGIN_VALID_COUNT, SHM_USERVALID_KEY, (uint32)sizeof(_UserValid));
 
 	m_pPostServerData = new CPostServerData();
 

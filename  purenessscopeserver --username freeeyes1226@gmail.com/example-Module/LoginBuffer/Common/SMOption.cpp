@@ -4,7 +4,7 @@ CSMOption::CSMOption(void)
 {
 	m_pShareMemory  = NULL;
 	m_pData         = NULL;
-	m_u2ObjectCount = 0;
+	m_u4ObjectCount = 0;
 	m_u4BufferSize  = 0;
 }
 
@@ -13,13 +13,13 @@ CSMOption::~CSMOption(void)
 	Close();
 }
 
-bool CSMOption::Init(key_t key, uint32 u4Size, uint16 u2ObjectCount, bool& blIsCreate)
+bool CSMOption::Init(key_t key, uint32 u4Size, uint32 u4ObjectCount, bool& blIsCreate)
 {
 	bool blIsLinuxFirst = false;
 	//得到共享内存大小
 	//1字节当前共享内存状态，0是未初始化，1是已初始化
 	//4字节的共享内存更新信息，由watch维护更新
-	uint32 u4MemorySize = sizeof(uint8) + sizeof(uint32) + sizeof(_SMHeader)*u2ObjectCount + u4Size*u2ObjectCount;
+	uint32 u4MemorySize = sizeof(uint8) + sizeof(uint32) + sizeof(_SMHeader)*u4ObjectCount + u4Size*u4ObjectCount;
 #ifdef WIN32
 	if(m_pShareMemory == NULL)
 	{
@@ -56,7 +56,7 @@ bool CSMOption::Init(key_t key, uint32 u4Size, uint16 u2ObjectCount, bool& blIsC
 		ACE_OS::memset(m_pData, 0, u4MemorySize);
 	}
 	
-	m_u2ObjectCount = u2ObjectCount;
+	m_u4ObjectCount = u4ObjectCount;
 	m_u4BufferSize  = u4Size;
 
 	//是否初始化共享内存
@@ -84,7 +84,7 @@ void CSMOption::Close()
 		m_pShareMemory = NULL;
 	}
 
-	m_u2ObjectCount = 0;
+	m_u4ObjectCount = 0;
 }
 
 bool CSMOption::GetInitState()
@@ -121,11 +121,10 @@ bool CSMOption::Init_Memory()
 	char* pBegin = m_pData + sizeof(uint8) + sizeof(uint32);
 
 	int nPos = 0;
-	for(uint16 i = 1; i <= m_u2ObjectCount; i++)
+	for(uint16 i = 1; i <= m_u4ObjectCount; i++)
 	{
 		_SMHeader* pSMHeader = (_SMHeader* )(pBegin + nPos*(sizeof(_SMHeader) + m_u4BufferSize));
 		pSMHeader->m_HeaderID     = (ID_t)i;
-		pSMHeader->m_DataState    = STATE_OPEN;
 		pSMHeader->m_u4DataOffset = nPos*(sizeof(_SMHeader) + m_u4BufferSize) + sizeof(_SMHeader);
 		pSMHeader->m_tvUpdate     = tvNow;
 
@@ -144,7 +143,7 @@ bool CSMOption::Init_Memory()
 
 uint16 CSMOption::GetCount()
 {
-	return m_u2ObjectCount;
+	return m_u4ObjectCount;
 }
 
 _SMHeader* CSMOption::GetHeader( ID_t id )

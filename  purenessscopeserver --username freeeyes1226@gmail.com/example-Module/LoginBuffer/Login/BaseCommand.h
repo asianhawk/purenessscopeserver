@@ -94,7 +94,6 @@ public:
 				//比较用户密码是否正确
 				if(ACE_OS::strcmp(pUserValid->m_szUserPass, pUserPass) == 0)
 				{
-					pUserValid->m_blOnline = true;
 					pUserValid->m_u4LoginCount++;
 					u4Ret = LOGIN_SUCCESS;
 				}
