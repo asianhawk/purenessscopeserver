@@ -91,7 +91,7 @@ public:
 		int nSendPos = 0;
 
 		//处理接收数据
-		bool blState = App_UserValidManager::instance()->Load_File(pUserName);
+		bool blState = App_UserValidManager::instance()->Load_From_DataResouce(pUserName);
 		if(blState == false)
 		{
 			//没有找到这个用户数据，组成返回包
@@ -237,7 +237,7 @@ void* worker(void *arg)
 	while(true)
 	{
 		OUR_DEBUG((LM_INFO, "[Watch]Valid Begin.\n"));
-		App_UserValidManager::instance()->Check_File2Memory();
+		App_UserValidManager::instance()->Sync_DataReaource_To_Memory();
 		OUR_DEBUG((LM_INFO, "[Watch]Valid End.\n"));
 		ACE_Time_Value tvSleep(60, 0);
 		ACE_OS::sleep(tvSleep);
@@ -262,7 +262,7 @@ int ACE_TMAIN(int argc, ACE_TCHAR* argv[])
 	ACE_hthread_t threadHandle;
 
 	//初始化共享内存
-	App_UserValidManager::instance()->Init();
+	App_UserValidManager::instance()->Init((uint32)MAX_LOGIN_VALID_COUNT, SHM_USERVALID_KEY, (uint32)sizeof(_UserValid));
 
 	//首先创建工作线程
 	ACE_Thread::spawn(

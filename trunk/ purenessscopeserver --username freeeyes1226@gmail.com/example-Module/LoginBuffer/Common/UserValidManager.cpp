@@ -1,8 +1,7 @@
 #include "UserValidManager.h"
 
-CUserValidManager::CUserValidManager(uint16 u2Count)
+CUserValidManager::CUserValidManager()
 {
-	m_u2Count = u2Count;
 }
 
 CUserValidManager::~CUserValidManager()
@@ -10,32 +9,7 @@ CUserValidManager::~CUserValidManager()
 	Close();
 }
 
-bool CUserValidManager::Init()
-{
-	bool blIsCreate = true;
-	bool blIsOpen   = true;
-	
-	blIsOpen = m_SMOption.Init(SHM_USERVALID_KEY, sizeof(_UserValid), (uint16)MAX_LOGIN_VALID_COUNT, blIsCreate);
-	if(false == blIsOpen)
-	{
-		return false;
-	}
-
-	if(blIsCreate == true)
-	{
-		//共享内存第一次创建，需要从文件里面重建共享内存
-		ReadFile();
-	}
-	else
-	{
-		//共享内存已经存在，遍历获得列表
-		ReadMemory();
-	}
-
-	return true;
-}
-
-bool CUserValidManager::ReadFile()
+bool CUserValidManager::Read_All_Init_DataResoure()
 {
 	//从文件里面获取当前可以支持的用户名和密码，放入共享内存中去
 	char szFileName[MAX_BUFF_200] = {'\0'};
@@ -93,7 +67,7 @@ bool CUserValidManager::ReadFile()
 
 	while(pLine != NULL) 
 	{
-		if(nIndex > (uint32)m_u2Count)
+		if(nIndex > (uint32)Get_Cache_Count())
 		{
 			break;
 		}
@@ -101,16 +75,15 @@ bool CUserValidManager::ReadFile()
 		bool blState = GetFileInfo(pLine, szUserName, szUserPass);
 		if(true == blState)
 		{
-			_UserValid* pUserValid = (_UserValid* )m_SMOption.GetBuffer(nIndex);
+			_UserValid* pUserValid = (_UserValid* )Get_CacheBlock_By_Index(nIndex);
 			if(NULL != pUserValid)
 			{
 				//初始化共享内存数据
 				sprintf_safe(pUserValid->m_szUserName, MAX_BUFF_50, "%s", szUserName);
 				sprintf_safe(pUserValid->m_szUserPass, MAX_BUFF_50, "%s", szUserPass);
-				pUserValid->m_blDelete     = false;
-				pUserValid->m_blOnline     = false;
-				pUserValid->m_u1State      = CHECKS_HIT;
-				pUserValid->m_u4LoginCount = 0;
+				
+				pUserValid->m_u4LoginCount  = 0;
+				pUserValid->SetHit();
 
 				string strUserName;
 				strUserName = (string)pUserValid->m_szUserName;
@@ -124,17 +97,16 @@ bool CUserValidManager::ReadFile()
 	}
 
 	//剩下的没有使用的共享内存块放在一起
-	if(nIndex <= (uint32)m_u2Count)
+	if(nIndex <= (uint32)Get_Cache_Count())
 	{
-		for(ID_t i = nIndex; i <= (ID_t)m_u2Count; i++)
+		for(ID_t i = nIndex; i <= (ID_t)Get_Cache_Count(); i++)
 		{
-			_UserValid* pUserValid = (_UserValid* )m_SMOption.GetBuffer(i);
+			_UserValid* pUserValid = (_UserValid* )Get_CacheBlock_By_Index(i);
 			if(NULL != pUserValid)
 			{
-				pUserValid->m_blDelete     = true;
-				pUserValid->m_blOnline     = false;
-				pUserValid->m_u1State      = CHECKS_UNHIT;
-				pUserValid->m_u4LoginCount = 0;
+				pUserValid->m_u4LoginCount                 = 0;
+				pUserValid->SetUnHit();
+
 				m_vecFreeValid.push_back(pUserValid);
 			}
 		}
@@ -143,7 +115,7 @@ bool CUserValidManager::ReadFile()
 	SAFE_DELETE_ARRAY(pFileBuffer);
 	fclose(pFile);
 
-	m_SMOption.SetMemoryState(READERINITSTATED);
+	Set_Memory_Init_Success();
 
 	return true;
 }
@@ -192,20 +164,20 @@ void CUserValidManager::Close()
 	m_vecFreeValid.clear();
 }
 
-bool CUserValidManager::ReadMemory()
+bool CUserValidManager::Read_All_From_CacheMemory()
 {
 	m_mapUserValid.clear();
 	m_vecFreeValid.clear();
 
-	for(int i = 1; i <= m_u2Count; i++)
+	for(uint32 i = 1; i <= Get_Cache_Count(); i++)
 	{
-		_UserValid* pUserValid = (_UserValid* )m_SMOption.GetBuffer(i);
+		_UserValid* pUserValid = (_UserValid* )Get_CacheBlock_By_Index(i);
 		if(NULL != pUserValid)
 		{
 			//符合条件的数据才插入当前遍历列表
 			if(ACE_OS::strlen(pUserValid->m_szUserName) != 0 
 				&& ACE_OS::strlen(pUserValid->m_szUserPass) != 0
-				&& pUserValid->m_blDelete == false)
+				&& pUserValid->GetDelete() == false)
 			{
 				string strUserName = (string)pUserValid->m_szUserName;
 				m_mapUserValid.insert(mapUserValid::value_type(strUserName, pUserValid));
@@ -249,14 +221,14 @@ _UserValid* CUserValidManager::GetUserValid( const char* pUserName )
 		_UserValid* pUserValid = (_UserValid* )f->second;
 		if(NULL != pUserValid)
 		{
-			if(strUserName != (string)pUserValid->m_szUserName || pUserValid->m_blDelete == true)
+			if(strUserName != (string)pUserValid->m_szUserName || pUserValid->GetDelete() == true)
 			{
 				//说明当前数据已经无效了，从当前map里面清除
 				m_mapUserValid.erase(f);
 				m_vecFreeValid.push_back(pUserValid);
 
 				//如果新数据不是删除的数据，重新添加新加载的数据
-				if(pUserValid->m_blDelete == false)
+				if(pUserValid->GetDelete() == false)
 				{
 					m_mapUserValid.insert(mapUserValid::value_type((string)pUserValid->m_szUserName, pUserValid));
 				}
@@ -264,7 +236,7 @@ _UserValid* CUserValidManager::GetUserValid( const char* pUserName )
 			}
 			else
 			{
-				if(pUserValid->m_blDelete == false)
+				if(pUserValid->GetDelete() == false)
 				{
 					return pUserValid;
 				}
@@ -283,7 +255,7 @@ _UserValid* CUserValidManager::GetUserValid( const char* pUserName )
 	}
 }
 
-void CUserValidManager::Check_File2Memory()
+void CUserValidManager::Sync_DataReaource_To_Memory()
 {
 	char szFileName[MAX_BUFF_200] = {'\0'};
 	sprintf_safe(szFileName, MAX_BUFF_200, "%s", SOURCE_FILE_PATH);
@@ -337,7 +309,7 @@ void CUserValidManager::Check_File2Memory()
 
 	char* pLine = strtok((char* )pFileBuffer, szFind);
 
-	BeginCheck();
+	Begin_Sync_DataReaource_To_Memory();
 
 	while(pLine != NULL) 
 	{
@@ -350,9 +322,7 @@ void CUserValidManager::Check_File2Memory()
 				//初始化共享内存数据
 				sprintf_safe(pUserValid->m_szUserName, MAX_BUFF_50, "%s", szUserName);
 				sprintf_safe(pUserValid->m_szUserPass, MAX_BUFF_50, "%s", szUserPass);
-				pUserValid->m_blDelete     = false;
-				pUserValid->m_u1State      = CHECKS_HIT;
-				pUserValid->m_u4LoginCount = 0;
+				pUserValid->SetHit();
 			}
 			else
 			{
@@ -368,10 +338,9 @@ void CUserValidManager::Check_File2Memory()
 					//初始化共享内存数据
 					sprintf_safe(pUserValid->m_szUserName, MAX_BUFF_50, "%s", szUserName);
 					sprintf_safe(pUserValid->m_szUserPass, MAX_BUFF_50, "%s", szUserPass);
-					pUserValid->m_blDelete     = false;
-					pUserValid->m_blOnline     = false;
-					pUserValid->m_u1State      = CHECKS_HIT;
-					pUserValid->m_u4LoginCount = 0;
+					
+					pUserValid->m_u4LoginCount                 = 0;
+					pUserValid->SetHit();
 
 					string strUserName;
 					strUserName = (string)pUserValid->m_szUserName;
@@ -386,35 +355,35 @@ void CUserValidManager::Check_File2Memory()
 		pLine = strtok(NULL, szFind);
 	}
 
-	EndCheck();
+	End_Sync_DataReaource_To_Memory();
 
 	SAFE_DELETE_ARRAY(pFileBuffer);
 	fclose(pFile);
 }
 
-void CUserValidManager::BeginCheck()
+void CUserValidManager::Begin_Sync_DataReaource_To_Memory()
 {
 	for(mapUserValid::iterator b = m_mapUserValid.begin(); b != m_mapUserValid.end(); b++)
 	{
 		_UserValid* pUserValid = (_UserValid* )b->second;
 		if(NULL != pUserValid)
 		{
-			pUserValid->m_u1State = CHECKS_UNHIT;
+			pUserValid->SetCheckState(CHECKS_UNHIT);
 		}
 	}
 }
 
-void CUserValidManager::EndCheck()
+void CUserValidManager::End_Sync_DataReaource_To_Memory()
 {
 	for(mapUserValid::iterator b = m_mapUserValid.begin(); b != m_mapUserValid.end();)
 	{
 		_UserValid* pUserValid = (_UserValid* )b->second;
 		if(NULL != pUserValid)
 		{
-			if(pUserValid->m_u1State != CHECKS_HIT)
+			if(pUserValid->GetCheckState() != CHECKS_HIT)
 			{
 				//说明这个数据已经在遍历中不存在了，回收之
-				pUserValid->m_blDelete = true;
+				pUserValid->SetDelete(true);
 				m_mapUserValid.erase(b++);
 
 				m_vecFreeValid.push_back(pUserValid);
@@ -435,7 +404,7 @@ void CUserValidManager::GetFreeValid()
 	//这里的map和Watch的监控是不一致的，如果当前找不到才去当前以为空闲的去寻找。
 	for(uint32 i = 0; i < (uint32)m_vecFreeValid.size(); i++)
 	{
-		if(m_vecFreeValid[i]->m_blDelete == false)
+		if(m_vecFreeValid[i]->GetDelete() == false)
 		{
 			mapUserValid::iterator f = m_mapUserValid.find((string)m_vecFreeValid[i]->m_szUserName);
 			if(f == m_mapUserValid.end())
@@ -448,7 +417,7 @@ void CUserValidManager::GetFreeValid()
 	for(vecValid::iterator b = m_vecFreeValid.begin(); b != m_vecFreeValid.end();)
 	{
 		_UserValid* pUserValid = (_UserValid* )(*b);
-		if(pUserValid->m_blDelete == false)
+		if(pUserValid->GetDelete() == false)
 		{
 			b = m_vecFreeValid.erase(b);
 		}
@@ -459,7 +428,7 @@ void CUserValidManager::GetFreeValid()
 	}
 }
 
-bool CUserValidManager::Load_File( const char* pUserName )
+bool CUserValidManager::Load_From_DataResouce( const char* pUserName )
 {
 	char szFileName[MAX_BUFF_200] = {'\0'};
 	sprintf_safe(szFileName, MAX_BUFF_200, "%s", SOURCE_FILE_PATH);
@@ -526,9 +495,8 @@ bool CUserValidManager::Load_File( const char* pUserName )
 				//初始化共享内存数据
 				sprintf_safe(pUserValid->m_szUserName, MAX_BUFF_50, "%s", szUserName);
 				sprintf_safe(pUserValid->m_szUserPass, MAX_BUFF_50, "%s", szUserPass);
-				pUserValid->m_blDelete     = false;
-				pUserValid->m_u1State      = CHECKS_HIT;
-				pUserValid->m_u4LoginCount = 0;
+				pUserValid->SetHit();
+				pUserValid->m_u4LoginCount                 = 0;
 			}
 			else
 			{
@@ -546,10 +514,8 @@ bool CUserValidManager::Load_File( const char* pUserName )
 					//初始化共享内存数据
 					sprintf_safe(pUserValid->m_szUserName, MAX_BUFF_50, "%s", szUserName);
 					sprintf_safe(pUserValid->m_szUserPass, MAX_BUFF_50, "%s", szUserPass);
-					pUserValid->m_blDelete     = false;
-					pUserValid->m_blOnline     = false;
-					pUserValid->m_u1State      = CHECKS_HIT;
-					pUserValid->m_u4LoginCount = 0;
+					pUserValid->SetHit();
+					pUserValid->m_u4LoginCount                 = 0;
 
 					string strUserName;
 					strUserName = (string)pUserValid->m_szUserName;

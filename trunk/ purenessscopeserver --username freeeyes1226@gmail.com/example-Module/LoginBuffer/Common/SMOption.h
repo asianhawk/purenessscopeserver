@@ -26,7 +26,7 @@ public:
 	CSMOption(void);
 	~CSMOption(void);
 
-	bool Init(key_t key, uint32 u4Size, uint16 u2ObjectCount, bool& blIsCreate);
+	bool Init(key_t key, uint32 u4Size, uint32 u4ObjectCount, bool& blIsCreate);
 	void Close();
 	uint16 GetCount();
 
@@ -43,7 +43,7 @@ private:
 	bool Init_Memory();
 
 private:
-	uint16                m_u2ObjectCount;
+	uint32                m_u4ObjectCount;
 	uint32                m_u4BufferSize;
 	char*                 m_pData;
 #ifdef WIN32
