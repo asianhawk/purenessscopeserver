@@ -91,7 +91,7 @@ int CBaseCommand::DoMessage(IMessage* pMessage, bool& bDeleteFlag)
     if(NULL != m_pServerObject->GetConnectManager())
     {
       //发送全部数据
-      m_pServerObject->GetConnectManager()->PostMessage(pMessage->GetMessageBase()->m_u4ConnectID, pResponsesPacket, SENDMESSAGE_JAMPNOMAL, u2PostCommandID, true);
+      m_pServerObject->GetConnectManager()->PostMessage(pMessage->GetMessageBase()->m_u4ConnectID, pResponsesPacket, SENDMESSAGE_JAMPNOMAL, u2PostCommandID, true, true);
     }
     else
     {

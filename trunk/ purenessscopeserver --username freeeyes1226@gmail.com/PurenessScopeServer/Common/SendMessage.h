@@ -12,13 +12,16 @@ struct _SendMessage
 {
 	uint32          m_u4ConnectID;    //要发送的远程ID
 	uint16          m_u2CommandID;    //要发送的命令ID，用于统计功能
-	bool            m_blSendState;    //要发送的状态，0是立即发送，1是先缓存不发送
+	bool            m_blSendState;    //要发送的状态，true是立即发送，false是先缓存不发送
+	bool            m_blDelete;       //发送完成后是否删除，true是删除，false是不删除
 	IBuffPacket*    m_pBuffPacket;    //数据包内容
 	uint8           m_nEvents;        //发送类型，0：正常数据包发送，1：发送阻塞数据
 	ACE_hrtime_t    m_tvSend;         //数据包发送的时间戳
 
 	_SendMessage()
 	{
+		m_blSendState = true;
+		m_blDelete    = true;
 		m_u4ConnectID = 0;
 		m_nEvents     = 0;
 		m_u2CommandID = 0;

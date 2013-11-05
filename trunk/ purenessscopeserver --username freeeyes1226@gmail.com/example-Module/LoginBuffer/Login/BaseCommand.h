@@ -79,12 +79,24 @@ public:
 			uint8 u1Ret = 0;
 			ACE_OS::memcpy(&u1Ret, (char* )&pData[nPos], sizeof(uint8));
 			nPos += sizeof(uint8);
+			uint32 u4CacheIndex = 0;
+			ACE_OS::memcpy(&u4CacheIndex, (char* )&pData[nPos], sizeof(uint32));
+			nPos += sizeof(uint32);
 			uint32 u4ConnectID = 0;
 			ACE_OS::memcpy(&u4ConnectID, (char* )&pData[nPos], sizeof(uint32));
 			nPos += sizeof(uint32);
 
-			//重新加载一下缓冲
-			App_UserValidManager::instance()->GetFreeValid();
+			if(u4CacheIndex == 0)
+			{
+				//重新加载一下缓冲
+				App_UserValidManager::instance()->GetFreeValid();
+			}
+			else
+			{
+				//Lru被触发，需要重新遍历一下内存
+				App_UserValidManager::instance()->Reload_Map_CacheMemory(u4CacheIndex);
+			}
+
 
 			uint32 u4Ret = LOGIN_SUCCESS;
 			//在重新找一下
@@ -106,6 +118,8 @@ public:
 			{
 				u4Ret = LOGIN_FAIL_NOEXIST;
 			}
+
+				App_UserValidManager::instance()->Display();
 
 			SAFE_DELETE_ARRAY(pUserPass);
 			SAFE_DELETE_ARRAY(pUserName);

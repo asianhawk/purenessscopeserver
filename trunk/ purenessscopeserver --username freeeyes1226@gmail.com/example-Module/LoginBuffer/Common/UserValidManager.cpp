@@ -2,6 +2,7 @@
 
 CUserValidManager::CUserValidManager()
 {
+
 }
 
 CUserValidManager::~CUserValidManager()
@@ -78,9 +79,17 @@ bool CUserValidManager::Read_All_Init_DataResoure()
 			_UserValid* pUserValid = (_UserValid* )Get_CacheBlock_By_Index(nIndex);
 			if(NULL != pUserValid)
 			{
+				//初始化块ID
+				pUserValid->SetCacheIndex(nIndex);
+
 				//初始化共享内存数据
 				sprintf_safe(pUserValid->m_szUserName, MAX_BUFF_50, "%s", szUserName);
 				sprintf_safe(pUserValid->m_szUserPass, MAX_BUFF_50, "%s", szUserPass);
+
+				//插入Lru列表
+				//这里不用检查Lru是否启动，因为是第一次加载
+				//不会超过Get_Cache_Count()上限
+				m_objLRU.Add_Cached_Lru((string)szUserName);
 				
 				pUserValid->m_u4LoginCount  = 0;
 				pUserValid->SetHit();
@@ -179,6 +188,12 @@ bool CUserValidManager::Read_All_From_CacheMemory()
 				&& ACE_OS::strlen(pUserValid->m_szUserPass) != 0
 				&& pUserValid->GetDelete() == false)
 			{
+
+				//插入Lru列表
+				//这里不用检查Lru是否启动，因为是第一次从已有内存加载
+				//不会超过Get_Cache_Count()上限
+				m_objLRU.Add_Cached_Lru((string)pUserValid->m_szUserName);
+
 				string strUserName = (string)pUserValid->m_szUserName;
 				m_mapUserValid.insert(mapUserValid::value_type(strUserName, pUserValid));
 			}
@@ -227,6 +242,9 @@ _UserValid* CUserValidManager::GetUserValid( const char* pUserName )
 				m_mapUserValid.erase(f);
 				m_vecFreeValid.push_back(pUserValid);
 
+				//删除Lru相关内容
+				m_objLRU.Delete_Cached_Lru(strUserName);
+
 				//如果新数据不是删除的数据，重新添加新加载的数据
 				if(pUserValid->GetDelete() == false)
 				{
@@ -236,15 +254,10 @@ _UserValid* CUserValidManager::GetUserValid( const char* pUserName )
 			}
 			else
 			{
-				if(pUserValid->GetDelete() == false)
-				{
-					return pUserValid;
-				}
-				else
-				{
-					return NULL;
-				}
-				
+				//添加命中
+				m_objLRU.Add_Cached_Lru(strUserName);
+
+				return pUserValid;
 			}
 		}
 		else
@@ -329,6 +342,8 @@ void CUserValidManager::Sync_DataReaource_To_Memory()
 				//如果没有命中，则是新数据，从空闲池里取出数据放在里面
 				if(m_vecFreeValid.size() <= 0)
 				{
+					//如果空闲池已经没有了，则推出函数
+					pLine = strtok(NULL, szFind);
 					continue;
 				}
 
@@ -384,8 +399,11 @@ void CUserValidManager::End_Sync_DataReaource_To_Memory()
 			{
 				//说明这个数据已经在遍历中不存在了，回收之
 				pUserValid->SetDelete(true);
-				m_mapUserValid.erase(b++);
 
+				//从Lru中删除
+				m_objLRU.Delete_Cached_Lru((string)pUserValid->m_szUserName);
+
+				m_mapUserValid.erase(b++);
 				m_vecFreeValid.push_back(pUserValid);
 			}
 			else
@@ -428,8 +446,9 @@ void CUserValidManager::GetFreeValid()
 	}
 }
 
-bool CUserValidManager::Load_From_DataResouce( const char* pUserName )
+bool CUserValidManager::Load_From_DataResouce(const char* pUserName, uint32& u4CacheIndex)
 {
+	u4CacheIndex = 0;
 	char szFileName[MAX_BUFF_200] = {'\0'};
 	sprintf_safe(szFileName, MAX_BUFF_200, "%s", SOURCE_FILE_PATH);
 	FILE* pFile = fopen((char* )szFileName, "r");
@@ -503,27 +522,66 @@ bool CUserValidManager::Load_From_DataResouce( const char* pUserName )
 				//如果没有命中，则是新数据，从空闲池里取出数据放在里面
 				if(m_vecFreeValid.size() <= 0)
 				{
-					SAFE_DELETE_ARRAY(pFileBuffer);
-					fclose(pFile);
-					return false;
-				}
-
-				_UserValid* pUserValid = (_UserValid* )m_vecFreeValid[0];
-				if(NULL != pUserValid)
-				{
-					//初始化共享内存数据
-					sprintf_safe(pUserValid->m_szUserName, MAX_BUFF_50, "%s", szUserName);
-					sprintf_safe(pUserValid->m_szUserPass, MAX_BUFF_50, "%s", szUserPass);
-					pUserValid->SetHit();
-					pUserValid->m_u4LoginCount                 = 0;
-
+					//如果空闲池已经不存在了，淘汰最长时间未被访问的数据
 					string strUserName;
-					strUserName = (string)pUserValid->m_szUserName;
+					bool blIsLast = m_objLRU.Check_Cached_Lru(strUserName);
+					if(blIsLast == false)
+					{
+						//没有找到被淘汰的数据，这里肯定是不合法的。
+						SAFE_DELETE_ARRAY(pFileBuffer);
+						fclose(pFile);
+						return false;
+					}
 
-					m_mapUserValid.insert(mapUserValid::value_type(strUserName, pUserValid));
+					mapUserValid::iterator f = m_mapUserValid.find(strUserName);
+					if(f == m_mapUserValid.end())
+					{
+						SAFE_DELETE_ARRAY(pFileBuffer);
+						fclose(pFile);
+						return false;
+					}
+					else
+					{
+						_UserValid* pUserValid = (_UserValid* )f->second;
 
-					vecValid::iterator b = m_vecFreeValid.begin();
-					m_vecFreeValid.erase(b);
+						//在这里进行LRU替换之
+						m_objLRU.Delete_Cached_Lru(strUserName);
+						m_objLRU.Add_Cached_Lru((string)pUserName);
+
+						m_mapUserValid.erase(f);
+
+						//初始化共享内存数据
+						sprintf_safe(pUserValid->m_szUserName, MAX_BUFF_50, "%s", szUserName);
+						sprintf_safe(pUserValid->m_szUserPass, MAX_BUFF_50, "%s", szUserPass);
+						pUserValid->SetHit();
+						pUserValid->m_u4LoginCount                 = 0;
+
+						string strUserName;
+						strUserName = (string)pUserValid->m_szUserName;
+
+						m_mapUserValid.insert(mapUserValid::value_type(strUserName, pUserValid));
+						u4CacheIndex = pUserValid->GetCacheIndex();
+					}
+				}
+				else
+				{
+					_UserValid* pUserValid = (_UserValid* )m_vecFreeValid[0];
+					if(NULL != pUserValid)
+					{
+						//初始化共享内存数据
+						sprintf_safe(pUserValid->m_szUserName, MAX_BUFF_50, "%s", szUserName);
+						sprintf_safe(pUserValid->m_szUserPass, MAX_BUFF_50, "%s", szUserPass);
+						pUserValid->SetHit();
+						pUserValid->m_u4LoginCount                 = 0;
+
+						string strUserName;
+						strUserName = (string)pUserValid->m_szUserName;
+
+						m_mapUserValid.insert(mapUserValid::value_type(strUserName, pUserValid));
+
+						vecValid::iterator b = m_vecFreeValid.begin();
+						m_vecFreeValid.erase(b);
+					}
 				}
 			}
 
@@ -534,6 +592,45 @@ bool CUserValidManager::Load_From_DataResouce( const char* pUserName )
 
 	SAFE_DELETE_ARRAY(pFileBuffer);
 	fclose(pFile);
+
+	Display();
+
+	return true;
+}
+
+bool CUserValidManager::Init(uint32 u4CachedCount, key_t objMemorykey, uint32 u4CheckSize)
+{
+	//设置Lru对象上限
+	m_objLRU.Set_Lru_Max_Count(u4CachedCount);
+
+	//调用父类方法
+	return CCacheManager::Init(u4CachedCount, objMemorykey, u4CheckSize);
+}
+
+void CUserValidManager::Display()
+{
+	OUR_DEBUG((LM_INFO, "[CUserValidManager::Display]m_mapUserValid count=%d, m_vecFreeValid=%d.\n", m_mapUserValid.size(), m_vecFreeValid.size()));
+	for(mapUserValid::iterator b = m_mapUserValid.begin(); b!= m_mapUserValid.end(); b++)
+	{
+		_UserValid* pUserValid = (_UserValid* )b->second;
+
+		OUR_DEBUG((LM_INFO, "[CUserValidManager::Display]UserName=%s.\n", pUserValid->m_szUserName));
+	}
+}
+
+bool CUserValidManager::Reload_Map_CacheMemory(uint32 u4CacheIndex)
+{
+	for(mapUserValid::iterator b = m_mapUserValid.begin(); b != m_mapUserValid.end(); b++)
+	{
+		_UserValid* pUserValid = (_UserValid* )b->second;
+		if( pUserValid->GetCacheIndex() == u4CacheIndex)
+		{
+			//重新加载指定的数据块与map的映射信息
+			m_mapUserValid.erase(b);
+			m_mapUserValid.insert(mapUserValid::value_type((string)pUserValid->m_szUserName, pUserValid));
+			break;
+		}
+	}
 
 	return true;
 }
