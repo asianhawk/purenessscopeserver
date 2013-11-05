@@ -14,7 +14,7 @@
 #define PRINTF printf
 #endif
 
-#define MAX_LOGIN_VALID_COUNT  200
+#define MAX_LOGIN_VALID_COUNT  10
 #define SOURCE_FILE_PATH "./LoginBufferFile/UserValid.txt"
 
 //这里如果是想用缓冲功能，必须继承_CacheBlock对象
@@ -36,12 +36,17 @@ public:
 	~CUserValidManager();
 
 	void Close();
+	void Display();
+
+	bool Init(uint32 u4CachedCount, key_t objMemorykey, uint32 u4CheckSize);
 
 	_UserValid* GetUserValid(const char* pUserName);      //根据名称得到用户状态
 	void Sync_DataReaource_To_Memory();                   //同步文件和共享内存
 	void GetFreeValid();                                  //从空闲数据块中寻找已经新加载的数据
 
-	bool Load_From_DataResouce(const char* pUserName);    //从文件里面寻找指定的用户名  
+	bool Load_From_DataResouce(const char* pUserName, uint32& u4CacheIndex);    //从文件里面寻找指定的用户名
+
+	bool Reload_Map_CacheMemory(uint32 u4CacheIndex);
 
 private:
 	bool Read_All_Init_DataResoure();         //从文件加载共享内存，并加载列表
@@ -51,8 +56,9 @@ private:
 	bool GetFileInfo(const char* pLine, char* pUserName, char* pUserPass); //从文件同步
 	   
 private:
-	mapUserValid m_mapUserValid;
-	vecValid     m_vecFreeValid;
+	mapUserValid            m_mapUserValid;
+	vecValid                m_vecFreeValid;
+	CCachedLRUList<string>  m_objLRU;
 };
 
 #endif

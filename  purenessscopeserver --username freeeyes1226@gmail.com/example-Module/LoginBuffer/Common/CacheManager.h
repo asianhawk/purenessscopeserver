@@ -106,9 +106,10 @@ protected:
 	void Set_Memory_Init_Success()                       
 	{
 		m_SMOption.SetMemoryState(READERINITSTATED);
-	} ;
+	};
 
 private:
 	CSMOption    m_SMOption;
 	uint32       m_u4Count;
+
 };
