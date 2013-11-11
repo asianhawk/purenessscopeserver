@@ -190,11 +190,29 @@ public:
 		}
 
 		m_mapTimeStamp.erase(ft);
+
+		//删除Index和key之间的对应关系
+		mapKey2Index::iterator fi = m_mapKey2Index.find(lrukey);
+		if(fi != m_mapKey2Index.end())
+		{
+			uint32 u4CachedIndex = (uint32)fi->second;
+
+			//删除对应关系
+			m_mapKey2Index.erase(fi);
+
+			//删除另一个map
+			mapIndex2Key::iterator fii = m_mapIndex2Key.find(u4CachedIndex);
+			if(fii != m_mapIndex2Key.end())
+			{
+				m_mapIndex2Key.erase(fii);
+			}
+		}
+
 		return true;
 	};
 
 	//添加一个key，如果已经存在则提升到队列最前面去
-	EM_LRUReturn Add_Cached_Lru(K lrukey)
+	EM_LRUReturn Add_Cached_Lru(K lrukey, uint32 u4CachedIndex)
 	{
 		mapKey::iterator f = m_mapKey.find(lrukey);
 		if(f == m_mapKey.end())
@@ -210,6 +228,9 @@ public:
 			m_mapKey.insert(mapKey::value_type(lrukey, u4Index));
 			m_mapTimeStamp.insert(mapTimeStamp::value_type(u4Index, lrukey));
 
+			m_mapKey2Index.insert(mapKey2Index::value_type(lrukey, u4CachedIndex));
+			m_mapIndex2Key.insert(mapIndex2Key::value_type(u4CachedIndex, lrukey));
+
 			return LRU_UNNEED_CHECK;
 		}
 		else
@@ -224,18 +245,91 @@ public:
 			u4CurrIndex = m_u4CheckIndex++;
 			m_mapTimeStamp.insert(mapTimeStamp::value_type(u4CurrIndex, lrukey));
 
-
 			return LRU_UNNEED_CHECK;
 		}
 	}
 
+	//根据实际情况更新Lru的对应index和key的列表
+	bool Reload_Cached_IndexList(K lrukey, K& lruBeforekey, uint32 u4CachedIndex)
+	{
+		//寻找之前的Index对应的key并修改之
+		mapIndex2Key::iterator fii = m_mapIndex2Key.find(u4CachedIndex);
+		if(fii == m_mapIndex2Key.end())
+		{
+			return false;
+		}
+
+		lruBeforekey = (K)fii->second;
+
+		mapKey2Index::iterator fi = m_mapKey2Index.find(lruBeforekey);
+		if(fi != m_mapKey2Index.end())
+		{
+			m_mapKey2Index.erase(fi);
+
+			//添加新的key对应关系
+			m_mapKey2Index.insert(mapKey2Index::value_type(lrukey, u4CachedIndex));
+		}
+
+		m_mapIndex2Key[u4CachedIndex] = lrukey;
+
+		//测试代码
+		//DisPlay_Index2Key();
+		//DisPlay_Key2Index();
+
+		return true;
+	}
+
+	//获得指定位置的Index对应信息
+	bool Get_Cached_KeyByIndex(uint32 u4CachedIndex, K& lrukey)
+	{
+		mapIndex2Key::iterator fii = m_mapIndex2Key.find(u4CachedIndex);
+		if(fii == m_mapIndex2Key.end())
+		{
+			return false;
+		}
+		else
+		{
+			lrukey = (K )fii->second;
+			return true;
+		}
+	}
 
 private:
-	typedef map<K, uint32> mapKey;
-	typedef map<uint32, K> mapTimeStamp;
+	//用于测试显示数据映射内容
+	void DisPlay_Index2Key()
+	{
+		OUR_DEBUG((LM_INFO, "[DisPlay_Index2Key]*****Begin DisPlay*****\n"));
+		for(mapIndex2Key::iterator b = m_mapIndex2Key.begin(); b != m_mapIndex2Key.end(); b++)
+		{
+			OUR_DEBUG((LM_INFO, "[DisPlay_Index2Key]key=%s.\n", ((string)(b->second)).c_str()));
+		}
+		OUR_DEBUG((LM_INFO, "[DisPlay_Index2Key]*****End DisPlay*****\n"));
+	}
+
+	//用于测试显示数据映射内容
+	void DisPlay_Key2Index()
+	{
+		OUR_DEBUG((LM_INFO, "[DisPlay_Key2Index]*****Begin DisPlay*****\n"));
+		for(mapKey2Index::iterator b = m_mapKey2Index.begin(); b != m_mapKey2Index.end(); b++)
+		{
+			OUR_DEBUG((LM_INFO, "[DisPlay_Key2Index]key=%s.\n", ((string)(b->first)).c_str()));
+		}
+		OUR_DEBUG((LM_INFO, "[DisPlay_Key2Index]*****End DisPlay*****\n"));
+	}
+
+private:
+	typedef map<K, uint32> mapKey;       //key与Version对应关系
+	typedef map<uint32, K> mapTimeStamp; //Version和key的对应关系
+
+	typedef map<K, uint32> mapKey2Index; //记录Index和key的关系
+	typedef map<uint32, K> mapIndex2Key; //记录key和Index的关系
 
 	mapKey       m_mapKey;
 	mapTimeStamp m_mapTimeStamp;
+
+	mapKey2Index m_mapKey2Index;
+	mapIndex2Key m_mapIndex2Key;
+
 	uint32       m_u4CheckIndex; 
 	uint32       m_u4MaxCachedCount;
 };
