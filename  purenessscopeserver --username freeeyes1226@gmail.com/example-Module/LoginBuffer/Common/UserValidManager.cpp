@@ -89,7 +89,7 @@ bool CUserValidManager::Read_All_Init_DataResoure()
 				//插入Lru列表
 				//这里不用检查Lru是否启动，因为是第一次加载
 				//不会超过Get_Cache_Count()上限
-				m_objLRU.Add_Cached_Lru((string)szUserName);
+				m_objLRU.Add_Cached_Lru((string)szUserName, pUserValid->GetCacheIndex());
 				
 				pUserValid->m_u4LoginCount  = 0;
 				pUserValid->SetHit();
@@ -192,7 +192,7 @@ bool CUserValidManager::Read_All_From_CacheMemory()
 				//插入Lru列表
 				//这里不用检查Lru是否启动，因为是第一次从已有内存加载
 				//不会超过Get_Cache_Count()上限
-				m_objLRU.Add_Cached_Lru((string)pUserValid->m_szUserName);
+				m_objLRU.Add_Cached_Lru((string)pUserValid->m_szUserName, pUserValid->GetCacheIndex());
 
 				string strUserName = (string)pUserValid->m_szUserName;
 				m_mapUserValid.insert(mapUserValid::value_type(strUserName, pUserValid));
@@ -255,7 +255,7 @@ _UserValid* CUserValidManager::GetUserValid( const char* pUserName )
 			else
 			{
 				//添加命中
-				m_objLRU.Add_Cached_Lru(strUserName);
+				m_objLRU.Add_Cached_Lru(strUserName, pUserValid->GetCacheIndex());
 
 				return pUserValid;
 			}
@@ -546,7 +546,7 @@ bool CUserValidManager::Load_From_DataResouce(const char* pUserName, uint32& u4C
 
 						//在这里进行LRU替换之
 						m_objLRU.Delete_Cached_Lru(strUserName);
-						m_objLRU.Add_Cached_Lru((string)pUserName);
+						m_objLRU.Add_Cached_Lru((string)pUserName, pUserValid->GetCacheIndex());
 
 						m_mapUserValid.erase(f);
 
@@ -620,17 +620,25 @@ void CUserValidManager::Display()
 
 bool CUserValidManager::Reload_Map_CacheMemory(uint32 u4CacheIndex)
 {
-	for(mapUserValid::iterator b = m_mapUserValid.begin(); b != m_mapUserValid.end(); b++)
-	{
-		_UserValid* pUserValid = (_UserValid* )b->second;
-		if( pUserValid->GetCacheIndex() == u4CacheIndex)
-		{
-			//重新加载指定的数据块与map的映射信息
-			m_mapUserValid.erase(b);
-			m_mapUserValid.insert(mapUserValid::value_type((string)pUserValid->m_szUserName, pUserValid));
-			break;
-		}
-	}
+	string strOldUserName;
+	string strNewUserName;
 
-	return true;
+	bool blRet = m_objLRU.Get_Cached_KeyByIndex(u4CacheIndex, strOldUserName);
+
+	mapUserValid::iterator f = m_mapUserValid.find(strOldUserName);
+	if(f != m_mapUserValid.end())
+	{
+		_UserValid* pUserValid = (_UserValid* )f->second;
+
+		//重载Index列表对应关系
+		m_objLRU.Reload_Cached_IndexList((string)pUserValid->m_szUserName, strOldUserName, u4CacheIndex);
+
+		m_mapUserValid.erase(f);
+		m_mapUserValid.insert(mapUserValid::value_type((string)pUserValid->m_szUserName, pUserValid));
+		return true;
+	}
+	else
+	{
+		return false;
+	}
 }
