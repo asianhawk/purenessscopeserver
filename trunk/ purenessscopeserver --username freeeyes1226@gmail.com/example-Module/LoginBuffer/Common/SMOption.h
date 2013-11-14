@@ -3,6 +3,7 @@
 
 #include "ace/OS_main.h"
 #include "ace/OS_NS_stdio.h"
+#include "ace/OS_NS_stdlib.h"
 //
 #ifdef WIN32
 #include "ace/Shared_Memory_MM.h"      //windwosœ¬ π”√

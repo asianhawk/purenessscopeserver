@@ -4,9 +4,9 @@ include Makefile.define
 default:all
 
 # 主应用文件列表
-PATS = BaseCommand.o Login.o ../Common/SMOption.o ../Common/UserValidManager.o
+PATS = BaseCommand.o Login.o ../Common/SMOption.o ../Common/UserValidManager.o ../Common/UserInfoManager.o
 
-LIB_BASE_OBJS = BaseCommand.o Login.o SMOption.o UserValidManager.o
+LIB_BASE_OBJS = BaseCommand.o Login.o SMOption.o UserValidManager.o UserInfoManager.o
 LIB_BASE = libLogin.so
 
 all: libLogin.so clear

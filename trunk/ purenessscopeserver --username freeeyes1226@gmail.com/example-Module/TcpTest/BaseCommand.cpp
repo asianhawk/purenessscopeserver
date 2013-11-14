@@ -96,6 +96,7 @@ int CBaseCommand::DoMessage(IMessage* pMessage, bool& bDeleteFlag)
     else
     {
       OUR_DEBUG((LM_INFO, "[CBaseCommand::DoMessage] m_pConnectManager = NULL"));
+	  m_pServerObject->GetPacketManager()->Delete(pResponsesPacket);
     }
 
   }

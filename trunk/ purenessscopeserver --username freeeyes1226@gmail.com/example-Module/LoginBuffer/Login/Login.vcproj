@@ -380,6 +380,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\Common\UserInfoManager.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\Common\UserValidManager.cpp"
 				>
 			</File>
@@ -402,6 +406,10 @@
 			</File>
 			<File
 				RelativePath="..\Common\SMOption.h"
+				>
+			</File>
+			<File
+				RelativePath="..\Common\UserInfoManager.h"
 				>
 			</File>
 			<File
