@@ -556,10 +556,10 @@ bool CUserValidManager::Load_From_DataResouce(const char* pUserName, uint32& u4C
 						pUserValid->SetHit();
 						pUserValid->m_u4LoginCount                 = 0;
 
-						string strUserName;
-						strUserName = (string)pUserValid->m_szUserName;
+						string strUserNewName;
+						strUserNewName = (string)pUserValid->m_szUserName;
 
-						m_mapUserValid.insert(mapUserValid::value_type(strUserName, pUserValid));
+						m_mapUserValid.insert(mapUserValid::value_type(strUserNewName, pUserValid));
 						u4CacheIndex = pUserValid->GetCacheIndex();
 					}
 				}

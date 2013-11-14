@@ -16,6 +16,7 @@ using namespace std;
 
 #define COMMAND_LOGIN    0x2100     //登陆
 #define COMMAND_LOGOUT   0x2101     //退出 
+#define COMMAND_USERINFO 0x2102     //获得玩家信息  
 
 #define LOGIN_SUCCESS            0
 #define LOGIN_FAIL_NOEXIST       1
@@ -107,6 +108,7 @@ private:
 	bool Send_Login(_LoginInfo& objLoginInfo);
 	bool Send_Single_Login();
 	
+	bool Send_UserInfo(int nUserID);
 	void Show_Send_List(bool blAccount = false);
 
 private:
@@ -131,4 +133,9 @@ public:
 	afx_msg void OnClose();
 	afx_msg void OnBnClickedButton3();
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
+	CEdit m_txtSeachUserID;
+	CEdit m_txtUserID;
+	CEdit m_txtUserLife;
+	CEdit m_txtUserMagic;
+	afx_msg void OnBnClickedButton4();
 };

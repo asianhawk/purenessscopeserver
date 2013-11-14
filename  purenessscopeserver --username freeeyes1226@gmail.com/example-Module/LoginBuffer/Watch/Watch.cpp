@@ -1,4 +1,5 @@
 #include "UserValidManager.h"
+#include "UserInfoManager.h"
 
 #include "ace/OS_main.h"
 #include "ace/Reactor.h"
@@ -8,10 +9,18 @@
 #include "ace/Singleton.h"
 #include "ace/Thread.h"
 
+//服务器启动的IP和端口
 #define SERVER_IP     "127.0.0.1"
 #define SERVER_PORT   10005
 
+#define SERVER_COMMAND_USERVALID   0xc001    //到数据源查询UserValid请求
+#define SERVER_COMMAND_USERINFO    0xc002    //到数据源查询UserInfo请求
+
+#define SERVER_COMMAND_USERVALID_R 0xc101    //应答查询UserValid请求
+#define SERVER_COMMAND_USERINFO_R  0xc102    //应答查询UserInfo请求
+
 typedef ACE_Singleton<CUserValidManager, ACE_Null_Mutex> App_UserValidManager;
+typedef ACE_Singleton<CUserInfoManager, ACE_Null_Mutex> App_UserInfoManager;
 
 class CClientService : public ACE_Event_Handler
 {
@@ -63,87 +72,166 @@ public:
 			return -1;
 		}
 
-		//解析数据
 		int nRecvPos      = 0;
-		int nUserNameSize = 0;
-		int nUserPassSize = 0;
-		int nConnectID    = 0;
 
-		ACE_OS::memcpy((char* )&nUserNameSize, (char* )&pBuff[nRecvPos], 2);
-		nRecvPos += 2;
-		char* pUserName = new char[nUserNameSize + 1];
-		ACE_OS::memset(pUserName, 0, nUserNameSize + 1);
-		ACE_OS::memcpy((char* )pUserName, (char* )&pBuff[nRecvPos], nUserNameSize);
-		nRecvPos += nUserNameSize;
+		//解析命令ID
+		uint16 u2WatchCommand = 0;
+		ACE_OS::memcpy((char* )&u2WatchCommand, (char* )&pBuff[nRecvPos], sizeof(uint16));
+		nRecvPos += sizeof(uint16);
 
-		ACE_OS::memcpy((char* )&nUserPassSize, (char* )&pBuff[nRecvPos], 2);
-		nRecvPos += 2;
-		char* pUserPass = new char[nUserPassSize + 1];
-		ACE_OS::memset(pUserPass, 0, nUserPassSize + 1);
-		ACE_OS::memcpy((char* )pUserPass, (char* )&pBuff[nRecvPos], nUserPassSize);
-		nRecvPos += nUserPassSize;
-
-		ACE_OS::memcpy((char* )&nConnectID, (char* )&pBuff[nRecvPos], 4);
-		nRecvPos += 4;
-
-		int nSendSize = 4 + 2 + nUserNameSize + 2 + nUserPassSize + 1 + 4 + 4;
-		char* pSend = new char[nSendSize];
-		int nSendPos = 0;
-
-		//处理接收数据
-		uint32 u4CacheIndex = 0;
-		bool blState = App_UserValidManager::instance()->Load_From_DataResouce(pUserName, u4CacheIndex);
-		if(blState == false)
+		if(u2WatchCommand == SERVER_COMMAND_USERVALID)
 		{
-			//没有找到这个用户数据，组成返回包
-			int nSendPacketSize = 2 + nUserNameSize + 2 + nUserPassSize + 1 + 4 + 4;
-			ACE_OS::memcpy((char* )&pSend[nSendPos], (char* )&nSendPacketSize, 4);
-			nSendPos += 4;
-			ACE_OS::memcpy((char* )&pSend[nSendPos], (char* )&nUserNameSize, 2);
-			nSendPos += 2;
-			ACE_OS::memcpy((char* )&pSend[nSendPos], (char* )pUserName, nUserNameSize);
-			nSendPos += nUserNameSize;
-			ACE_OS::memcpy((char* )&pSend[nSendPos], (char* )&nUserPassSize, 2);
-			nSendPos += 2;
-			ACE_OS::memcpy((char* )&pSend[nSendPos], (char* )pUserPass, nUserPassSize);
-			nSendPos += nUserPassSize;
-			int nRet = 1;
-			ACE_OS::memcpy((char* )&pSend[nSendPos], (char* )&nRet, 1);
-			nSendPos += 1;
-			ACE_OS::memcpy((char* )&pSend[nSendPos], (char* )&u4CacheIndex, 4);
-			nSendPos += 4;
-			ACE_OS::memcpy((char* )&pSend[nSendPos], (char* )&nConnectID, 4);
-			nSendPos += 4;
+			//解析数据
+			int nUserNameSize = 0;
+			int nUserPassSize = 0;
+			int nConnectID    = 0;
+
+			ACE_OS::memcpy((char* )&nUserNameSize, (char* )&pBuff[nRecvPos], 2);
+			nRecvPos += 2;
+			char* pUserName = new char[nUserNameSize + 1];
+			ACE_OS::memset(pUserName, 0, nUserNameSize + 1);
+			ACE_OS::memcpy((char* )pUserName, (char* )&pBuff[nRecvPos], nUserNameSize);
+			nRecvPos += nUserNameSize;
+
+			ACE_OS::memcpy((char* )&nUserPassSize, (char* )&pBuff[nRecvPos], 2);
+			nRecvPos += 2;
+			char* pUserPass = new char[nUserPassSize + 1];
+			ACE_OS::memset(pUserPass, 0, nUserPassSize + 1);
+			ACE_OS::memcpy((char* )pUserPass, (char* )&pBuff[nRecvPos], nUserPassSize);
+			nRecvPos += nUserPassSize;
+
+			ACE_OS::memcpy((char* )&nConnectID, (char* )&pBuff[nRecvPos], 4);
+			nRecvPos += 4;
+
+			int nSendSize = 4 + 2 + 2 + nUserNameSize + 2 + nUserPassSize + 1 + 4 + 4;
+			char* pSend = new char[nSendSize];
+			int nSendPos = 0;
+
+			uint16 u2CommandReturn = SERVER_COMMAND_USERVALID_R;
+
+			//处理接收数据
+			uint32 u4CacheIndex = 0;
+			bool blState = App_UserValidManager::instance()->Load_From_DataResouce(pUserName, u4CacheIndex);
+			if(blState == false)
+			{
+				//没有找到这个用户数据，组成返回包
+				int nSendPacketSize = 2 + 2 + nUserNameSize + 2 + nUserPassSize + 1 + 4 + 4;
+				ACE_OS::memcpy((char* )&pSend[nSendPos], (char* )&nSendPacketSize, 4);
+				nSendPos += 4;
+				ACE_OS::memcpy((char* )&pSend[nSendPos], (char* )&u2CommandReturn, 2);
+				nSendPos += 2;
+				ACE_OS::memcpy((char* )&pSend[nSendPos], (char* )&nUserNameSize, 2);
+				nSendPos += 2;
+				ACE_OS::memcpy((char* )&pSend[nSendPos], (char* )pUserName, nUserNameSize);
+				nSendPos += nUserNameSize;
+				ACE_OS::memcpy((char* )&pSend[nSendPos], (char* )&nUserPassSize, 2);
+				nSendPos += 2;
+				ACE_OS::memcpy((char* )&pSend[nSendPos], (char* )pUserPass, nUserPassSize);
+				nSendPos += nUserPassSize;
+				int nRet = 1;
+				ACE_OS::memcpy((char* )&pSend[nSendPos], (char* )&nRet, 1);
+				nSendPos += 1;
+				ACE_OS::memcpy((char* )&pSend[nSendPos], (char* )&u4CacheIndex, 4);
+				nSendPos += 4;
+				ACE_OS::memcpy((char* )&pSend[nSendPos], (char* )&nConnectID, 4);
+				nSendPos += 4;
+			}
+			else
+			{
+				//找到了这个用户数据，组成返回包
+				int nSendPacketSize = 2 + 2 + nUserNameSize + 2 + nUserPassSize + 1 + 4 + 4;
+				ACE_OS::memcpy((char* )&pSend[nSendPos], (char* )&nSendPacketSize, 4);
+				nSendPos += 4;
+				ACE_OS::memcpy((char* )&pSend[nSendPos], (char* )&u2CommandReturn, 2);
+				nSendPos += 2;
+				ACE_OS::memcpy((char* )&pSend[nSendPos], (char* )&nUserNameSize, 2);
+				nSendPos += 2;
+				ACE_OS::memcpy((char* )&pSend[nSendPos], (char* )pUserName, nUserNameSize);
+				nSendPos += nUserNameSize;
+				ACE_OS::memcpy((char* )&pSend[nSendPos], (char* )&nUserPassSize, 2);
+				nSendPos += 2;
+				ACE_OS::memcpy((char* )&pSend[nSendPos], (char* )pUserPass, nUserPassSize);
+				nSendPos += nUserPassSize;
+				int nRet = 0;
+				ACE_OS::memcpy((char* )&pSend[nSendPos], (char* )&nRet, 1);
+				nSendPos += 1;
+				ACE_OS::memcpy((char* )&pSend[nSendPos], (char* )&u4CacheIndex, 4);
+				nSendPos += 4;
+				ACE_OS::memcpy((char* )&pSend[nSendPos], (char* )&nConnectID, 4);
+				nSendPos += 4;
+			}
+
+			//发送返回数据
+			this->peer().send(pSend, nSendSize, &nowait);
+
+			SAFE_DELETE_ARRAY(pUserPass);
+			SAFE_DELETE_ARRAY(pUserName);
+			SAFE_DELETE_ARRAY(pSend);
 		}
-		else
+		else if(u2WatchCommand == SERVER_COMMAND_USERINFO)
 		{
-			//找到了这个用户数据，组成返回包
-			int nSendPacketSize = 2 + nUserNameSize + 2 + nUserPassSize + 1 + 4 + 4;
-			ACE_OS::memcpy((char* )&pSend[nSendPos], (char* )&nSendPacketSize, 4);
-			nSendPos += 4;
-			ACE_OS::memcpy((char* )&pSend[nSendPos], (char* )&nUserNameSize, 2);
-			nSendPos += 2;
-			ACE_OS::memcpy((char* )&pSend[nSendPos], (char* )pUserName, nUserNameSize);
-			nSendPos += nUserNameSize;
-			ACE_OS::memcpy((char* )&pSend[nSendPos], (char* )&nUserPassSize, 2);
-			nSendPos += 2;
-			ACE_OS::memcpy((char* )&pSend[nSendPos], (char* )pUserPass, nUserPassSize);
-			nSendPos += nUserPassSize;
-			int nRet = 0;
-			ACE_OS::memcpy((char* )&pSend[nSendPos], (char* )&nRet, 1);
-			nSendPos += 1;
-			ACE_OS::memcpy((char* )&pSend[nSendPos], (char* )&u4CacheIndex, 4);
-			nSendPos += 4;
-			ACE_OS::memcpy((char* )&pSend[nSendPos], (char* )&nConnectID, 4);
-			nSendPos += 4;
+			//解析数据
+			uint32 u4UserID    = 0;
+			uint32 u4ConnectID = 0;
+
+			ACE_OS::memcpy((char* )&u4UserID, (char* )&pBuff[nRecvPos], sizeof(uint32));
+			nRecvPos += sizeof(uint32);
+			ACE_OS::memcpy((char* )&u4ConnectID, (char* )&pBuff[nRecvPos], sizeof(uint32));
+			nRecvPos += sizeof(uint32);
+
+			int nSendSize = 4 + 2 + 1 + 4 + 4 + 4;
+			char* pSend = new char[nSendSize];
+			int nSendPos = 0;
+
+			uint16 u2CommandReturn = SERVER_COMMAND_USERINFO_R;
+
+			uint32 u4CacheIndex = 0;
+			bool blState = App_UserInfoManager::instance()->Load_From_DataResouce(u4UserID, u4CacheIndex);
+			if(blState == false)
+			{
+				//没有找到这个用户数据，组成返回包
+				int nSendPacketSize = 2 + 1 + 4 + 4 + 4;
+				ACE_OS::memcpy((char* )&pSend[nSendPos], (char* )&nSendPacketSize, 4);
+				nSendPos += 4;
+				ACE_OS::memcpy((char* )&pSend[nSendPos], (char* )&u2CommandReturn, 2);
+				nSendPos += 2;
+				int nRet = 1;
+				ACE_OS::memcpy((char* )&pSend[nSendPos], (char* )&nRet, 1);
+				nSendPos += 1;
+				ACE_OS::memcpy((char* )&pSend[nSendPos], (char* )&u4UserID, 4);
+				nSendPos += 4;
+				ACE_OS::memcpy((char* )&pSend[nSendPos], (char* )&u4CacheIndex, 4);
+				nSendPos += 4;
+				ACE_OS::memcpy((char* )&pSend[nSendPos], (char* )&u4ConnectID, 4);
+				nSendPos += 4;
+			}
+			else
+			{
+				//找到了数据并加载了内存，组成返回包
+				int nSendPacketSize = 2 + 1 + 4 + 4 + 4;
+				ACE_OS::memcpy((char* )&pSend[nSendPos], (char* )&nSendPacketSize, 4);
+				nSendPos += 4;
+				ACE_OS::memcpy((char* )&pSend[nSendPos], (char* )&u2CommandReturn, 2);
+				nSendPos += 2;
+				int nRet = 0;
+				ACE_OS::memcpy((char* )&pSend[nSendPos], (char* )&nRet, 1);
+				nSendPos += 1;
+				ACE_OS::memcpy((char* )&pSend[nSendPos], (char* )&u4UserID, 4);
+				nSendPos += 4;
+				ACE_OS::memcpy((char* )&pSend[nSendPos], (char* )&u4CacheIndex, 4);
+				nSendPos += 4;
+				ACE_OS::memcpy((char* )&pSend[nSendPos], (char* )&u4ConnectID, 4);
+				nSendPos += 4;
+			}
+
+			//发送返回数据
+			this->peer().send(pSend, nSendSize, &nowait);
+
+			//发送数据
+			SAFE_DELETE_ARRAY(pSend);
 		}
 
-		//发送返回数据
-		this->peer().send(pSend, nSendSize, &nowait);
-
-		SAFE_DELETE_ARRAY(pUserPass);
-		SAFE_DELETE_ARRAY(pUserName);
-		SAFE_DELETE_ARRAY(pSend);
+		
 		SAFE_DELETE_ARRAY(pBuff);
 		return 0;
 	}
@@ -232,7 +320,7 @@ protected:
 	ACE_SOCK_Acceptor m_objAcceptor;
 };
 
-void* worker(void *arg) 
+void* worker_UserValid(void *arg) 
 {
 	if(NULL != arg)
 	{
@@ -250,7 +338,27 @@ void* worker(void *arg)
 	}
 
 	return NULL; 
-} 
+}
+
+void* worker_UserInfo(void *arg)
+{
+	if(NULL != arg)
+	{
+		OUR_DEBUG((LM_INFO, "[worker]have param.\n"));
+	}
+
+	while(true)
+	{
+		OUR_DEBUG((LM_INFO, "[Watch]Valid Begin.\n"));
+		App_UserInfoManager::instance()->Sync_Memory_To_DataReaource();
+		OUR_DEBUG((LM_INFO, "[Watch]Valid End.\n"));
+		App_UserInfoManager::instance()->Display();
+		ACE_Time_Value tvSleep(60, 0);
+		ACE_OS::sleep(tvSleep);
+	}
+
+	return NULL; 
+}
 
 
 int ACE_TMAIN(int argc, ACE_TCHAR* argv[])
@@ -269,11 +377,22 @@ int ACE_TMAIN(int argc, ACE_TCHAR* argv[])
 
 	//初始化共享内存
 	App_UserValidManager::instance()->Init((uint32)MAX_LOGIN_VALID_COUNT, SHM_USERVALID_KEY, (uint32)sizeof(_UserValid));
+	App_UserInfoManager::instance()->Init((uint32)MAX_LOGIN_INFO_COUNT, SHM_USERINFO_KEY, (uint32)sizeof(_UserInfo));
 
-	//首先创建工作线程
+	//首先创建工作线程(Valid的工作线程)
 	ACE_Thread::spawn(
-		(ACE_THR_FUNC)worker,        //线程执行函数
-		NULL,                        //执行函数参数
+		(ACE_THR_FUNC)worker_UserValid,  //线程执行函数
+		NULL,                            //执行函数参数
+		THR_JOINABLE | THR_NEW_LWP,
+		&threadId,
+		&threadHandle
+		);
+
+	//再创建工作线程
+	//首先创建工作线程(Valid的工作线程)
+	ACE_Thread::spawn(
+		(ACE_THR_FUNC)worker_UserInfo,   //线程执行函数
+		NULL,                            //执行函数参数
 		THR_JOINABLE | THR_NEW_LWP,
 		&threadId,
 		&threadHandle

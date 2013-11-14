@@ -14,7 +14,7 @@
 #define PRINTF printf
 #endif
 
-#define MAX_LOGIN_VALID_COUNT  10
+#define MAX_LOGIN_INFO_COUNT  10
 #define SOURCE_FILE_PATH "./LoginBufferFile/UserValid.txt"
 
 //这里如果是想用缓冲功能，必须继承_CacheBlock对象
@@ -46,7 +46,7 @@ public:
 
 	bool Load_From_DataResouce(const char* pUserName, uint32& u4CacheIndex);    //从文件里面寻找指定的用户名
 
-	bool Reload_Map_CacheMemory(uint32 u4CacheIndex);
+	bool Reload_Map_CacheMemory(uint32 u4CacheIndex);     //更新指定的cached位置的数据到map映射表
 
 private:
 	bool Read_All_Init_DataResoure();         //从文件加载共享内存，并加载列表

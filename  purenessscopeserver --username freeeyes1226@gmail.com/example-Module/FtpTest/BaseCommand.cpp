@@ -122,6 +122,7 @@ void CBaseCommand::Do_Ftp_Login( IMessage* pMessage )
 	else
 	{
 		OUR_DEBUG((LM_INFO, "[CBaseCommand::DoMessage] m_pConnectManager = NULL"));
+		m_pServerObject->GetPacketManager()->Delete(pResponsesPacket);
 	}
 }
 
@@ -172,6 +173,7 @@ void CBaseCommand::Do_Ftp_Logout( IMessage* pMessage )
 	else
 	{
 		OUR_DEBUG((LM_INFO, "[CBaseCommand::DoMessage] m_pConnectManager = NULL"));
+		m_pServerObject->GetPacketManager()->Delete(pResponsesPacket);
 	}
 }
 
@@ -249,6 +251,7 @@ void CBaseCommand::Do_Ftp_FileList( IMessage* pMessage )
 	else
 	{
 		OUR_DEBUG((LM_INFO, "[CBaseCommand::DoMessage] m_pConnectManager = NULL"));
+		m_pServerObject->GetPacketManager()->Delete(pResponsesPacket);
 	}
 }
 
@@ -327,6 +330,7 @@ void CBaseCommand::Do_Ftp_FileDownLoad( IMessage* pMessage )
 			else
 			{
 				OUR_DEBUG((LM_INFO, "[CBaseCommand::DoMessage] m_pConnectManager = NULL"));
+				m_pServerObject->GetPacketManager()->Delete(pResponsesPacket);
 			}
 		}
 
@@ -348,6 +352,7 @@ void CBaseCommand::Do_Ftp_FileDownLoad( IMessage* pMessage )
 		else
 		{
 			OUR_DEBUG((LM_INFO, "[CBaseCommand::DoMessage] m_pConnectManager = NULL"));
+			m_pServerObject->GetPacketManager()->Delete(pResponsesPacket);
 		}
 	}
 }
@@ -426,6 +431,7 @@ void CBaseCommand::Do_Ftp_FileUpLoad( IMessage* pMessage )
 			else
 			{
 				OUR_DEBUG((LM_INFO, "[CBaseCommand::DoMessage] m_pConnectManager = NULL"));
+				m_pServerObject->GetPacketManager()->Delete(pResponsesPacket);
 			}
 		}
 
@@ -447,6 +453,7 @@ void CBaseCommand::Do_Ftp_FileUpLoad( IMessage* pMessage )
 		else
 		{
 			OUR_DEBUG((LM_INFO, "[CBaseCommand::DoMessage] m_pConnectManager = NULL"));
+			m_pServerObject->GetPacketManager()->Delete(pResponsesPacket);
 		}
 	}
 }
