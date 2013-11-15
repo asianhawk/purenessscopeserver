@@ -24,7 +24,7 @@ int CBaseCommand::DoMessage(IMessage* pMessage, bool& bDeleteFlag)
   //比如这个函数是返回一个int
   //那么末尾就是__LEAVE_FUNCTION_WITHRETURN(0); 0就是返回的int，当然，也支持别的类型变量，具体看你自己的函数。
   //如果函数不返回任何变量，你可以使用__LEAVE_FUNCTION即可。
-  __ENTER_FUNCTION;
+  __ENTER_FUNCTION();
 
   if(m_pServerObject == NULL)
   {
@@ -91,7 +91,7 @@ int CBaseCommand::DoMessage(IMessage* pMessage, bool& bDeleteFlag)
     if(NULL != m_pServerObject->GetConnectManager())
     {
       //发送全部数据
-      m_pServerObject->GetConnectManager()->PostMessage(pMessage->GetMessageBase()->m_u4ConnectID, pResponsesPacket, SENDMESSAGE_JAMPNOMAL, u2PostCommandID, true, true);
+      m_pServerObject->GetConnectManager()->PostMessage(pMessage->GetMessageBase()->m_u4ConnectID, pResponsesPacket, SENDMESSAGE_JAMPNOMAL, u2PostCommandID, PACKET_SEND_IMMEDIATLY, PACKET_IS_FRAMEWORK_RECYC);
     }
     else
     {

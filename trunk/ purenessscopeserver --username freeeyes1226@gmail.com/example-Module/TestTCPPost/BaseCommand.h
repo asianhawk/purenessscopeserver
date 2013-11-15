@@ -38,7 +38,7 @@ public:
 			char* pData = new char[mbRecv->length()];
 			ACE_OS::memcpy(pData, mbRecv->rd_ptr(), mbRecv->length());
 			
-			m_pServerObject->GetConnectManager()->PostMessage(m_u4ConnectID, pData, mbRecv->length(), SENDMESSAGE_JAMPNOMAL, u2RetCommand, true, true);
+			m_pServerObject->GetConnectManager()->PostMessage(m_u4ConnectID, pData, mbRecv->length(), SENDMESSAGE_JAMPNOMAL, u2RetCommand, PACKET_SEND_IMMEDIATLY, PACKET_IS_FRAMEWORK_RECYC);
 		}
 
 		return true;
