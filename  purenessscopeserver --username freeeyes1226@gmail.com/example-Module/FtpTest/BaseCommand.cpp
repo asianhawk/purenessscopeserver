@@ -16,7 +16,7 @@ void CBaseCommand::SetServerObject(CServerObject* pServerObject)
 
 int CBaseCommand::DoMessage(IMessage* pMessage, bool& bDeleteFlag)
 {
-  __ENTER_FUNCTION;
+  __ENTER_FUNCTION();
 
   if(m_pServerObject == NULL)
   {
@@ -117,7 +117,7 @@ void CBaseCommand::Do_Ftp_Login( IMessage* pMessage )
 	if(NULL != m_pServerObject->GetConnectManager())
 	{
 		//发送全部数据
-		m_pServerObject->GetConnectManager()->PostMessage(pMessage->GetMessageBase()->m_u4ConnectID, pResponsesPacket, SENDMESSAGE_NOMAL, u2PostCommandID, true, true);
+		m_pServerObject->GetConnectManager()->PostMessage(pMessage->GetMessageBase()->m_u4ConnectID, pResponsesPacket, SENDMESSAGE_NOMAL, u2PostCommandID, PACKET_SEND_IMMEDIATLY, PACKET_IS_FRAMEWORK_RECYC);
 	}
 	else
 	{
@@ -246,7 +246,7 @@ void CBaseCommand::Do_Ftp_FileList( IMessage* pMessage )
 	if(NULL != m_pServerObject->GetConnectManager())
 	{
 		//发送全部数据
-		m_pServerObject->GetConnectManager()->PostMessage(pMessage->GetMessageBase()->m_u4ConnectID, pResponsesPacket, SENDMESSAGE_NOMAL, u2PostCommandID, true, true);
+		m_pServerObject->GetConnectManager()->PostMessage(pMessage->GetMessageBase()->m_u4ConnectID, pResponsesPacket, SENDMESSAGE_NOMAL, u2PostCommandID, PACKET_SEND_IMMEDIATLY, PACKET_IS_FRAMEWORK_RECYC);
 	}
 	else
 	{
@@ -325,7 +325,7 @@ void CBaseCommand::Do_Ftp_FileDownLoad( IMessage* pMessage )
 			if(NULL != m_pServerObject->GetConnectManager())
 			{
 				//发送全部数据
-				m_pServerObject->GetConnectManager()->PostMessage(pMessage->GetMessageBase()->m_u4ConnectID, pResponsesPacket, SENDMESSAGE_NOMAL, u2PostCommandID, true, true);
+				m_pServerObject->GetConnectManager()->PostMessage(pMessage->GetMessageBase()->m_u4ConnectID, pResponsesPacket, SENDMESSAGE_NOMAL, u2PostCommandID, PACKET_SEND_IMMEDIATLY, PACKET_IS_FRAMEWORK_RECYC);
 			}
 			else
 			{
@@ -347,7 +347,7 @@ void CBaseCommand::Do_Ftp_FileDownLoad( IMessage* pMessage )
 		if(NULL != m_pServerObject->GetConnectManager())
 		{
 			//发送全部数据
-			m_pServerObject->GetConnectManager()->PostMessage(pMessage->GetMessageBase()->m_u4ConnectID, pResponsesPacket, SENDMESSAGE_NOMAL, u2PostCommandID, true, true);
+			m_pServerObject->GetConnectManager()->PostMessage(pMessage->GetMessageBase()->m_u4ConnectID, pResponsesPacket, SENDMESSAGE_NOMAL, u2PostCommandID, PACKET_SEND_IMMEDIATLY, PACKET_IS_FRAMEWORK_RECYC);
 		}
 		else
 		{
@@ -426,7 +426,7 @@ void CBaseCommand::Do_Ftp_FileUpLoad( IMessage* pMessage )
 			if(NULL != m_pServerObject->GetConnectManager())
 			{
 				//发送全部数据
-				m_pServerObject->GetConnectManager()->PostMessage(pMessage->GetMessageBase()->m_u4ConnectID, pResponsesPacket, SENDMESSAGE_NOMAL, u2PostCommandID, true, true);
+				m_pServerObject->GetConnectManager()->PostMessage(pMessage->GetMessageBase()->m_u4ConnectID, pResponsesPacket, SENDMESSAGE_NOMAL, u2PostCommandID, PACKET_SEND_IMMEDIATLY, PACKET_IS_FRAMEWORK_RECYC);
 			}
 			else
 			{
@@ -448,7 +448,7 @@ void CBaseCommand::Do_Ftp_FileUpLoad( IMessage* pMessage )
 		if(NULL != m_pServerObject->GetConnectManager())
 		{
 			//发送全部数据
-			m_pServerObject->GetConnectManager()->PostMessage(pMessage->GetMessageBase()->m_u4ConnectID, pResponsesPacket, SENDMESSAGE_NOMAL, u2PostCommandID, true, true);
+			m_pServerObject->GetConnectManager()->PostMessage(pMessage->GetMessageBase()->m_u4ConnectID, pResponsesPacket, SENDMESSAGE_NOMAL, u2PostCommandID, PACKET_SEND_IMMEDIATLY, PACKET_IS_FRAMEWORK_RECYC);
 		}
 		else
 		{

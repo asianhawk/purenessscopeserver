@@ -132,9 +132,15 @@ using namespace std;
 #define PACKET_GET_NO_ENOUGTH             1      //得到的数据包不完整
 #define PACKET_GET_ERROR                  2      //数据包格式错误
 
-#define MAX_PACKET_SIZE     1024*1024
+#define MAX_PACKET_SIZE     1024*1024            //最大允许的包尺寸
 
-#define CONNECT_LIMIT_RETRY 30              //初始化中间服务器链接后定期检查，单位是秒
+#define PACKET_IS_FRAMEWORK_RECYC         true   //框架回收（数据包回收机制）
+#define PACKET_IS_SELF_RECYC              false  //由逻辑自己回收（数据包回收机制）
+
+#define PACKET_SEND_IMMEDIATLY            true   //立刻发送（数据包发送机制）
+#define PACKET_SEND_CACHE                 false  //缓存发送（数据包发送机制）
+
+#define CONNECT_LIMIT_RETRY 30                   //初始化中间服务器链接后定期检查，单位是秒
 
 //对应当前框架支持的网络模式
 enum
@@ -501,14 +507,14 @@ inline void __assertspecial__(const char* file, int line, const char* func, cons
 #endif
 
 #if defined(WIN32)
-#define __ENTER_FUNCTION {try{
+#define __ENTER_FUNCTION() {try{
 #define __THROW_FUNCTION(msg) throw(msg)
 #define __LEAVE_FUNCTION() }catch(char* msg){AssertSpecial(false,msg); }}
 #define __LEAVE_FUNCTION_WITHRETURN(ret) }catch(char* msg){AssertSpecial(false,msg); return ret; }}
 #else	//linux
-#define __ENTER_FUNCTION {try{
+#define __ENTER_FUNCTION() {try{
 #define __THROW_FUNCTION(msg) throw(msg)
-#define __LEAVE_FUNCTION }catch(char* msg){AssertSpecial(FALSE,msg);}}
+#define __LEAVE_FUNCTION() }catch(char* msg){AssertSpecial(false,msg);}}
 #define __LEAVE_FUNCTION_WITHRETURN(ret) }catch(char* msg){AssertSpecial(false,msg); return ret; }}
 #endif 
 
@@ -555,10 +561,10 @@ public:
 				time_t tNow = time(NULL);
 				struct tm* tmNow = ACE_OS::localtime(&tNow);
 				sprintf_safe(szTimeNow, MAX_BUFF_50, "%04d-%02d-%02d %02d:%02d:%02d", tmNow->tm_year + 1900, tmNow->tm_mon + 1, tmNow->tm_mday, tmNow->tm_hour, tmNow->tm_min, tmNow->tm_sec);
-				sprintf_safe(szLog, MAX_BUFF_1024, "[%s]dbTimeInterval more than (%d) < (%d), %s:%s:%d行.\n", szTimeNow, m_nMillionSecond, lTimeInterval, m_szFileName, m_szFunctionName, m_nFileLine);
+				sprintf_safe(szLog, MAX_BUFF_1024, "[%s]dbTimeInterval more than (%d) < (%d), File(%s):FunName(%s):Line(%d).\n", szTimeNow, m_nMillionSecond, lTimeInterval, m_szFileName, m_szFunctionName, m_nFileLine);
 				ACE_OS::fwrite(szLog, strlen(szLog), sizeof(char), pFile);
+				ACE_OS::fclose(pFile);
 			}
-			 ACE_OS::fclose(pFile);
 		}
 	};
 
