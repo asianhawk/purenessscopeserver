@@ -386,9 +386,8 @@ bool CUserInfoManager::GetFileInfo( const char* pLine, uint32& u4UserID, uint32&
 bool CUserInfoManager::Reload_Map_CacheMemory( uint32 u4CacheIndex )
 {
 	uint32 u4OldUserID = 0;
-	uint32 u4NewUserID = 0;
 
-	bool blRet = m_objLRU.Get_Cached_KeyByIndex(u4CacheIndex, u4OldUserID);
+	m_objLRU.Get_Cached_KeyByIndex(u4CacheIndex, u4OldUserID);
 
 	mapUserInfo::iterator f = m_mapUserInfo.find(u4OldUserID);
 	if(f != m_mapUserInfo.end())

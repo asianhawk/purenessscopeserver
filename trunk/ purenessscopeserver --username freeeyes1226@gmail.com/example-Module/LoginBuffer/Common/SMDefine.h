@@ -174,7 +174,7 @@ public:
 	//从队列里删除指定的key
 	bool Delete_Cached_Lru(K lrukey)
 	{
-		mapKey::iterator f = m_mapKey.find(lrukey);
+		typename mapKey::iterator f = m_mapKey.find(lrukey);
 		if(f == m_mapKey.end())
 		{
 			return false;
@@ -183,7 +183,7 @@ public:
 		uint32 u4Index = (uint32)f->second;
 		m_mapKey.erase(f);
 
-		mapTimeStamp::iterator ft = m_mapTimeStamp.find(u4Index);
+		typename mapTimeStamp::iterator ft = m_mapTimeStamp.find(u4Index);
 		if(ft == m_mapTimeStamp.end())
 		{
 			return false;
@@ -192,7 +192,7 @@ public:
 		m_mapTimeStamp.erase(ft);
 
 		//删除Index和key之间的对应关系
-		mapKey2Index::iterator fi = m_mapKey2Index.find(lrukey);
+		typename mapKey2Index::iterator fi = m_mapKey2Index.find(lrukey);
 		if(fi != m_mapKey2Index.end())
 		{
 			uint32 u4CachedIndex = (uint32)fi->second;
@@ -201,7 +201,7 @@ public:
 			m_mapKey2Index.erase(fi);
 
 			//删除另一个map
-			mapIndex2Key::iterator fii = m_mapIndex2Key.find(u4CachedIndex);
+			typename mapIndex2Key::iterator fii = m_mapIndex2Key.find(u4CachedIndex);
 			if(fii != m_mapIndex2Key.end())
 			{
 				m_mapIndex2Key.erase(fii);
@@ -214,7 +214,7 @@ public:
 	//添加一个key，如果已经存在则提升到队列最前面去
 	EM_LRUReturn Add_Cached_Lru(K lrukey, uint32 u4CachedIndex)
 	{
-		mapKey::iterator f = m_mapKey.find(lrukey);
+		typename mapKey::iterator f = m_mapKey.find(lrukey);
 		if(f == m_mapKey.end())
 		{
 			//如果是新key,判断是否需要进行LRU检测
@@ -225,11 +225,11 @@ public:
 
 			//添加新的key
 			uint32 u4Index = m_u4CheckIndex++;
-			m_mapKey.insert(mapKey::value_type(lrukey, u4Index));
-			m_mapTimeStamp.insert(mapTimeStamp::value_type(u4Index, lrukey));
+			m_mapKey.insert(typename mapKey::value_type(lrukey, u4Index));
+			m_mapTimeStamp.insert(typename mapTimeStamp::value_type(u4Index, lrukey));
 
-			m_mapKey2Index.insert(mapKey2Index::value_type(lrukey, u4CachedIndex));
-			m_mapIndex2Key.insert(mapIndex2Key::value_type(u4CachedIndex, lrukey));
+			m_mapKey2Index.insert(typename mapKey2Index::value_type(lrukey, u4CachedIndex));
+			m_mapIndex2Key.insert(typename mapIndex2Key::value_type(u4CachedIndex, lrukey));
 
 			return LRU_UNNEED_CHECK;
 		}
@@ -239,11 +239,11 @@ public:
 			uint32& u4CurrIndex = (uint32&)f->second;
 
 			//删除旧的key，添加新的key
-			mapTimeStamp::iterator ft = m_mapTimeStamp.find(u4CurrIndex);
+			typename mapTimeStamp::iterator ft = m_mapTimeStamp.find(u4CurrIndex);
 			m_mapTimeStamp.erase(ft);
 
 			u4CurrIndex = m_u4CheckIndex++;
-			m_mapTimeStamp.insert(mapTimeStamp::value_type(u4CurrIndex, lrukey));
+			m_mapTimeStamp.insert(typename mapTimeStamp::value_type(u4CurrIndex, lrukey));
 
 			return LRU_UNNEED_CHECK;
 		}
@@ -253,7 +253,7 @@ public:
 	bool Reload_Cached_IndexList(K lrukey, K& lruBeforekey, uint32 u4CachedIndex)
 	{
 		//寻找之前的Index对应的key并修改之
-		mapIndex2Key::iterator fii = m_mapIndex2Key.find(u4CachedIndex);
+		typename mapIndex2Key::iterator fii = m_mapIndex2Key.find(u4CachedIndex);
 		if(fii == m_mapIndex2Key.end())
 		{
 			return false;
@@ -261,13 +261,13 @@ public:
 
 		lruBeforekey = (K)fii->second;
 
-		mapKey2Index::iterator fi = m_mapKey2Index.find(lruBeforekey);
+		typename mapKey2Index::iterator fi = m_mapKey2Index.find(lruBeforekey);
 		if(fi != m_mapKey2Index.end())
 		{
 			m_mapKey2Index.erase(fi);
 
 			//添加新的key对应关系
-			m_mapKey2Index.insert(mapKey2Index::value_type(lrukey, u4CachedIndex));
+			m_mapKey2Index.insert(typename mapKey2Index::value_type(lrukey, u4CachedIndex));
 		}
 
 		m_mapIndex2Key[u4CachedIndex] = lrukey;
@@ -282,7 +282,7 @@ public:
 	//获得指定位置的Index对应信息
 	bool Get_Cached_KeyByIndex(uint32 u4CachedIndex, K& lrukey)
 	{
-		mapIndex2Key::iterator fii = m_mapIndex2Key.find(u4CachedIndex);
+		typename mapIndex2Key::iterator fii = m_mapIndex2Key.find(u4CachedIndex);
 		if(fii == m_mapIndex2Key.end())
 		{
 			return false;
@@ -299,7 +299,7 @@ private:
 	void DisPlay_Index2Key()
 	{
 		OUR_DEBUG((LM_INFO, "[DisPlay_Index2Key]*****Begin DisPlay*****\n"));
-		for(mapIndex2Key::iterator b = m_mapIndex2Key.begin(); b != m_mapIndex2Key.end(); b++)
+		for(typename mapIndex2Key::iterator b = m_mapIndex2Key.begin(); b != m_mapIndex2Key.end(); b++)
 		{
 			OUR_DEBUG((LM_INFO, "[DisPlay_Index2Key]key=%s.\n", ((string)(b->second)).c_str()));
 		}
@@ -310,7 +310,7 @@ private:
 	void DisPlay_Key2Index()
 	{
 		OUR_DEBUG((LM_INFO, "[DisPlay_Key2Index]*****Begin DisPlay*****\n"));
-		for(mapKey2Index::iterator b = m_mapKey2Index.begin(); b != m_mapKey2Index.end(); b++)
+		for(typename mapKey2Index::iterator b = m_mapKey2Index.begin(); b != m_mapKey2Index.end(); b++)
 		{
 			OUR_DEBUG((LM_INFO, "[DisPlay_Key2Index]key=%s.\n", ((string)(b->first)).c_str()));
 		}
