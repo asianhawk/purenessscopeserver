@@ -92,6 +92,7 @@ BEGIN_MESSAGE_MAP(CLoginClientDlg, CDialog)
 	ON_BN_CLICKED(IDC_BUTTON3, &CLoginClientDlg::OnBnClickedButton3)
 	ON_WM_TIMER()
 	ON_BN_CLICKED(IDC_BUTTON4, &CLoginClientDlg::OnBnClickedButton4)
+	ON_BN_CLICKED(IDC_BUTTON5, &CLoginClientDlg::OnBnClickedButton5)
 END_MESSAGE_MAP()
 
 
@@ -442,6 +443,7 @@ bool CLoginClientDlg::Send_Login(_LoginInfo& objLoginInfo)
 		nCurrRecvLen = recv(m_sckClient, (char* )pRecvBuff + nRecvBegin, nRecvLength - nRecvBegin, 0);
 		if(nCurrRecvLen <= 0)
 		{
+			delete[] pRecvBuff;
 			DWORD dwError = GetLastError();
 			MessageBox(_T("远程服务器发送数据失败"), _T("错误信息"), MB_OK);
 			objLoginInfo.m_nServerFail++;
@@ -470,6 +472,8 @@ bool CLoginClientDlg::Send_Login(_LoginInfo& objLoginInfo)
 	{
 		objLoginInfo.m_nServerFail++;
 	}
+
+	delete[] pRecvBuff;
 
 	return true;
 }
@@ -605,6 +609,7 @@ bool CLoginClientDlg::Send_UserInfo( int nUserID )
 		nCurrRecvLen = recv(m_sckClient, (char* )pRecvBuff + nRecvBegin, nRecvLength - nRecvBegin, 0);
 		if(nCurrRecvLen <= 0)
 		{
+			delete[] pRecvBuff;
 			DWORD dwError = GetLastError();
 			MessageBox(_T("远程服务器发送数据失败"), _T("错误信息"), MB_OK);
 			return false;
@@ -642,6 +647,123 @@ bool CLoginClientDlg::Send_UserInfo( int nUserID )
 	strData.Format(_T("%d"), nMagic);
 	m_txtUserMagic.SetWindowText(strData);
 
+	delete[] pRecvBuff;
+
+	return true;
+}
+
+bool CLoginClientDlg::Send_SetUserInfo( int nUserID, int nLife, int nMagic )
+{
+	int nCommand = COMMAND_SET_USERINFO;
+	char szSendBuff[MAX_BUFF_500] = {'\0'};
+	if(m_sckClient == INVALID_SOCKET)
+	{
+		return false;
+	}
+
+	int nPos = 0;
+	int nLen = 2 + 4 + 4 + 4;
+
+	memcpy_s(&szSendBuff[nPos], sizeof(int), (char*)&nLen, sizeof(int));
+	nPos += sizeof(int);
+	memcpy_s(&szSendBuff[nPos], sizeof(short), (char*)&nCommand, sizeof(short));
+	nPos += sizeof(short);
+
+	memcpy_s(&szSendBuff[nPos], sizeof(int), (char*)&nUserID, sizeof(int));
+	nPos += sizeof(int);
+	memcpy_s(&szSendBuff[nPos], sizeof(int), (char*)&nLife, sizeof(int));
+	nPos += sizeof(int);
+	memcpy_s(&szSendBuff[nPos], sizeof(int), (char*)&nMagic, sizeof(int));
+	nPos += sizeof(int);
+
+	int nTotalSendLen = nPos;
+	int nBeginSend    = 0;
+	int nCurrSendLen  = 0;
+	bool blSendFlag   = false;
+	int nBeginRecv    = 0;
+	int nCurrRecvLen  = 0;
+	bool blRecvFlag   = false;
+	while(true)
+	{
+		nCurrSendLen = send(m_sckClient, szSendBuff + nBeginSend, nTotalSendLen, 0);
+		if(nCurrSendLen <= 0)
+		{
+			DWORD dwError = GetLastError();
+			MessageBox(_T("远程服务器发送数据失败"), _T("错误信息"), MB_OK);
+			return false;
+		}
+		else
+		{
+			nTotalSendLen -= nCurrSendLen;
+			if(nTotalSendLen == 0)
+			{
+				//发送完成
+				blSendFlag = true;
+				break;
+			}
+			else
+			{
+				nBeginSend += nCurrSendLen;
+			}
+		}
+	}
+
+	//先接收四字节的数据包长度
+	char szRecvLength[4] = {'\0'};
+	nCurrRecvLen = recv(m_sckClient, (char* )szRecvLength, 4, 0);
+	if(nCurrRecvLen != 4)
+	{
+		DWORD dwError = GetLastError();
+		MessageBox(_T("远程服务器接收数据失败"), _T("错误信息"), MB_OK);
+		return false;
+	}
+
+	int nRecvLength = 0;
+	memcpy_s(&nRecvLength, sizeof(int), szRecvLength, sizeof(int));
+	char* pRecvBuff = new char[nRecvLength];
+	int nRecvBegin  = 0;
+
+	while(true)
+	{
+		if(nRecvLength - nRecvBegin == 0)
+		{
+			break;
+		}
+
+		//如果发送成功了，则处理接收数据
+		nCurrRecvLen = recv(m_sckClient, (char* )pRecvBuff + nRecvBegin, nRecvLength - nRecvBegin, 0);
+		if(nCurrRecvLen <= 0)
+		{
+			delete[] pRecvBuff;
+			DWORD dwError = GetLastError();
+			MessageBox(_T("远程服务器发送数据失败"), _T("错误信息"), MB_OK);
+			return false;
+		}
+		else
+		{
+			nRecvBegin += nCurrRecvLen;
+		}
+	}
+
+	int nRecvCommandID = 0;
+	int nRet           = 0;
+	nPos               = 0;
+
+	memcpy_s((char*)&nRecvCommandID,  sizeof(short), &pRecvBuff[nPos], sizeof(short));
+	nPos += sizeof(short);
+	memcpy_s((char*)&nRet,  sizeof(int), &pRecvBuff[nPos], sizeof(int));
+	nPos += sizeof(int);
+
+	if(nRet == LOGIN_SUCCESS)
+	{
+		MessageBox(_T("设置用户信息成功"), _T("提示信息"), MB_OK);
+	}
+	else
+	{
+		MessageBox(_T("设置用户信息失败"), _T("提示信息"), MB_OK);
+	}
+
+	delete[] pRecvBuff;
 	return true;
 }
 
@@ -726,7 +848,7 @@ void CLoginClientDlg::OnBnClickedButton4()
 	m_txtServerPort.GetWindowText(strData);
 	m_objServerInfo.m_nServerPort = _ttoi((LPCTSTR)strData);
 
-	//获得相关服务器连接信息
+	//获得相关用户ID
 	m_txtSeachUserID.GetWindowText(strData);
 	nSrcLen = WideCharToMultiByte(CP_ACP, 0, strData, strData.GetLength(), NULL, 0, NULL, NULL);
 	nDecLen = WideCharToMultiByte(CP_ACP, 0, strData, nSrcLen, szSeachUserID, MAX_BUFF_50, NULL,NULL);
@@ -744,3 +866,45 @@ void CLoginClientDlg::OnBnClickedButton4()
 	Close();
 }
 
+
+void CLoginClientDlg::OnBnClickedButton5()
+{
+	char szTemp[MAX_BUFF_50] = {'\0'};
+	// 测试获得用户信息
+	CString strData;
+
+	//获得相关服务器连接信息
+	m_txtServerIP.GetWindowText(strData);
+	int nSrcLen = WideCharToMultiByte(CP_ACP, 0, strData, strData.GetLength(), NULL, 0, NULL, NULL);
+	int nDecLen = WideCharToMultiByte(CP_ACP, 0, strData, nSrcLen, m_objServerInfo.m_szServerIP, MAX_BUFF_50, NULL,NULL);
+	m_objServerInfo.m_szServerIP[nDecLen] = '\0';
+
+	m_txtServerPort.GetWindowText(strData);
+	m_objServerInfo.m_nServerPort = _ttoi((LPCTSTR)strData);
+
+	//获得相关用户信息
+	m_txtUserID.GetWindowText(strData);
+	nSrcLen = WideCharToMultiByte(CP_ACP, 0, strData, strData.GetLength(), NULL, 0, NULL, NULL);
+	nDecLen = WideCharToMultiByte(CP_ACP, 0, strData, nSrcLen, szTemp, MAX_BUFF_50, NULL,NULL);
+	szTemp[nDecLen] = '\0';
+	int nUserID = atoi(szTemp);
+	m_txtUserLife.GetWindowText(strData);
+	nSrcLen = WideCharToMultiByte(CP_ACP, 0, strData, strData.GetLength(), NULL, 0, NULL, NULL);
+	nDecLen = WideCharToMultiByte(CP_ACP, 0, strData, nSrcLen, szTemp, MAX_BUFF_50, NULL,NULL);
+	szTemp[nDecLen] = '\0';
+	int nLife = atoi(szTemp);
+	m_txtUserMagic.GetWindowText(strData);
+	nSrcLen = WideCharToMultiByte(CP_ACP, 0, strData, strData.GetLength(), NULL, 0, NULL, NULL);
+	nDecLen = WideCharToMultiByte(CP_ACP, 0, strData, nSrcLen, szTemp, MAX_BUFF_50, NULL,NULL);
+	szTemp[nDecLen] = '\0';
+	int nMagic = atoi(szTemp);
+
+	if(Connect() == false)
+	{
+		return;
+	}
+
+	Send_SetUserInfo(nUserID, nLife, nMagic);
+
+	Close();
+}
