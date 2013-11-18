@@ -621,9 +621,8 @@ void CUserValidManager::Display()
 bool CUserValidManager::Reload_Map_CacheMemory(uint32 u4CacheIndex)
 {
 	string strOldUserName;
-	string strNewUserName;
 
-	bool blRet = m_objLRU.Get_Cached_KeyByIndex(u4CacheIndex, strOldUserName);
+	m_objLRU.Get_Cached_KeyByIndex(u4CacheIndex, strOldUserName);
 
 	mapUserValid::iterator f = m_mapUserValid.find(strOldUserName);
 	if(f != m_mapUserValid.end())
