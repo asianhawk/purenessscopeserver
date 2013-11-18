@@ -14,9 +14,10 @@ using namespace std;
 #define MAX_BUFF_50      50
 #define MAX_BUFF_500     500
 
-#define COMMAND_LOGIN    0x2100     //登陆
-#define COMMAND_LOGOUT   0x2101     //退出 
-#define COMMAND_USERINFO 0x2102     //获得玩家信息  
+#define COMMAND_LOGIN         0x2100     //登陆
+#define COMMAND_LOGOUT        0x2101     //退出 
+#define COMMAND_USERINFO      0x2102     //获得玩家信息  
+#define COMMAND_SET_USERINFO  0x2103     //设置用户信息 
 
 #define LOGIN_SUCCESS            0
 #define LOGIN_FAIL_NOEXIST       1
@@ -109,6 +110,8 @@ private:
 	bool Send_Single_Login();
 	
 	bool Send_UserInfo(int nUserID);
+	bool Send_SetUserInfo(int nUserID, int nLife, int nMagic);
+
 	void Show_Send_List(bool blAccount = false);
 
 private:
@@ -138,4 +141,5 @@ public:
 	CEdit m_txtUserLife;
 	CEdit m_txtUserMagic;
 	afx_msg void OnBnClickedButton4();
+	afx_msg void OnBnClickedButton5();
 };

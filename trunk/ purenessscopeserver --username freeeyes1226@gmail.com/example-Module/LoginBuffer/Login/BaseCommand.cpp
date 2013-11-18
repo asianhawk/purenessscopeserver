@@ -17,7 +17,7 @@ void CBaseCommand::SetServerObject(CServerObject* pServerObject)
 
 int CBaseCommand::DoMessage(IMessage* pMessage, bool& bDeleteFlag)
 {
-  __ENTER_FUNCTION;
+  __ENTER_FUNCTION();
 
   if(m_pServerObject == NULL)
   {
@@ -57,6 +57,10 @@ int CBaseCommand::DoMessage(IMessage* pMessage, bool& bDeleteFlag)
   else if(pMessage->GetMessageBase()->m_u2Cmd == COMMAND_USERINFO)
   {
 	  Do_User_Info(pMessage);
+  }
+  else if(pMessage->GetMessageBase()->m_u2Cmd == COMMAND_SET_USERINFO)
+  {
+	  Do_Set_User_Info(pMessage);
   }
 
   return 0;
@@ -373,6 +377,73 @@ void CBaseCommand::Do_User_Info( IMessage* pMessage )
 	return;
 }
 
+void CBaseCommand::Do_Set_User_Info( IMessage* pMessage )
+{
+	uint32     u4PacketLen  = 0;
+	uint16     u2CommandID  = 0;
+	uint32     u4UserID     = 0;
+	uint32     u4Life       = 0;
+	uint32     u4Magic      = 0;
+	bool       blIsNeedSend = false;
+
+	IBuffPacket* pBodyPacket = m_pServerObject->GetPacketManager()->Create();
+	if(NULL == pBodyPacket)
+	{
+		OUR_DEBUG((LM_ERROR, "[CBaseCommand::DoMessage] pBodyPacket is NULL.\n"));
+		return;
+	}
+
+	_PacketInfo BodyPacket;
+	pMessage->GetPacketBody(BodyPacket);
+
+	pBodyPacket->WriteStream(BodyPacket.m_pData, BodyPacket.m_nDataLen);
+
+	(*pBodyPacket) >> u2CommandID;
+	(*pBodyPacket) >> u4UserID;
+	(*pBodyPacket) >> u4Life;
+	(*pBodyPacket) >> u4Magic;
+
+	m_pServerObject->GetPacketManager()->Delete(pBodyPacket);
+
+	IBuffPacket* pResponsesPacket = m_pServerObject->GetPacketManager()->Create();
+	m_pServerObject->GetPacketManager()->Delete(pBodyPacket);
+	uint16 u2PostCommandID = COMMAND_RETURN_SET_USERINFO;
+	uint32 u4Ret = LOGIN_SUCCESS;
+
+	_UserInfo* pUserInfo = App_UserInfoManager::instance()->GetUserInfo(u4UserID);
+	if(pUserInfo == NULL)
+	{
+		u4Ret = LOGIN_FAIL_NOEXIST;
+		(*pResponsesPacket) << (uint16)u2PostCommandID;   //拼接应答命令ID
+		(*pResponsesPacket) << (uint32)u4Ret;
+		(*pResponsesPacket) << (uint32)u4UserID;
+	}
+	else
+	{
+
+		//设置数据
+		pUserInfo->m_u4Life  = u4Life;
+		pUserInfo->m_u4Magic = u4Magic;
+
+		(*pResponsesPacket) << (uint16)u2PostCommandID;   //拼接应答命令ID
+		(*pResponsesPacket) << (uint32)u4Ret;
+		(*pResponsesPacket) << (uint32)u4UserID;
+	}
+
+	if(NULL != m_pServerObject->GetConnectManager())
+	{
+		//发送全部数据
+		m_pServerObject->GetConnectManager()->PostMessage(pMessage->GetMessageBase()->m_u4ConnectID, pResponsesPacket, SENDMESSAGE_NOMAL, u2PostCommandID, true, true);
+	}
+	else
+	{
+		OUR_DEBUG((LM_INFO, "[CBaseCommand::DoMessage] m_pConnectManager = NULL"));
+		m_pServerObject->GetPacketManager()->Delete(pResponsesPacket);
+	}
+
+	return;
+}
+
 void CBaseCommand::InitUserList()
 {
 	App_UserValidManager::instance()->Init((uint32)MAX_LOGIN_VALID_COUNT, SHM_USERVALID_KEY, (uint32)sizeof(_UserValid));
@@ -393,4 +464,5 @@ void CBaseCommand::ClearUserList()
 	SAFE_DELETE(m_pPostServerData);
 	App_UserValidManager::instance()->Close();
 }
+
 

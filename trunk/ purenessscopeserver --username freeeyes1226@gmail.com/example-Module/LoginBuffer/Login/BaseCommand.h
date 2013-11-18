@@ -12,10 +12,12 @@
 //定义客户端信令(TCP)
 #define COMMAND_LOGIN                  0x2100     //登陆
 #define COMMAND_LOGOUT                 0x2101     //退出 
-#define COMMAND_USERINFO               0x2102     //设置玩家信息  
+#define COMMAND_USERINFO               0x2102     //查询用户信息 
+#define COMMAND_SET_USERINFO           0x2103     //设置用户信息 
 #define COMMAND_RETURN_LOGIN           0xe100     //登陆应答 
 #define COMMAND_RETURN_LOGOUT          0xe101     //登出应答
-#define COMMAND_RETURN_USERINFO        0xe102     //设置玩家信息 
+#define COMMAND_RETURN_USERINFO        0xe102     //查询用户信息
+#define COMMAND_RETURN_SET_USERINFO    0xe103     //设置用户信息 
 
 //中间服务器通讯信令(TCP)
 #define SERVER_COMMAND_USERVALID   0xc001    //到数据源查询UserValid请求
@@ -257,7 +259,8 @@ public:
 private:
 	void Do_User_Login(IMessage* pMessage);        //处理登陆
 	void Do_User_Logout(IMessage* pMessage);       //处理登出
-	void Do_User_Info(IMessage* pMessage);         //获得文件列表
+	void Do_User_Info(IMessage* pMessage);         //获得用户信息
+	void Do_Set_User_Info(IMessage* pMessage);     //设置用户信息 
 
 private:
   CServerObject*    m_pServerObject;

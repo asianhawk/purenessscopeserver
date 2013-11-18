@@ -53,6 +53,7 @@ int LoadModuleData(CServerObject* pServerObject)
     pMessageManager->AddClientCommand(COMMAND_LOGIN, &g_BaseCommand, g_szName);
 	pMessageManager->AddClientCommand(COMMAND_LOGOUT, &g_BaseCommand, g_szName);
 	pMessageManager->AddClientCommand(COMMAND_USERINFO, &g_BaseCommand, g_szName);
+	pMessageManager->AddClientCommand(COMMAND_SET_USERINFO, &g_BaseCommand, g_szName);
     pMessageManager->AddClientCommand(CLIENT_LINK_CONNECT, &g_BaseCommand, g_szName);
     pMessageManager->AddClientCommand(CLIENT_LINK_CDISCONNET, &g_BaseCommand, g_szName);
   }
@@ -78,6 +79,7 @@ int UnLoadModuleData()
       pMessageManager->DelClientCommand(COMMAND_LOGIN, &g_BaseCommand);
 	  pMessageManager->DelClientCommand(COMMAND_LOGOUT, &g_BaseCommand);
 	  pMessageManager->DelClientCommand(COMMAND_USERINFO, &g_BaseCommand);
+	  pMessageManager->DelClientCommand(COMMAND_SET_USERINFO, &g_BaseCommand);
       pMessageManager->DelClientCommand(CLIENT_LINK_CONNECT, &g_BaseCommand);
       pMessageManager->DelClientCommand(CLIENT_LINK_CDISCONNET, &g_BaseCommand);
       pMessageManager = NULL;
