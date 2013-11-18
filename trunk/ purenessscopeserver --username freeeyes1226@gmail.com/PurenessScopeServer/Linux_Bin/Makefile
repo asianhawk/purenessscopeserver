@@ -10,8 +10,6 @@ PATS = ../Reactor/AceReactorManager.o \
        ../PacketParse/PacketParsePool.o \
        ../Common/MakePacket.o \
        ../Common/MessageBlockManager.o \
-       ../Common/ClientParse.o \
-       ../Common/ClientParsePool.o \
        ../Common/ForbiddenIP.o \
        ../Reactor/ConnectAccept.o \
        ../Reactor/ConnectHandler.o \
@@ -47,8 +45,6 @@ OBJS = AceReactorManager.o \
        PacketParsePool.o \
        MakePacket.o \
        MessageBlockManager.o \
-       ClientParse.o \
-       ClientParsePool.o \
        ForbiddenIP.o \
        ConnectAccept.o \
        ConnectHandler.o \
