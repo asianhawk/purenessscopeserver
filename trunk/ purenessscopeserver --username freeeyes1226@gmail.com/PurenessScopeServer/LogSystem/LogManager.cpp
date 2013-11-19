@@ -72,7 +72,7 @@ int CLogManager::svc(void)
 		ProcessLog(mb->msg_type(), pstrLogText);
 		mb->release();
 		//OUR_DEBUG((LM_ERROR,"[CLogManager::svc] delete pstrLogText BEGIN!\n"));
-		delete pstrLogText;
+		SAFE_DELETE(pstrLogText);
 		//OUR_DEBUG((LM_ERROR,"[CLogManager::svc] delete pstrLogText END!\n"));
 
 	}
