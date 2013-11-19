@@ -63,10 +63,9 @@ int CheckCoreLimit(int nMaxCoreFile)
 	}
 	else
 	{
-		//不需要Core文件尺寸，这里就什么都不做了
-		/*
 		if((int)rCorelimit.rlim_cur > 0)
 		{
+			//不需要Core文件尺寸，在这里把Core文件大小设置成0
 			rCorelimit.rlim_cur = (rlim_t)nMaxCoreFile;
 			rCorelimit.rlim_max = (rlim_t)nMaxCoreFile;			
 			if (setrlimit(RLIMIT_CORE, &rCorelimit)!= 0) 
@@ -74,12 +73,48 @@ int CheckCoreLimit(int nMaxCoreFile)
 				OUR_DEBUG((LM_INFO, "[Checkfilelimit]failed to setrlimit number of files.\n"));
 				return -1;
 			}
-		}	
-		*/
+		}		
 	}
 
 	//OUR_DEBUG((LM_INFO, "[CheckCoreLimit]rlim.rlim_cur=%d, nMaxOpenFile=%d, openfile is not enougth， please check [ulimit -a].\n", (int)rCorelimit.rlim_cur, nMaxCoreFile));		
 	return 0;
+}
+
+//设置当前代码路径
+bool SetAppPath()
+{
+	char szPath[MAX_BUFF_300] = {'\0'};
+	char* pFilePath = NULL;
+
+	int nSize = pathconf(".",_PC_PATH_MAX);
+	if((pFilePath = (char *)new char[nSize]) != NULL)
+	{
+		memset(pFilePath, 0, nSize);
+		sprintf(pFilePath,"/proc/%d/exe",getpid());
+
+		//从符号链接中获得当前文件全路径和文件名
+		readlink(pFilePath, szPath, nSize);
+		delete[] pFilePath;
+		pFilePath = NULL;
+		//从szPath里面拆出当前路径
+		int nLen = strlen(szPath);
+		while(szPath[nLen - 1]!='/') 
+		{
+			nLen--;
+		}
+
+		szPath[nLen > 0 ? (nLen-1) : 0]= '\0';
+
+		chdir(szPath);
+		OUR_DEBUG((LM_INFO, "[SetAppPath]Set work Path (%s) OK.\n", szPath));
+
+		return true;
+	}
+	else
+	{
+		OUR_DEBUG((LM_INFO, "[SetAppPath]Set work Path[null].\n"));
+		return false;
+	}
 }
 
 //获得当前文件打开数
@@ -125,6 +160,7 @@ int Checkfilelimit(int nMaxOpenFile)
 			}
 
 			//OUR_DEBUG((LM_INFO, "[Checkfilelimit]rlim.rlim_cur=%d, nMaxOpenFile=%d, openfile is not enougth， please check [ulimit -a].\n", (int)rfilelimit.rlim_cur, nMaxOpenFile));
+			return -1;
 		}
 	}
 
@@ -225,6 +261,9 @@ int ACE_TMAIN(int argc, ACE_TCHAR* argv[])
 	{
 		App_MainConfig::instance()->Display();
 	}
+
+	//设置当前工作路径
+	SetAppPath();
 
 	//判断当前并行连接数是否支持框架
 	if(-1 == Checkfilelimit(App_MainConfig::instance()->GetMaxHandlerCount()))
