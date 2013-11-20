@@ -56,7 +56,20 @@ int LoadModuleData(CServerObject* pServerObject)
   else
   {
     OUR_DEBUG((LM_INFO, "[Base LoadModuleData] pMessageManager = NULL.\n"));
-  }		
+  }
+
+  //显示框架工作线程ID
+  OUR_DEBUG((LM_INFO, "[Base LoadModuleData] *********************************.\n"));
+
+  uint32 u4WorkThread = pMessageManager->GetWorkThreadCount();
+  OUR_DEBUG((LM_INFO, "[Base LoadModuleData] WorkThreadCount=%d.\n", u4WorkThread));
+
+  for(uint32 u4Index = 0; u4Index < u4WorkThread; u4Index++)
+  {
+	  OUR_DEBUG((LM_INFO, "[Base LoadModuleData] WorkThreadID=%d.\n", pMessageManager->GetWorkThreadByIndex(u4Index)));
+  }
+
+  OUR_DEBUG((LM_INFO, "[Base LoadModuleData] *********************************.\n"));
 
   OUR_DEBUG((LM_INFO, "[Base LoadModuleData] End.\n"));
 

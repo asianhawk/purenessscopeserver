@@ -47,6 +47,7 @@
 				Optimization="0"
 				AdditionalIncludeDirectories="./TinyXML;./Inlcude;./PacketParse;&quot;$(ACE_ROOT)&quot;;./Message;./Common;./IObject"
 				PreprocessorDefinitions="WIN32;_WINDOWS;_DEBUG"
+				StringPooling="true"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"

@@ -1,6 +1,9 @@
 // MessageService.h
 // 处理消息，将消息分派给具体的逻辑处理类去执行
 // 今天到了国家图书馆，感觉新馆真的很气派，在这里写代码很有意思。
+// 有时候，在朋友们的支持下，PSS才会走的更远。
+// 不断的有好建议提出，可见大家都在认真使用中。
+// 有时候平凡就是这样，
 // add by freeeyes
 // 2009-01-29
 
@@ -387,3 +390,14 @@ mapModuleClient* CMessageManager::GetModuleClient()
 {
 	return &m_mapModuleClient;
 }
+
+uint32 CMessageManager::GetWorkThreadCount()
+{
+	return App_MessageServiceGroup::instance()->GetWorkThreadCount();
+}
+
+uint32 CMessageManager::GetWorkThreadByIndex(uint32 u4Index)
+{
+	return App_MessageServiceGroup::instance()->GetWorkThreadIDByIndex(u4Index);
+}
+
