@@ -59,7 +59,7 @@ public:
   CProConnectManager() {};
   virtual ~CProConnectManager() {};
 
-  bool PostMessage(uint32 u4ConnectID, IBuffPacket* pBuffPacket, uint8 u1SendType = SENDMESSAGE_NOMAL, uint16 u2CommandID = 0, bool blSendState = true)
+  bool PostMessage(uint32 u4ConnectID, IBuffPacket* pBuffPacket, uint8 u1SendType = SENDMESSAGE_NOMAL, uint16 u2CommandID = 0, bool blSendState = PACKET_SEND_IMMEDIATLY, bool blDlete = PACKET_IS_FRAMEWORK_RECYC)
   {
     if(false == App_BuffPacketManager::instance()->Delete(pBuffPacket))
     {
@@ -72,13 +72,13 @@ public:
     }
   };
 
-  bool PostMessage(uint32 u4ConnectID, const char* pData, uint32 nDataLen, uint8 u1SendType = SENDMESSAGE_NOMAL, uint16 u2CommandID = 0, bool blSendState = true)
+  bool PostMessage(uint32 u4ConnectID, const char* pData, uint32 nDataLen, uint8 u1SendType = SENDMESSAGE_NOMAL, uint16 u2CommandID = 0, bool blSendState = PACKET_SEND_IMMEDIATLY, bool blDlete = PACKET_IS_FRAMEWORK_RECYC)
   {
     delete pData;
     return true;
   };
 
-  bool PostMessage(vector<uint32> vecConnectID, IBuffPacket* pBuffPacket, uint8 u1SendType = SENDMESSAGE_NOMAL, uint16 u2CommandID = 0, bool blSendState = true)
+  bool PostMessage(vector<uint32> vecConnectID, IBuffPacket* pBuffPacket, uint8 u1SendType = SENDMESSAGE_NOMAL, uint16 u2CommandID = 0, bool blSendState = PACKET_SEND_IMMEDIATLY, bool blDlete = PACKET_IS_FRAMEWORK_RECYC)
   {
     if(false == App_BuffPacketManager::instance()->Delete(pBuffPacket))
     {
@@ -91,13 +91,13 @@ public:
     }
   }
 
-  bool PostMessage(vector<uint32> vecConnectID, const char* pData, uint32 nDataLen, uint8 u1SendType = SENDMESSAGE_NOMAL, uint16 u2CommandID = 0, bool blSendState = true)
+  bool PostMessage(vector<uint32> vecConnectID, const char* pData, uint32 nDataLen, uint8 u1SendType = SENDMESSAGE_NOMAL, uint16 u2CommandID = 0, bool blSendState = PACKET_SEND_IMMEDIATLY, bool blDlete = PACKET_IS_FRAMEWORK_RECYC)
   {
     delete pData;
     return true;
   }
 
-  bool PostMessageAll(IBuffPacket* pBuffPacket, uint8 u1SendType = SENDMESSAGE_NOMAL, uint16 u2CommandID = 0, bool blSendState = true)
+  bool PostMessageAll(IBuffPacket* pBuffPacket, uint8 u1SendType = SENDMESSAGE_NOMAL, uint16 u2CommandID = 0, bool blSendState = PACKET_SEND_IMMEDIATLY, bool blDlete = PACKET_IS_FRAMEWORK_RECYC)
   {
     if(false == App_BuffPacketManager::instance()->Delete(pBuffPacket))
     {
@@ -110,7 +110,7 @@ public:
     }
   }
 
-  bool PostMessageAll(const char* pData, uint32 nDataLen, uint8 u1SendType = SENDMESSAGE_NOMAL, uint16 u2CommandID = 0, bool blSendState = true)
+  bool PostMessageAll(const char* pData, uint32 nDataLen, uint8 u1SendType = SENDMESSAGE_NOMAL, uint16 u2CommandID = 0, bool blSendState = PACKET_SEND_IMMEDIATLY, bool blDlete = PACKET_IS_FRAMEWORK_RECYC)
   {
     delete pData;
     return true;

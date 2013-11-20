@@ -152,6 +152,9 @@ public:
 	
 	mapModuleClient* GetModuleClient();                                //返回所有模块绑定注册命令信息
 
+	virtual uint32 GetWorkThreadCount();
+	virtual uint32 GetWorkThreadByIndex(uint32 u4Index);
+
 private:
 	bool CloseCommandInfo(const char* pModuleName);
 

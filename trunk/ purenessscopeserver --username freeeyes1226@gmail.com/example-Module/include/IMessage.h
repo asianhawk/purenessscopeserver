@@ -2,6 +2,7 @@
 #define _IMESSAGE_H
 
 #include "IBuffPacket.h"
+#include "ProfileTime.h"
 
 //记录消息的一些参数
 struct _MessageBase
@@ -15,19 +16,21 @@ struct _MessageBase
 	uint32         m_u4MsgTime;           //消息接收到的时间
 	char           m_szIP[MAX_BUFF_20];   //客户端IP(目前只有UDP会赋值，TCP可以根据ConnectID自己去获取)
 	uint32         m_u4Port;              //客户端端口(目前只有UDP会赋值，TCP可以根据ConnectID自己去获取)
-	ACE_hrtime_t   m_tvMsgArrived;        //消息到达时间
+	uint32         m_u4WorkThreadID;      //工作线程ID
+	CProfileTime   m_ProfileTime;         //消息到达时间
 
 	_MessageBase()
 	{
-		m_u1PacketType  = PACKET_TCP;   //默认为TCP
-		m_u4ConnectID   = 0;
-		m_u4PacketID    = 0;
-		m_u2Cmd         = 0;
-		m_u4MsgTime     = 0;
-		m_u4HeadSrcSize = 0;
-		m_u4BodySrcSize = 0;
-		m_szIP[0]       = '\0';
-		m_u4Port        = 0;
+		m_u1PacketType   = PACKET_TCP;   //默认为TCP
+		m_u4ConnectID    = 0;
+		m_u4PacketID     = 0;
+		m_u2Cmd          = 0;
+		m_u4MsgTime      = 0;
+		m_u4HeadSrcSize  = 0;
+		m_u4BodySrcSize  = 0;
+		m_u4WorkThreadID = 0;
+		m_szIP[0]        = '\0';
+		m_u4Port         = 0;
 	}
 };
 
