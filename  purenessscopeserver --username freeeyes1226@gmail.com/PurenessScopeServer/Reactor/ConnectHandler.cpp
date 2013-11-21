@@ -716,7 +716,7 @@ bool CConnectHandler::SendMessage(uint16 u2CommandID, IBuffPacket* pBuffPacket, 
 	ACE_Message_Block* pMbData = NULL;
 
 	//如果不是直接发送数据，则拼接数据包
-	if(u1SendType == SENDMESSAGE_NOMAL)
+	if(blState == PACKET_SEND_CACHE)
 	{
 		//先判断要发送的数据长度，看看是否可以放入缓冲，缓冲是否已经放满。
 		uint32 u4SendPacketSize = 0;

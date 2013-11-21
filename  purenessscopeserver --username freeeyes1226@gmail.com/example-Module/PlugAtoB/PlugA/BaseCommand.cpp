@@ -89,6 +89,7 @@ void CBaseCommand::Do_PlugA_DATA(IMessage* pMessage)
 	IBuffPacket* pModuleRecvBuff = m_pServerObject->GetPacketManager()->Create();
 
 	(*pModuleSendBuff) << pMessage->GetMessageBase()->m_u4WorkThreadID;
+	(*pModuleSendBuff) << pMessage->GetMessageBase()->m_u4ConnectID;
 	(*pModuleSendBuff) << strUserText;
 
 	//向PlugB通知数据处理
@@ -104,16 +105,16 @@ void CBaseCommand::Do_PlugA_DATA(IMessage* pMessage)
 	m_pServerObject->GetPacketManager()->Delete(pBodyPacket);
 
 	IBuffPacket* pResponsesPacket = m_pServerObject->GetPacketManager()->Create();
-	uint16 u2PostCommandID = COMMAND_RETURN_PLUGA;
+	//uint16 u2PostCommandID = COMMAND_RETURN_PLUGA;
 
 	//返回结果
-	(*pResponsesPacket) << (uint16)u2PostCommandID;   //拼接应答命令ID
+	//(*pResponsesPacket) << (uint16)u2PostCommandID;   //拼接应答命令ID
 	(*pResponsesPacket) << (uint32)u4Ret;
 
 	if(NULL != m_pServerObject->GetConnectManager())
 	{
 		//发送全部数据
-		m_pServerObject->GetConnectManager()->PostMessage(pMessage->GetMessageBase()->m_u4ConnectID, pResponsesPacket, SENDMESSAGE_NOMAL, u2PostCommandID, true, true);
+		m_pServerObject->GetConnectManager()->PostMessage(pMessage->GetMessageBase()->m_u4ConnectID, pResponsesPacket, SENDMESSAGE_JAMPNOMAL, (uint16)COMMAND_RETURN_PLUGA, PACKET_SEND_IMMEDIATLY, PACKET_IS_FRAMEWORK_RECYC);
 	}
 	else
 	{
