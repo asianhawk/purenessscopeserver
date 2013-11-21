@@ -344,6 +344,12 @@ void CLoginClientDlg::OnClose()
 {
 	// TODO: 在此添加消息处理程序代码和/或调用默认值
 	//判断socket是否已经连接，如果有连接则断开
+	if(m_blMultiple == true)
+	{
+		m_blMultiple = false; 
+		Sleep(1);
+	}
+
 	if(m_sckClient != INVALID_SOCKET)
 	{
 		Close();
@@ -526,6 +532,7 @@ bool CLoginClientDlg::Send_Multiple_Login()
 		Send_Login(m_vecLoginInfo[nIndex - 1]);
 	}
 
+	m_blMultiple = false;
 	Close();
 
 	return true;
