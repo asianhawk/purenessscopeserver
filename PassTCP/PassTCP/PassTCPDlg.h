@@ -76,6 +76,8 @@ public:
   CEdit m_txtFailRecv;
   CEdit m_txtClientUdpPort;
   CEdit m_txtPacketTimewait;
+  CEdit m_txtSendByteCount;
+  CEdit m_txtRecvByteCount;
   int m_nRadio;
   
   vecClientTcpSocket m_vecClientTcpSocket;
@@ -84,4 +86,5 @@ public:
   afx_msg void OnBnClickedButton2();
   afx_msg void OnTimer(UINT_PTR nIDEvent);
   afx_msg void OnBnClickedButton3();
+
 };

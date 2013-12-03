@@ -36,6 +36,7 @@ CConnectHandler::CConnectHandler(void)
 	m_u4SuccessSendSize   = 0;
 	m_u8SendQueueTimeout  = MAX_QUEUE_TIMEOUT * 1000 * 1000;  //目前因为记录的是纳秒
 	m_u8RecvQueueTimeout  = MAX_QUEUE_TIMEOUT * 1000 * 1000;  //目前因为记录的是纳秒
+	m_u2TcpNodelay        = TCP_NODELAY_ON;
 }
 
 CConnectHandler::~CConnectHandler(void)
@@ -123,6 +124,7 @@ void CConnectHandler::Init(uint16 u2HandlerID)
 	m_u4SendThresHold  = App_MainConfig::instance()->GetSendTimeout();
 	m_u2SendQueueMax   = App_MainConfig::instance()->GetSendQueueMax();
 	m_u4MaxPacketSize  = App_MainConfig::instance()->GetRecvBuffSize();
+	m_u2TcpNodelay     = App_MainConfig::instance()->GetTcpNodelay();
 
 	m_u8SendQueueTimeout = App_MainConfig::instance()->GetSendQueueTimeout() * 1000 * 1000;
 	if(m_u8SendQueueTimeout == 0)
@@ -248,6 +250,14 @@ int CConnectHandler::open(void*)
 	int nTecvBuffSize = MAX_MSG_SOCKETBUFF;
 	//ACE_OS::setsockopt(this->get_handle(), SOL_SOCKET, SO_RCVBUF, (char* )&nTecvBuffSize, sizeof(nTecvBuffSize));
 	ACE_OS::setsockopt(this->get_handle(), SOL_SOCKET, SO_SNDBUF, (char* )&nTecvBuffSize, sizeof(nTecvBuffSize));
+	
+	if(m_u2TcpNodelay == TCP_NODELAY_OFF)
+	{
+		//如果设置了禁用Nagle算法，则这里要禁用。
+		int nOpt=1; 
+		ACE_OS::setsockopt(this->get_handle(), IPPROTO_TCP, TCP_NODELAY, (char* )&nOpt, sizeof(int)); 
+	}
+
 	//int nOverTime = MAX_MSG_SENDTIMEOUT;
 	//ACE_OS::setsockopt(this->get_handle(), SOL_SOCKET, SO_SNDTIMEO, (char* )&nOverTime, sizeof(nOverTime));
 
@@ -684,7 +694,7 @@ bool CConnectHandler::SetSendQueueTimeCost(uint32 u4TimeCost)
 	m_ThreadLock.release();
 
 	//如果超过阀值，则记录到日志中去
-	if((uint32)(m_u8SendQueueTimeout * 1000) <= u4TimeCost)
+	if((uint32)(m_u8SendQueueTimeout) <= u4TimeCost)
 	{
 		AppLogManager::instance()->WriteLog(LOG_SYSTEM_SENDQUEUEERROR, "[TCP]IP=%s,Prot=%d,m_u8SendQueueTimeout = [%d], Timeout=[%d].", GetClientIPInfo().m_szClientIP, GetClientIPInfo().m_nPort, (uint32)m_u8SendQueueTimeout, u4TimeCost);
 	}
@@ -1192,7 +1202,7 @@ bool CConnectManager::AddConnect(uint32 u4ConnectID, CConnectHandler* pConnectHa
 	return true;
 }
 
-bool CConnectManager::SendMessage(uint32 u4ConnectID, IBuffPacket* pBuffPacket, uint16 u2CommandID, bool blSendState, uint8 u1SendType, ACE_hrtime_t& tvSendBegin, bool blDelete)
+bool CConnectManager::SendMessage(uint32 u4ConnectID, IBuffPacket* pBuffPacket, uint16 u2CommandID, bool blSendState, uint8 u1SendType, ACE_Time_Value& tvSendBegin, bool blDelete)
 {
 	//ACE_Guard<ACE_Recursive_Thread_Mutex> WGuard(m_ThreadWriteLock);
 	//因为是队列调用，所以这里不需要加锁了。
@@ -1215,7 +1225,8 @@ bool CConnectManager::SendMessage(uint32 u4ConnectID, IBuffPacket* pBuffPacket, 
 			pConnectHandler->SendMessage(u2CommandID, pBuffPacket, blSendState, u1SendType, u4PacketSize, blDelete);
 
 			//记录消息发送消耗时间
-			uint32 u4SendCost = (uint32)(ACE_OS::gethrtime() - tvSendBegin);
+			ACE_Time_Value tvInterval = ACE_OS::gettimeofday() - tvSendBegin;
+			uint32 u4SendCost = (uint32)(tvInterval.msec());
 			pConnectHandler->SetSendQueueTimeCost(u4SendCost);
 			App_CommandAccount::instance()->SaveCommandData_Mutex(u2CommandID, (uint8)u4SendCost, PACKET_TCP, u4PacketSize, u4CommandSize, COMMAND_TYPE_OUT);
 			return true;
@@ -1308,7 +1319,7 @@ bool CConnectManager::PostMessage(uint32 u4ConnectID, IBuffPacket* pBuffPacket, 
 		pSendMessage->m_u2CommandID = u2CommandID;
 		pSendMessage->m_blDelete    = blDelete;
 		pSendMessage->m_blSendState = blSendState;
-		pSendMessage->m_tvSend      = ACE_OS::gethrtime();
+		pSendMessage->m_tvSend      = ACE_OS::gettimeofday();
 
 		_SendMessage** ppSendMessage = (_SendMessage **)mb->base();
 		*ppSendMessage = pSendMessage;
@@ -1708,7 +1719,7 @@ bool CConnectManager::PostMessageAll(IBuffPacket* pBuffPacket, uint8 u1SendType,
 			pSendMessage->m_u2CommandID = u2CommandID;
 			pSendMessage->m_blDelete    = blDelete;
 			pSendMessage->m_blSendState = blSendState;
-			pSendMessage->m_tvSend      = ACE_OS::gethrtime();
+			pSendMessage->m_tvSend      = ACE_OS::gettimeofday();
 
 			_SendMessage** ppSendMessage = (_SendMessage **)mb->base();
 			*ppSendMessage = pSendMessage;

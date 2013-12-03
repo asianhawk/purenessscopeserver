@@ -51,7 +51,7 @@ bool CCommandAccount::SaveCommandData(uint16 u2CommandID, uint64 u8CommandCost, 
 		//记录超时的命令
 		_CommandTimeOut objCommandTimeOut;
 		objCommandTimeOut.m_u2CommandID   = u2CommandID;
-		objCommandTimeOut.m_u4TimeOutTime = (uint32)(u8CommandCost / 1000000);  //转换为毫秒
+		objCommandTimeOut.m_u4TimeOutTime = (uint32)(u8CommandCost);  //转换为毫秒
 		m_vecCommandTimeOut.push_back(objCommandTimeOut);
 		AppLogManager::instance()->WriteLog(LOG_SYSTEM_PACKETTIME, "u2CommandID=%d, Timeout=[%d].", u2CommandID, (uint32)u8CommandCost);
 	}
@@ -153,7 +153,7 @@ bool CCommandAccount::SaveCommandData_Mutex( uint16 u2CommandID, uint64 u8Comman
 		//记录超时的命令
 		_CommandTimeOut objCommandTimeOut;
 		objCommandTimeOut.m_u2CommandID   = u2CommandID;
-		objCommandTimeOut.m_u4TimeOutTime = (uint32)(u8CommandCost / 1000000);  //转换为毫秒
+		objCommandTimeOut.m_u4TimeOutTime = (uint32)(u8CommandCost);  //转换为毫秒
 		m_vecCommandTimeOut.push_back(objCommandTimeOut);
 		AppLogManager::instance()->WriteLog(LOG_SYSTEM_PACKETTIME, "u2CommandID=%d, Timeout=[%d].", u2CommandID, (uint32)u8CommandCost);
 	}

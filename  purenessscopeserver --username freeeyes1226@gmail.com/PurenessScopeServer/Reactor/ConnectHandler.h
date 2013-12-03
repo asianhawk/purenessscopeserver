@@ -32,6 +32,10 @@
 #include "SendMessage.h"
 #include "CommandAccount.h"
 
+#ifdef __LINUX__
+#include "netinet/tcp.h"
+#endif
+
 #include <map>
 
 using namespace std;
@@ -111,6 +115,7 @@ private:
 
 	uint32                     m_u4ReadSendSize;               //准备发送的字节数（水位标）
 	uint32                     m_u4SuccessSendSize;            //实际客户端接收到的总字节数（水位标）
+	uint16                     m_u2TcpNodelay;                 //Nagle算法开关
 
 	_TimerCheckID*             m_pTCClose;                     //定时检测链接存活状态的定时器
 
@@ -138,7 +143,7 @@ public:
 
 	void CloseAll();
 	bool AddConnect(uint32 u4ConnectID, CConnectHandler* pConnectHandler);
-	bool SendMessage(uint32 u4ConnectID, IBuffPacket* pBuffPacket,  uint16 u2CommandID, bool blSendState, uint8 u1SendType, ACE_hrtime_t& tvSendBegin, bool blDelete = true);    //同步发送                                                                     //发送缓冲数据
+	bool SendMessage(uint32 u4ConnectID, IBuffPacket* pBuffPacket,  uint16 u2CommandID, bool blSendState, uint8 u1SendType, ACE_Time_Value& tvSendBegin, bool blDelete = true);    //同步发送                                                                     //发送缓冲数据
 	bool PostMessage(uint32 u4ConnectID, IBuffPacket* pBuffPacket, uint8 u1SendType = SENDMESSAGE_NOMAL, uint16 u2CommandID = 0, bool blSendState = true, bool blDelete = true); //异步发送
 	bool PostMessageAll(IBuffPacket* pBuffPacket, uint8 u1SendType = SENDMESSAGE_NOMAL, uint16 u2CommandID = 0, bool blSendState = true, bool blDelete = true);                  //异步群发
 	bool Close(uint32 u4ConnectID);                                                                          //客户单关闭

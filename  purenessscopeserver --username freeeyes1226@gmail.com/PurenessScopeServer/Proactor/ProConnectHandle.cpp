@@ -27,6 +27,7 @@ CProConnectHandle::CProConnectHandle(void)
 	m_pBlockMessage       = NULL;
 	m_u2SendQueueTimeout  = MAX_QUEUE_TIMEOUT * 1000;  //目前因为记录的是微秒，所以这里相应的扩大1000倍
 	m_u2RecvQueueTimeout  = MAX_QUEUE_TIMEOUT * 1000;  //目前因为记录的是微秒，所以这里相应的扩大1000倍
+	m_u2TcpNodelay        = TCP_NODELAY_ON;
 }
 
 CProConnectHandle::~CProConnectHandle(void)
@@ -45,6 +46,7 @@ void CProConnectHandle::Init(uint16 u2HandlerID)
 	m_u4SendThresHold  = App_MainConfig::instance()->GetSendTimeout();
 	m_u2SendQueueMax   = App_MainConfig::instance()->GetSendQueueMax();
 	m_u4MaxPacketSize  = App_MainConfig::instance()->GetRecvBuffSize();
+	m_u2TcpNodelay     = App_MainConfig::instance()->GetTcpNodelay();
 
 	m_u2SendQueueTimeout = App_MainConfig::instance()->GetSendQueueTimeout() * 1000;
 	if(m_u2SendQueueTimeout == 0)
@@ -218,6 +220,13 @@ void CProConnectHandle::open(ACE_HANDLE h, ACE_Message_Block&)
 		App_ForbiddenIP::instance()->AddTempIP(m_addrRemote.get_host_addr(), App_MainConfig::instance()->GetForbiddenTime());
 		Close();
 		return;
+	}
+
+	if(m_u2TcpNodelay == TCP_NODELAY_OFF)
+	{
+		//如果设置了禁用Nagle算法，则这里要禁用。
+		int nOpt = 1; 
+		ACE_OS::setsockopt(h, IPPROTO_TCP, TCP_NODELAY, (char* )&nOpt, sizeof(int)); 
 	}
 
 	//初始化检查器
@@ -1081,7 +1090,7 @@ bool CProConnectManager::AddConnect(uint32 u4ConnectID, CProConnectHandle* pConn
 	return true;
 }
 
-bool CProConnectManager::SendMessage(uint32 u4ConnectID, IBuffPacket* pBuffPacket, uint16 u2CommandID, bool blSendState, uint8 u1SendType, ACE_hrtime_t& tvSendBegin, bool blDelete)
+bool CProConnectManager::SendMessage(uint32 u4ConnectID, IBuffPacket* pBuffPacket, uint16 u2CommandID, bool blSendState, uint8 u1SendType, ACE_Time_Value& tvSendBegin, bool blDelete)
 {
 	//ACE_Guard<ACE_Recursive_Thread_Mutex> WGrard(m_ThreadWriteLock);
 	//OUR_DEBUG((LM_ERROR,"[CProConnectManager::SendMessage]BEGIN.\n"));
@@ -1099,9 +1108,7 @@ bool CProConnectManager::SendMessage(uint32 u4ConnectID, IBuffPacket* pBuffPacke
 			pConnectHandler->SendMessage(u2CommandID, pBuffPacket, blSendState, u1SendType, u4PacketSize, blDelete);
 
 			//记录消息发送消耗时间
-			//uint32 u4SendCost = (uint32)(ACE_OS::gethrtime() - tvSendBegin);
 			uint32 u4SendCost = 0;
-			//pConnectHandler->SetSendQueueTimeCost(u4SendCost);
 			App_CommandAccount::instance()->SaveCommandData_Mutex(u2CommandID, (uint8)u4SendCost, PACKET_TCP, u4PacketSize, u4CommandSize, COMMAND_TYPE_OUT);
 			return true;
 		}
@@ -1171,7 +1178,7 @@ bool CProConnectManager::PostMessage(uint32 u4ConnectID, IBuffPacket* pBuffPacke
 		pSendMessage->m_u2CommandID = u2CommandID;
 		pSendMessage->m_blSendState = blSendState;
 		pSendMessage->m_blDelete    = blDelete;
-		pSendMessage->m_tvSend      = ACE_OS::gethrtime();
+		pSendMessage->m_tvSend      = ACE_OS::gettimeofday();
 
 		_SendMessage** ppSendMessage = (_SendMessage **)mb->base();
 		*ppSendMessage = pSendMessage;
@@ -1490,7 +1497,7 @@ bool CProConnectManager::PostMessageAll( IBuffPacket* pBuffPacket, uint8 u1SendT
 			pSendMessage->m_u2CommandID = u2CommandID;
 			pSendMessage->m_blSendState = blSendState;
 			pSendMessage->m_blDelete    = blDelete;
-			pSendMessage->m_tvSend      = ACE_OS::gethrtime();
+			pSendMessage->m_tvSend      = ACE_OS::gettimeofday();
 
 			_SendMessage** ppSendMessage = (_SendMessage **)mb->base();
 			*ppSendMessage = pSendMessage;
