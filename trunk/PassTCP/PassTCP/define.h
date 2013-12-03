@@ -253,6 +253,8 @@ struct _Socket_State_Info
 	int m_nFailConnect;               //连接失败数
 	int m_nFailSend;                  //发送失败数
 	int m_nFailRecv;                  //接收失败数
+	int m_nSendByteCount;             //发送字节数
+	int m_nRecvByteCount;             //接收字节数
 
 	_Socket_State_Info()
 	{
@@ -263,6 +265,8 @@ struct _Socket_State_Info
 		m_nFailConnect    = 0;
 		m_nFailSend       = 0;
 		m_nFailRecv       = 0;
+		m_nSendByteCount  = 0;
+		m_nRecvByteCount  = 0;
 	}
 };
 

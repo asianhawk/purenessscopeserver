@@ -26,6 +26,7 @@ CMainConfig::CMainConfig(void)
 	m_u1Monitor               = 0;
 	m_u4SendDatamark          = MAX_BLOCK_SIZE;
 	m_u4CoreFileSize          = 0;
+	m_u2TcpNodelay            = TCP_NODELAY_ON;
 
 	m_u1ConsoleSupport        = 0;
 	m_nConsolePort            = 0;
@@ -310,6 +311,14 @@ bool CMainConfig::Init(const char* szConfigPath)
 	{
 		m_u4SendTimeout = (int)ACE_OS::atoi(pData);
 	}
+	pData = m_MainConfig.GetData("SendInfo", "TcpNodelay");
+	if(pData != NULL)
+	{
+		if((uint16)ACE_OS::atoi(pData) != TCP_NODELAY_ON)
+		{
+			m_u2TcpNodelay = TCP_NODELAY_OFF;
+		}
+	}
 	pData = m_MainConfig.GetData("RecvInfo", "RecvBuffSize");
 	if(pData != NULL)
 	{
@@ -577,6 +586,7 @@ void CMainConfig::Display()
 	OUR_DEBUG((LM_INFO, "[CMainConfig::Display]m_u2WorkQueuePutTime = %d.\n", m_u2WorkQueuePutTime));
 	OUR_DEBUG((LM_INFO, "[CMainConfig::Display]m_u1ServerType = %d.\n", m_u1ServerType));
 	OUR_DEBUG((LM_INFO, "[CMainConfig::Display]m_u4SendDatamark = %d.\n", m_u4SendDatamark));
+	OUR_DEBUG((LM_INFO, "[CMainConfig::Display]m_u2TcpNodelay = %d.\n", m_u2TcpNodelay));
 
 	for(int i = 0; i < (int)m_vecUDPServerInfo.size(); i++)
 	{
@@ -918,5 +928,10 @@ uint32 CMainConfig::GetSendDataMask()
 uint32 CMainConfig::GetCoreFileSize()
 {
 	return m_u4CoreFileSize;
+}
+
+uint16 CMainConfig::GetTcpNodelay()
+{
+	return m_u2TcpNodelay;
 }
 

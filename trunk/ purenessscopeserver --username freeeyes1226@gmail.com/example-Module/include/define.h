@@ -142,6 +142,9 @@ using namespace std;
 
 #define CONNECT_LIMIT_RETRY 30                   //初始化中间服务器链接后定期检查，单位是秒
 
+#define TCP_NODELAY_ON      0                    //TCP Nagle算法开关开关打开
+#define TCP_NODELAY_OFF     1                    //TCP Nagle算法开关开关关闭
+
 //对应当前框架支持的网络模式
 enum
 {

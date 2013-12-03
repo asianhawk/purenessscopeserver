@@ -101,6 +101,8 @@ void CPassTCPDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Radio(pDX, IDC_RADIO1, m_nRadio);
 	DDX_Control(pDX, IDC_EDIT15, m_txtClientUdpPort);
 	DDX_Control(pDX, IDC_EDIT16, m_txtPacketTimewait);
+	DDX_Control(pDX, IDC_EDIT17, m_txtSendByteCount);
+	DDX_Control(pDX, IDC_EDIT18, m_txtRecvByteCount);
 }
 
 BEGIN_MESSAGE_MAP(CPassTCPDlg, CDialog)
@@ -373,6 +375,9 @@ void CPassTCPDlg::InitView()
 	m_txtSendData.SetWindowText(_T("0a 00 00 00 00 10 be cd aa 8f 3c 01 00 00"));
 	m_txtClientUdpPort.SetWindowText(_T("20002"));
 
+	m_txtSendByteCount.SetWindowText(_T("0"));
+	m_txtRecvByteCount.SetWindowText(_T("0"));
+
 	m_nRadio = 1;
 
 	ClearResult();
@@ -395,6 +400,9 @@ void CPassTCPDlg::ClearResult()
 	m_txtFailConnect.SetWindowText(_T("0"));
 	m_txtFailSend.SetWindowText(_T("0"));
 	m_txtFailRecv.SetWindowText(_T("0"));
+
+	m_txtSendByteCount.SetWindowText(_T("0"));
+	m_txtRecvByteCount.SetWindowText(_T("0"));
 }
 
 void CPassTCPDlg::Close()
@@ -481,6 +489,8 @@ void CPassTCPDlg::OnTimer(UINT_PTR nIDEvent)
 		int nFailSend       = 0;
 		int nFailRecv       = 0;
 		int nCurrConnect    = 0;
+		int nSendByteCount  = 0;
+		int nRecvByteCount  = 0;
 
 		int nConnectType = 0;
 		switch(GetCheckedRadioButton(IDC_RADIO1, IDC_RADIO2))
@@ -510,6 +520,8 @@ void CPassTCPDlg::OnTimer(UINT_PTR nIDEvent)
 						nFailSend       += pSocket_State_Info->m_nFailSend;
 						nFailRecv       += pSocket_State_Info->m_nFailRecv;
 						nCurrConnect    += pSocket_State_Info->m_nCurrectSocket;
+						nSendByteCount  += pSocket_State_Info->m_nSendByteCount;
+						nRecvByteCount  += pSocket_State_Info->m_nRecvByteCount;
 					}
 				}
 			}
@@ -530,6 +542,10 @@ void CPassTCPDlg::OnTimer(UINT_PTR nIDEvent)
 			m_txtFailRecv.SetWindowText(strData);
 			strData.Format(_T("%d"), nCurrConnect);
 			m_txtCurrConnect.SetWindowText(strData);
+			strData.Format(_T("%d"), nSendByteCount);
+			m_txtSendByteCount.SetWindowText(strData);
+			strData.Format(_T("%d"), nRecvByteCount);
+			m_txtRecvByteCount.SetWindowText(strData);
 		}
 		else
 		{
@@ -653,6 +669,14 @@ void CPassTCPDlg::OnBnClickedButton3()
 
 	m_txtSuccessRecv.GetWindowText(strData);
 	sprintf_s(szLogText, 1024, "成功接收数据包数:%d\n", _ttoi((LPCTSTR)strData));
+	fwrite(szLogText, strlen(szLogText), sizeof(char), pFile);
+
+	m_txtSendByteCount.GetWindowText(strData);
+	sprintf_s(szLogText, 1024, "发送字节数:%d\n", _ttoi((LPCTSTR)strData));
+	fwrite(szLogText, strlen(szLogText), sizeof(char), pFile);
+
+	m_txtRecvByteCount.GetWindowText(strData);
+	sprintf_s(szLogText, 1024, "接收字节数:%d\n", _ttoi((LPCTSTR)strData));
 	fwrite(szLogText, strlen(szLogText), sizeof(char), pFile);
 
 	m_txtFailConnect.GetWindowText(strData);

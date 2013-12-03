@@ -100,6 +100,7 @@ private:
 	uint32             m_u4AllRecvSize;                //当前链接接收字节总数
 	uint32             m_u4AllSendSize;                //当前链接发送字节总数 
 	CPacketParse*      m_pPacketParse;                 //数据包解析类
+	uint16             m_u2TcpNodelay;                 //Nagle算法开关
 
 	uint32             m_u4ReadSendSize;               //准备发送的字节数（水位标）
 	uint32             m_u4SuccessSendSize;            //实际客户端接收到的总字节数（水位标）
@@ -134,7 +135,7 @@ public:
 
 	void CloseAll();                                                                                         //关闭所有链接信息 
 	bool AddConnect(uint32 u4ConnectID, CProConnectHandle* pConnectHandler);                                 //添加一个新的链接信息
-	bool SendMessage(uint32 u4ConnectID, IBuffPacket* pBuffPacket, uint16 u2CommandID, bool blSendState, uint8 u1SendType, ACE_hrtime_t& tvSendBegin, bool blDelete);               //发送数据
+	bool SendMessage(uint32 u4ConnectID, IBuffPacket* pBuffPacket, uint16 u2CommandID, bool blSendState, uint8 u1SendType, ACE_Time_Value& tvSendBegin, bool blDelete);               //发送数据
 	bool PostMessage(uint32 u4ConnectID, IBuffPacket* pBuffPacket, uint8 u1SendType = SENDMESSAGE_NOMAL, uint16 u2CommandID = 0, bool blSendState = true, bool blDelete = true);    //异步发送
 	bool PostMessageAll(IBuffPacket* pBuffPacket, uint8 u1SendType = SENDMESSAGE_NOMAL, uint16 u2CommandID = 0, bool blSendState = true, bool blDelete = true);                     //异步群发
 	bool Close(uint32 u4ConnectID);                                                                          //客户端关闭

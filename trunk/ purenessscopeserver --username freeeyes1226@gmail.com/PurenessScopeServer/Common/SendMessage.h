@@ -16,7 +16,7 @@ struct _SendMessage
 	bool            m_blDelete;       //发送完成后是否删除，true是删除，false是不删除
 	IBuffPacket*    m_pBuffPacket;    //数据包内容
 	uint8           m_nEvents;        //发送类型，0：正常数据包发送，1：发送阻塞数据
-	ACE_hrtime_t    m_tvSend;         //数据包发送的时间戳
+	ACE_Time_Value  m_tvSend;         //数据包发送的时间戳
 
 	_SendMessage()
 	{

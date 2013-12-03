@@ -181,12 +181,19 @@ void CClientTcpSocket::Run()
 					{
 						//发送完成
 						m_pSocket_State_Info->m_nSuccessSend += nPacketCount;
+
+						//记录发送字节数
+						m_pSocket_State_Info->m_nSendByteCount += nCurrSendLen;
+
 						blSendFlag = true;
 						break;
 					}
 					else
 					{
 						nBeginSend += nCurrSendLen;
+
+						//记录发送字节数
+						m_pSocket_State_Info->m_nSendByteCount += nCurrSendLen;
 					}
 				}
 			}
@@ -194,6 +201,7 @@ void CClientTcpSocket::Run()
 			//接收数据
 			if(blSendFlag == true && m_pSocket_Info->m_blIsRecv == true)
 			{
+				int nBegin = GetTickCount();
 				while(true)
 				{
 					//如果发送成功了，则处理接收数据
@@ -211,6 +219,7 @@ void CClientTcpSocket::Run()
 					}
 					else
 					{
+						m_pSocket_State_Info->m_nRecvByteCount += nCurrRecvLen;
 						nTotalRecvLen -= nCurrRecvLen;
 						if(nTotalRecvLen == 0)
 						{
@@ -231,7 +240,10 @@ void CClientTcpSocket::Run()
 							nBeginRecv += nCurrRecvLen;
 						}
 					}
-				}
+				} 
+				int nEnd = GetTickCount();
+				int nV = nEnd - nBegin;
+				int a = 1;
 			}
 
 			//如果有数据包间隔，则sleep指定的时间
