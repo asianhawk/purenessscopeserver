@@ -50,6 +50,7 @@ public:
   CListCtrl m_lstCommand;
   CListCtrl m_lstPlugInInfo;
   CEdit m_txtXMLFileName;
+  CEdit m_txtHelp;
   afx_msg void OnBnClickedButton1();
   afx_msg void OnBnClickedButton5();  //读取XML文件
   afx_msg void OnBnClickedButton4();  //写入XML文件 

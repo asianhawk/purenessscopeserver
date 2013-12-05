@@ -2,7 +2,7 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9.00"
-	Name="PSSPlugInTest"
+	Name="PSSPlugInTools"
 	ProjectGUID="{9A243F56-3BBD-42F3-9FA2-C9213E38B818}"
 	RootNamespace="PSSPlugInTest"
 	Keyword="MFCProj"
@@ -449,6 +449,10 @@
 			</File>
 			<File
 				RelativePath=".\PacketParse\PacketParse.h"
+				>
+			</File>
+			<File
+				RelativePath=".\PacketParse\PacketParseBase.h"
 				>
 			</File>
 			<File

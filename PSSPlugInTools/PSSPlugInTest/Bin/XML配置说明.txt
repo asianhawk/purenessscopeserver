@@ -1,0 +1,30 @@
+这个工具是用来离线检查各个插件性能的。
+也就是说，这个工具可以模拟并发若干个数据包，并且可以设置并发中各个包的顺序，压测当前插件性能。
+这个工具的意义在于检测插件在上线前的各种问题。在上线前做到单元检测。
+
+TestInstance.xml文件是加载插件的配置文件。
+首先，要把要测试的插件拷贝到当前目录下，如果有相关联的文件，也需要一同拷贝到当前目录下。
+然后，从PSS框架的Lib文件夹下，拷贝PacketParsed.lib文件到当前工程的lib文件夹下，因为插件测试工具需要用到。
+同时，将PSS框架中的PacketParsed.dll文件，放在当前文件夹下。
+PluginFileName是插件的名字，如果有多个插件，可以用逗号隔开。
+比如：
+<Plugin PluginFileName="TcpTestd.dll" />
+这是告诉工具加载当前目录下的TcpTestd.dll工具包。
+如果是多个插件，就是
+<Plugin PluginFileName="TcpTestd.dll,A.dll,B.dll" />
+SendCount是指一次模拟客户端发送多少个数据包，同时接收多少个包为合理。
+这个按照你的需求去定义
+ThreadCount线程数目前暂无含义。
+CommandID是要压测的命令ID，和2字节的命令ID匹配。
+CommandGroup是数据包组ID，如果你有两组数据包要发送（并发发送）
+你可以这样设置
+<Command CommandID="0x1000" CommandGroup="1" CommandSort="1" CommandText="0a 00 00 00 00 10 be cd aa 8f 3c 01 00 00" />
+<Command CommandID="0x1000" CommandGroup="2" CommandSort="1" CommandText="0a 00 00 00 00 10 be cd aa 8f 3c 01 00 00" />
+这样测试工具就会开出两个独立线程，分别压测CommandGroup=1和CommandGroup=2的两组数据。
+此无上限，不过推荐设置最好在10个以内。
+如果你的插件是需要连续数据包测试的，那么可以这样写
+<Command CommandID="0x1000" CommandGroup="1" CommandSort="1" CommandText="0a 00 00 00 00 10 be cd aa 8f 3c 01 00 00" />
+<Command CommandID="0x1001" CommandGroup="1" CommandSort="2" CommandText="0a 00 00 00 00 10 be cd aa 8f 3c 01 00 00" />
+<Command CommandID="0x1002" CommandGroup="1" CommandSort="3" CommandText="0a 00 00 00 00 10 be cd aa 8f 3c 01 00 00" />
+以上命令就是，告诉测试工具，以CommandSort的排序顺序，按顺序串行发送指定的命令。
+CommandText为包的二进制代码组成，你可以提前限定。
