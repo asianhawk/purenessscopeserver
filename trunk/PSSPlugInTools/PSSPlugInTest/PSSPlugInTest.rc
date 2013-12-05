@@ -16,7 +16,7 @@
 #undef APSTUDIO_READONLY_SYMBOLS
 
 /////////////////////////////////////////////////////////////////////////////
-// Chinese (P.R.C.) resources
+// 中文(中华人民共和国) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_CHS)
 #ifdef _WIN32
@@ -88,7 +88,7 @@ BEGIN
     DEFPUSHBUTTON   "OK",IDOK,113,41,50,14,WS_GROUP
 END
 
-IDD_PSSPLUGINTEST_DIALOG DIALOGEX 0, 0, 414, 268
+IDD_PSSPLUGINTEST_DIALOG DIALOGEX 0, 0, 414, 306
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_MINIMIZEBOX | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 EXSTYLE WS_EX_APPWINDOW
 CAPTION "插件检测器"
@@ -101,19 +101,20 @@ BEGIN
     EDITTEXT        IDC_EDIT2,89,46,40,14,ES_AUTOHSCROLL
     LTEXT           "要求处理次数(每秒)",IDC_STATIC,240,49,70,8
     EDITTEXT        IDC_EDIT3,315,47,40,14,ES_AUTOHSCROLL
-    GROUPBOX        "测试信息",IDC_STATIC,7,167,400,94
-    CONTROL         "",IDC_LIST2,"SysListView32",LVS_REPORT | LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP,14,178,386,77
+    GROUPBOX        "测试信息",IDC_STATIC,7,205,400,94
+    CONTROL         "",IDC_LIST2,"SysListView32",LVS_REPORT | LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP,14,217,386,77
     LTEXT           "测试独立线程数",IDC_STATIC,21,64,57,8
     EDITTEXT        IDC_EDIT4,89,62,40,14,ES_AUTOHSCROLL | ES_READONLY
     PUSHBUTTON      "加载插件",IDC_BUTTON1,239,62,50,14
     PUSHBUTTON      "开始测试",IDC_BUTTON2,295,62,50,14
     PUSHBUTTON      "停止测试",IDC_BUTTON3,352,62,50,14
-    GROUPBOX        "测试插件命令信息",IDC_STATIC,7,84,400,79
+    GROUPBOX        "测试插件命令信息",IDC_STATIC,7,84,400,116
     CONTROL         "",IDC_LIST3,"SysListView32",LVS_REPORT | LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP,13,95,296,62
     PUSHBUTTON      "保存当前测试用例",IDC_BUTTON4,316,123,80,14
     PUSHBUTTON      "加载当前测试用例",IDC_BUTTON5,316,141,80,14
     LTEXT           "测试用例文件名",IDC_STATIC,317,94,57,8
     EDITTEXT        IDC_EDIT5,317,106,77,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT6,15,162,380,33,ES_MULTILINE | ES_AUTOHSCROLL | ES_READONLY | NOT WS_BORDER
 END
 
 
@@ -138,17 +139,17 @@ BEGIN
         LEFTMARGIN, 7
         RIGHTMARGIN, 407
         TOPMARGIN, 7
-        BOTTOMMARGIN, 261
+        BOTTOMMARGIN, 299
     END
 END
 #endif    // APSTUDIO_INVOKED
 
-#endif    // Chinese (P.R.C.) resources
+#endif    // 中文(中华人民共和国) resources
 /////////////////////////////////////////////////////////////////////////////
 
 
 /////////////////////////////////////////////////////////////////////////////
-// English (U.S.) resources
+// 英语(美国) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
 #ifdef _WIN32
@@ -205,7 +206,7 @@ BEGIN
     IDS_ABOUTBOX            "&About PSSPlugInTest..."
 END
 
-#endif    // English (U.S.) resources
+#endif    // 英语(美国) resources
 /////////////////////////////////////////////////////////////////////////////
 
 

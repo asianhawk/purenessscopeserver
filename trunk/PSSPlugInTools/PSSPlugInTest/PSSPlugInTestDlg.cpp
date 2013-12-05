@@ -76,14 +76,15 @@ CPSSPlugInTestDlg::CPSSPlugInTestDlg(CWnd* pParent /*=NULL*/)
 
 void CPSSPlugInTestDlg::DoDataExchange(CDataExchange* pDX)
 {
-  CDialog::DoDataExchange(pDX);
-  DDX_Control(pDX, IDC_EDIT1, m_txtPlugInName);
-  DDX_Control(pDX, IDC_EDIT2, m_txtSendCount);
-  DDX_Control(pDX, IDC_EDIT3, m_txtRecvCount);
-  DDX_Control(pDX, IDC_EDIT4, m_txtThreadCount);
-  DDX_Control(pDX, IDC_LIST3, m_lstCommand);
-  DDX_Control(pDX, IDC_LIST2, m_lstPlugInInfo);
-  DDX_Control(pDX, IDC_EDIT5, m_txtXMLFileName);
+	CDialog::DoDataExchange(pDX);
+	DDX_Control(pDX, IDC_EDIT1, m_txtPlugInName);
+	DDX_Control(pDX, IDC_EDIT2, m_txtSendCount);
+	DDX_Control(pDX, IDC_EDIT3, m_txtRecvCount);
+	DDX_Control(pDX, IDC_EDIT4, m_txtThreadCount);
+	DDX_Control(pDX, IDC_LIST3, m_lstCommand);
+	DDX_Control(pDX, IDC_LIST2, m_lstPlugInInfo);
+	DDX_Control(pDX, IDC_EDIT5, m_txtXMLFileName);
+	DDX_Control(pDX, IDC_EDIT6, m_txtHelp);
 }
 
 BEGIN_MESSAGE_MAP(CPSSPlugInTestDlg, CDialog)
@@ -396,6 +397,8 @@ bool CPSSPlugInTestDlg::InitView()
   m_lstPlugInInfo.InsertColumn(2, _T("当前发送"), LVCFMT_CENTER, 100);
   m_lstPlugInInfo.InsertColumn(3, _T("当前处理"), LVCFMT_CENTER, 100);
   m_lstPlugInInfo.InsertColumn(4, _T("每秒处理"), LVCFMT_CENTER, 100);
+
+  m_txtHelp.SetWindowText(_T("注：测试用例文件请打开当前目录的TestInstance.xml文件。并详细阅读TestInstance.xml的说明文件。"));
 
   g_nCommandColNumber = 0;
 
