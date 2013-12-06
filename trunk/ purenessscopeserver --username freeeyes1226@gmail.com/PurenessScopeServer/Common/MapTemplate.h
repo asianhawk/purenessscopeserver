@@ -43,7 +43,7 @@ public:
 	}
 
 	//删除数据
-	bool DelMapData(Key mapkey)
+	bool DelMapData(Key mapkey, bool blIsDelete = false)
 	{
 		typename mapData::iterator f = m_mapData.find(mapkey);
 
@@ -52,7 +52,11 @@ public:
 			T* pData = (T*)f->second;
 			if(pData != NULL)
 			{
-				delete pData;
+				if(blIsDelete == true)
+				{
+					delete pData;
+					pData = NULL;
+				}
 			}
 			m_mapData.erase(f);
 
@@ -78,14 +82,18 @@ public:
 	}
 
 	//清除map内的所有数据
-	void Clear()
+	void Clear(bool blIsDelete = false)
 	{
 		for(typename mapData::iterator b = m_mapData.begin(); b != m_mapData.end(); b++)
 		{
 			T* pData = (T*)b->second;
 			if(pData != NULL)
 			{
-				//delete pData;
+				if(blIsDelete == true)
+				{
+					delete pData;
+					pData = NULL;
+				}
 			}
 		}
 

@@ -27,11 +27,12 @@ using namespace std;
 //单元模式日志类
 class CLogFile {
 public:
-	CLogFile()
+	CLogFile(const char* pFileRoot)
 	{
 		m_nType             = 0;
 		m_StrServerName     = "";
 		m_StrlogType        = "ServerError";
+		sprintf_safe(m_szFilRoot, MAX_BUFF_100, "%s", pFileRoot);
 	};
 
 	virtual ~CLogFile()
@@ -144,13 +145,13 @@ public:
 	void CreatePath()
 	{
 		char szPath[MAX_CMD_NUM] = {'\0'};
-		sprintf_safe(szPath, MAX_CMD_NUM, "%s/Log/", App_MainConfig::instance()->GetModulePath());
+		sprintf_safe(szPath, MAX_CMD_NUM, "%s/Log/", m_szFilRoot);
 		ACE_OS::mkdir(szPath);
 
-		sprintf_safe(szPath, MAX_CMD_NUM, "%s/Log/%s/", App_MainConfig::instance()->GetModulePath(), m_StrlogType.c_str());
+		sprintf_safe(szPath, MAX_CMD_NUM, "%s/Log/%s/", m_szFilRoot, m_StrlogType.c_str());
 		ACE_OS::mkdir(szPath);
 
-		sprintf_safe(szPath, MAX_CMD_NUM, "%s/Log/%s/%s", App_MainConfig::instance()->GetModulePath(), m_StrlogType.c_str(), m_StrlogName.c_str());
+		sprintf_safe(szPath, MAX_CMD_NUM, "%s/Log/%s/%s", m_szFilRoot, m_StrlogType.c_str(), m_StrlogName.c_str());
 		ACE_OS::mkdir(szPath);
 	}
 
@@ -163,7 +164,7 @@ private:
 	ACE_FILE_IO         m_File;
 	ACE_FILE_Addr       m_FileAddr; 
 	char                m_szLogTime[MAX_TIME_SIZE];
-
+	char                m_szFilRoot[MAX_BUFF_100];   //路径的主目录
 };
 
 class CFileLogger : public CServerLogger
