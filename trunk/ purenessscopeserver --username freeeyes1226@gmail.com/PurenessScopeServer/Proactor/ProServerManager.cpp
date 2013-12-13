@@ -197,7 +197,7 @@ bool CProServerManager::Start()
 			return false;
 		}
 
-		int nRet = pConnectAcceptor->open(listenAddr, 0, 1, MAX_ASYNCH_BACKLOG, 1, pProactor);
+		int nRet = pConnectAcceptor->open(listenAddr, 0, 1, App_MainConfig::instance()->GetBacklog(), 1, pProactor);
 		if(-1 == nRet)
 		{
 			OUR_DEBUG((LM_INFO, "[CProServerManager::Start] pConnectAcceptor->open[%d] is error.\n", i));

@@ -46,6 +46,7 @@ CMainConfig::CMainConfig(void)
 	m_u2SendQueueCount      = SENDQUEUECOUNT;
 	m_u2SendQueuePutTime    = (uint16)MAX_MSG_PUTTIMEOUT;
 	m_u2WorkQueuePutTime    = (uint16)MAX_MSG_PUTTIMEOUT;
+	m_u2Backlog             = (uint16)MAX_ASYNCH_BACKLOG;
 
 	m_u1CommandFlow         = 0;
 
@@ -121,6 +122,11 @@ bool CMainConfig::Init(const char* szConfigPath)
 		return false;
 	}
 
+	pData = m_MainConfig.GetData("NetWorkMode", "BackLog");
+	if(NULL != pData)
+	{
+		m_u2Backlog = (uint16)ACE_OS::atoi(pData);
+	}
 
 	//获得服务器基础属性
 	pData = m_MainConfig.GetData("ServerType", "Type");
@@ -609,6 +615,7 @@ void CMainConfig::Display()
 	OUR_DEBUG((LM_INFO, "[CMainConfig::Display]m_u1CommandFlow = %d.\n", m_u1CommandFlow));
 	OUR_DEBUG((LM_INFO, "[CMainConfig::Display]m_u1CommandAccount = %d.\n", m_u1CommandAccount));
 	OUR_DEBUG((LM_INFO, "[CMainConfig::Display]m_u4CoreFileSize = %d.\n", m_u4CoreFileSize));
+	OUR_DEBUG((LM_INFO, "[CMainConfig::Display]m_u2Backlog = %d.\n", m_u2Backlog));
 }
 
 const char* CMainConfig::GetServerName()
@@ -935,3 +942,7 @@ uint16 CMainConfig::GetTcpNodelay()
 	return m_u2TcpNodelay;
 }
 
+uint16 CMainConfig::GetBacklog()
+{
+	return m_u2Backlog;
+}
