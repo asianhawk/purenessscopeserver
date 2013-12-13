@@ -127,6 +127,7 @@ public:
 	uint32 GetSendDataMask();
 	uint32 GetCoreFileSize();
 	uint16 GetTcpNodelay();
+	uint16 GetBacklog();
 
 private:
 	CXmlOpeation m_MainConfig;
@@ -195,6 +196,7 @@ private:
 	uint8      m_u1NetworkMode;                    //当前可以设置的网络模式
 	uint8      m_u1Monitor;                        //设置当前的监控开关是否打开，0是关闭，1是打开
 	uint32     m_u4CoreFileSize;                   //Core文件的尺寸大小
+	uint16     m_u2Backlog;                        //设置的Backlog值
 
 	typedef vector<_ServerInfo> vecServerInfo;
 	vecServerInfo m_vecServerInfo;

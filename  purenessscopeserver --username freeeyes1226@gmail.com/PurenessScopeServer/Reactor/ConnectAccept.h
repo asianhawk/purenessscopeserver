@@ -2,6 +2,8 @@
 #define _CONNECTACCEPT_H
 
 #include "ace/Acceptor.h"
+#include "ace/SOCK_Acceptor.h"
+#include "ace/INET_Addr.h"
 #include "ConnectHandler.h"
 #include "ConsoleHandler.h"
 
@@ -21,6 +23,15 @@ class ConnectAcceptor : public ACE_Acceptor<CConnectHandler, ACE_SOCK_ACCEPTOR>
 {
 protected:
 	virtual int make_svc_handler (CConnectHandler *&sh);
+
+public:
+	//因为基础的open不能满足需求，所以在这里重载了一个open接口
+	//提供设置backlog的服务
+	int open2(ACE_INET_Addr& local_addr,
+		ACE_Reactor *reactor,
+		int flags, 
+		int backlog);
+
 };
 
 class CConnectAcceptorManager
