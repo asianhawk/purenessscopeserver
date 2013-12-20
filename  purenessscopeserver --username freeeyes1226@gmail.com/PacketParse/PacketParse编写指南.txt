@@ -1,6 +1,6 @@
 PacketParse是处理数据包的接收判定和处理发送数据包格式的类。
 由调用者自己自由实现。
-目前支持两种模式，一种是PACKET_WITHHEAD，另一种是PACKET_WITHHEAD
+目前支持两种模式，一种是PACKET_WITHHEAD，另一种是PACKET_WITHSTREAM
 先说PACKET_WITHHEAD模式
 这个模式，顾名思义，是包含包头的模式。
 也就是说，数据包包含了应该具备的数据头，包头的大小是定长的，包头的内容可以由开发者自己定制。

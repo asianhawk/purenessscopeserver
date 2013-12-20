@@ -252,7 +252,10 @@ int ACE_TMAIN(int argc, ACE_TCHAR* argv[])
 		}
 	}
 
-	//第一步，读取配置文件
+	//首先设置当前工作路径
+	SetAppPath();
+
+	//读取配置文件
 	if(!App_MainConfig::instance()->Init(MAINCONFIG))
 	{
 		OUR_DEBUG((LM_INFO, "[main]%s\n", App_MainConfig::instance()->GetError()));
@@ -261,9 +264,6 @@ int ACE_TMAIN(int argc, ACE_TCHAR* argv[])
 	{
 		App_MainConfig::instance()->Display();
 	}
-
-	//设置当前工作路径
-	SetAppPath();
 
 	//判断当前并行连接数是否支持框架
 	if(-1 == Checkfilelimit(App_MainConfig::instance()->GetMaxHandlerCount()))
