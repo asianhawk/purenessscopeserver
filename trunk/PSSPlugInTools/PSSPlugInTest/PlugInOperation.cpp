@@ -116,6 +116,7 @@ bool CPlugInOperation::Run()
       if(NULL != pCommaindInfo)
       {
         pCommaindInfo->m_nSendDataCount++;
+		pCommaindInfo->m_nSendMessageSize += pCommaindInfo->m_nSendDataLen;
         
         //开始整合数据（丢到逻辑接口处理里面去）
         ACE_Message_Block* pHeadBlock = App_MessageBlockManager::instance()->Create(pPacketParse->GetPacketHeadLen());

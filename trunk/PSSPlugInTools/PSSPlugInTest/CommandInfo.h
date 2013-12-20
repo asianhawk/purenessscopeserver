@@ -16,20 +16,24 @@ struct _CommaindInfo
   int   m_nCommandSort;
   unsigned char* m_pSendData;
   int   m_nSendDataLen;
+  int   m_nRecvMessageSize;          //发送字节总数
+  int   m_nSendMessageSize;          //接收字节总数
   int   m_nSendDataCount;
   int   m_nRecvDataCount;
   int   m_nBeforDataCount;
 
   _CommaindInfo()
   {
-    m_szCommandID[0]  = '\0';
-    m_nCommandSort    = 0;
-    m_nCommandGroup   = 0;
-    m_pSendData       = NULL;
-    m_nSendDataLen    = 0;
-    m_nSendDataCount  = 0;
-    m_nRecvDataCount  = 0;
-	m_nBeforDataCount = 0;
+    m_szCommandID[0]   = '\0';
+    m_nCommandSort     = 0;
+    m_nCommandGroup    = 0;
+    m_pSendData        = NULL;
+    m_nSendDataLen     = 0;
+    m_nSendDataCount   = 0;
+    m_nRecvDataCount   = 0;
+	m_nBeforDataCount  = 0;
+	m_nRecvMessageSize = 0;
+	m_nSendMessageSize = 0;
   }
 
   void SetDataCount()
@@ -49,8 +53,10 @@ struct _CommaindInfo
       delete m_pSendData;
       m_pSendData = NULL;
     }
-    m_nSendDataCount = 0;
-    m_nRecvDataCount = 0;
+    m_nSendDataCount   = 0;
+    m_nRecvDataCount   = 0;
+	m_nRecvMessageSize = 0;
+	m_nSendMessageSize = 0;
   }
 
   ~_CommaindInfo()
