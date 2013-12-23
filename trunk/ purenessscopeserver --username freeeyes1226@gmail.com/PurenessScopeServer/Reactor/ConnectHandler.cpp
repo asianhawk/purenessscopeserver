@@ -736,14 +736,17 @@ bool CConnectHandler::SendMessage(uint16 u2CommandID, IBuffPacket* pBuffPacket, 
 		}
 		else
 		{
-			u4SendPacketSize = (uint32)m_pBlockMessage->length();
+			u4SendPacketSize = (uint32)pBuffPacket->GetPacketLen();
 		}
 		u4PacketSize = u4SendPacketSize;
 
 		if(u4SendPacketSize + (uint32)m_pBlockMessage->length() >= m_u4MaxPacketSize)
 		{
 			OUR_DEBUG((LM_DEBUG,"[CConnectHandler::SendMessage] Connectid=[%d] m_pBlockMessage is not enougth.\n", GetConnectID()));
-			App_BuffPacketManager::instance()->Delete(pBuffPacket);
+			if(blDelete == true)
+			{					
+				App_BuffPacketManager::instance()->Delete(pBuffPacket);
+			}
 			Close();
 			return false;
 		}
@@ -766,52 +769,39 @@ bool CConnectHandler::SendMessage(uint16 u2CommandID, IBuffPacket* pBuffPacket, 
 			}
 		}
 
-		//如果不是立刻发送，则把数据拷贝到缓冲数据中去
-		if(false == blState)
-		{
-			if(blDelete == true)
-			{
-				//删除发送数据包 
-				App_BuffPacketManager::instance()->Delete(pBuffPacket);
-			}
-			Close();
-			return true;
-		}
-
-		//因为是异步发送，发送的数据指针不可以立刻释放，所以需要在这里创建一个新的发送数据块，将数据考入
-		pMbData = App_MessageBlockManager::instance()->Create((uint32)m_pBlockMessage->length());
-		if(NULL == pMbData)
-		{
-			OUR_DEBUG((LM_DEBUG,"[CConnectHandler::SendMessage] Connectid=[%d] pMbData is NULL.\n", GetConnectID()));
-			if(blDelete == true)
-			{
-				//删除发送数据包 
-				App_BuffPacketManager::instance()->Delete(pBuffPacket);
-			}
-			Close();
-			return false;
-		}
-
-		ACE_OS::memcpy(pMbData->wr_ptr(), m_pBlockMessage->rd_ptr(), m_pBlockMessage->length());
-		pMbData->wr_ptr(m_pBlockMessage->length());
-		//放入完成，则清空缓存数据，使命完成
-		m_pBlockMessage->reset();
-
 		if(blDelete == true)
 		{
 			//删除发送数据包 
 			App_BuffPacketManager::instance()->Delete(pBuffPacket);
 		}
+		Close();
+
+		//放入完成，从这里退出
+		return true;
 	}
 	else
 	{
-		//如果之前有缓冲数据，则和缓冲数据一起发送
-		u4PacketSize = m_pBlockMessage->length() + pBuffPacket->GetPacketLen();
-		if(m_pBlockMessage->length() > 0)
+		//先判断是否要组装包头，如果需要，则组装在m_pBlockMessage中
+		uint32 u4SendPacketSize = 0;
+		if(u1SendType == SENDMESSAGE_NOMAL)
 		{
+			u4SendPacketSize = m_objSendPacketParse.MakePacketLength(GetConnectID(), pBuffPacket->GetPacketLen(), u2CommandID);
+			m_objSendPacketParse.MakePacket(GetConnectID(), pBuffPacket->GetData(), pBuffPacket->GetPacketLen(), m_pBlockMessage, u2CommandID);
+			//这里MakePacket已经加了数据长度，所以在这里不再追加
+		}
+		else
+		{
+			u4SendPacketSize = (uint32)pBuffPacket->GetPacketLen();
 			ACE_OS::memcpy(m_pBlockMessage->wr_ptr(), pBuffPacket->GetData(), pBuffPacket->GetPacketLen());
 			m_pBlockMessage->wr_ptr(pBuffPacket->GetPacketLen());
+		}
 
+		//如果之前有缓冲数据，则和缓冲数据一起发送
+		u4PacketSize = m_pBlockMessage->length();
+
+		//这里肯定会大于0
+		if(m_pBlockMessage->length() > 0)
+		{
 			//因为是异步发送，发送的数据指针不可以立刻释放，所以需要在这里创建一个新的发送数据块，将数据考入
 			pMbData = App_MessageBlockManager::instance()->Create((uint32)m_pBlockMessage->length());
 			if(NULL == pMbData)
@@ -831,41 +821,22 @@ bool CConnectHandler::SendMessage(uint16 u2CommandID, IBuffPacket* pBuffPacket, 
 			//放入完成，则清空缓存数据，使命完成
 			m_pBlockMessage->reset();
 		}
-		else
-		{
-			//如果没有缓冲区，直接发送
-			pMbData = App_MessageBlockManager::instance()->Create((uint32)pBuffPacket->GetPacketLen());
-			if(NULL == pMbData)
-			{
-				OUR_DEBUG((LM_DEBUG,"[CConnectHandler::SendMessage] Connectid=[%d] pMbData is NULL.\n", GetConnectID()));
-				if(blDelete == true)
-				{
-					//删除发送数据包 
-					App_BuffPacketManager::instance()->Delete(pBuffPacket);
-				}
-				Close();
-				return false;
-			}
-
-			ACE_OS::memcpy(pMbData->wr_ptr(), pBuffPacket->GetData(), pBuffPacket->GetPacketLen());
-			pMbData->wr_ptr(pBuffPacket->GetPacketLen());
-		}
 
 		if(blDelete == true)
 		{
 			//删除发送数据包 
 			App_BuffPacketManager::instance()->Delete(pBuffPacket);
 		}
-	}
 
-	bool blRet = PutSendPacket(pMbData);
-	if(true == blRet)
-	{
-		//记录成功发送字节
-		m_u4SuccessSendSize += u4SendSuc;
-	}
+		bool blRet = PutSendPacket(pMbData);
+		if(true == blRet)
+		{
+			//记录成功发送字节
+			m_u4SuccessSendSize += u4SendSuc;
+		}
 
-	return blRet;
+		return blRet;
+	}
 }
 
 bool CConnectHandler::PutSendPacket(ACE_Message_Block* pMbData)
