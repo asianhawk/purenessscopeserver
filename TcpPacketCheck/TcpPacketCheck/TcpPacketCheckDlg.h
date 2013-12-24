@@ -5,6 +5,18 @@
 #include "afxwin.h"
 #include "afxcmn.h"
 
+#define MAX_BUFF_200   200
+
+#define COMMAND_AUTOTEST_HEAD         0x5000   //带头返回数据包
+#define COMMAND_AUTOTEST_NOHEAD       0x5001   //不带头数据包
+#define COMMAND_AUTOTEST_HEADBUFF     0x5002   //带头缓冲数据包
+#define COMMAND_AUTOTEST_NOHEADBUFF   0x5003   //不带头缓冲数据包
+
+#define COMMAND_AUTOTEST_RETUEN_HEAD         0xf000   
+#define COMMAND_AUTOTEST_RETUEN_NOHEAD       0xf001
+#define COMMAND_AUTOTEST_RETUEN_HEADBUFF     0xf002
+#define COMMAND_AUTOTEST_RETUEN_NOHEADBUFF   0xf003
+
 class CConvertBuffer
 {
 public:
@@ -207,6 +219,11 @@ private:
 	bool CheckMultipleTcpPacket(_ClientInfo& objClientInfo, int nIndex);
 	bool CheckValidPacket(_ClientInfo& objClientInfo, int nIndex);
 	bool CheckHalfPacket(_ClientInfo& objClientInfo, int nIndex);
+	bool CheckIsHead(_ClientInfo& objClientInfo, int nIndex);
+	bool CheckIsNoHead(_ClientInfo& objClientInfo, int nIndex);
+	bool CheckIsHeadBuffer(_ClientInfo& objClientInfo, int nIndex);
+	bool CheckIsNoHeadBuffer(_ClientInfo& objClientInfo, int nIndex);
+
 
 private:
 	CEdit m_txtPacketBuffer;
@@ -216,4 +233,5 @@ private:
 	CListCtrl m_lstResult;
 public:
 	afx_msg void OnBnClickedButton1();
+	afx_msg void OnCustomDraw(NMHDR* pNMHDR, LRESULT* pResult);
 };
