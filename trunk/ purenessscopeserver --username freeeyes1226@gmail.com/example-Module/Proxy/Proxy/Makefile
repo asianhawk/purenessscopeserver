@@ -4,7 +4,7 @@ include Makefile.define
 default:all
 
 # 主应用文件列表
-PATS = BaseCommand.o ProxyTest.o 
+PATS = BaseCommand.o ProxyTest.o ProxyClient.o
 
 LIB_BASE_OBJS = BaseCommand.o ProxyTest.o ProxyClient.o
 LIB_BASE = libProxyTest.so
