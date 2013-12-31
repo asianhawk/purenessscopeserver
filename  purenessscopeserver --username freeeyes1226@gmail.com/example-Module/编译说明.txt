@@ -2,7 +2,7 @@
 
 ÇëÏÈÔËÐÐÑùÀýÎÄ¼þ¼ÐÏÂµÄzzz.bat,Ëü»á¸ù¾Ý²»Í¬µÄ²Ù×÷ÏµÍ³Éú³É²»Í¬µÄ¹¤³ÌÎÄ¼þ¡£
 Èç¹ûÔÚwindowsÏÂ£¬Ëü»áÉú³ÉÏàÓ¦±¾µØ±àÒëÆ÷µÄ¹¤³ÌÎÄ¼þ¡£
-Èç¹ûÔÚlinuxÏÂ£¬Ëü»áÉú³É×Ô¼ºµÄmakefileÎÄ¼þ¡£
+Èç¹ûÔÚlinuxÏÂ£¬Çë²»ÒªÓÃzzz.bat£¬Ö±½ÓÓÃµ±Ç°Ä¿Â¼ÏÂµÄmakefileÎÄ¼þ¼´¿É
 
 Èç¹ûÔÚwindowsÏÂ£¬³ÌÐò»á×Ô¶¯Éú³ÉÔÚ
 ..\PurenessScopeServer\Windows_Bin
@@ -20,3 +20,4 @@ FtpTest	ÑÝÊ¾ÁËÒ»¸öPSS¿ò¼Ü¿ª·¢µÄÖ§³ÖÔÚÖ¸¶¨ÓÃ»§µÇÂ½µÄÊ±ºò£¬¶ÔÖ¸¶¨µÄÎÄ¼þ½øÐÐÉÏ´«ÏÂÔ
 LoginBuffer	ÑÝÊ¾ÁËÒ»¸ö»ùÓÚ¶þ¼¶»º³åµÄÓÃ»§µÇÂ½µÇ³öµÄÀý×Ó£¬Ê¹ÓÃ¹²ÏíÄÚ´æ£¬¼õÉÙµ±´óÁ¿µÇÂ½ÓÃ»§Í¬Ê±Ó¿ÈëµÄÊ±ºò£¬ÈçºÎ¼õÉÙ¶ÔÊý¾ÝÔ´µÄÑ¹Á¦¡£
 			²¢ÑÝÊ¾ÁË£¬ÈçºÎ×öµ½¹²ÏíÄÚ´æºÍÊý¾ÝÔ´»¥Îª±¸·Ý¡£Ïà¹Ø²âÊÔ¿Í»§¶ËÎªPSSLoginClient
 PlugAtoB ÑÝÊ¾ÁËPSS¿ò¼ÜÄ£¿é¼äµ÷ÓÃµÄ»úÖÆ£¬¿Í»§¶Ë·¢ËÍÒ»¸öÊý¾Ý°üÇëÇó£¬PlugA´¦ÀíÊý¾ÝµÄÊ±ºòµ÷ÓÃPlugBÍê³ÉÏà¹ØÐ­×÷¡£Ïà¹Ø²âÊÔ¿Í»§¶ËÎªPSSPlugClient
+Proxy ÑÝÊ¾ÁËsocket½Ó´úÀíµÄÓÃÀý,proxyÎª´úÀí²å¼þ£¬ProxyServerÎªÔ¶³ÌÄ¿±ê·þÎñÆ÷£¬
