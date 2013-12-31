@@ -28,7 +28,7 @@ void CCommandAccount::Init(uint8 u1CommandAccount, uint8 u1Flow, uint16 u2Packet
 {
 	m_u1Flow           = u1Flow;
 	m_u1CommandAccount = u1CommandAccount;
-	m_u8PacketTimeout  = (uint64)(u2PacketTimeout * 1000000);
+	m_u8PacketTimeout  = (uint64)u2PacketTimeout;   //单位是毫秒
 }
 
 void CCommandAccount::Close()
@@ -51,7 +51,7 @@ bool CCommandAccount::SaveCommandData(uint16 u2CommandID, uint64 u8CommandCost, 
 		//记录超时的命令
 		_CommandTimeOut objCommandTimeOut;
 		objCommandTimeOut.m_u2CommandID   = u2CommandID;
-		objCommandTimeOut.m_u4TimeOutTime = (uint32)(u8CommandCost);  //转换为毫秒
+		objCommandTimeOut.m_u4TimeOutTime = (uint32)u8CommandCost;  //转换为毫秒
 		m_vecCommandTimeOut.push_back(objCommandTimeOut);
 		AppLogManager::instance()->WriteLog(LOG_SYSTEM_PACKETTIME, "u2CommandID=%d, Timeout=[%d].", u2CommandID, (uint32)u8CommandCost);
 	}

@@ -1188,7 +1188,6 @@ bool CConnectManager::SendMessage(uint32 u4ConnectID, IBuffPacket* pBuffPacket, 
 	if(f != m_mapConnectManager.end())
 	{
 		CConnectHandler* pConnectHandler = (CConnectHandler* )f->second;
-		uint32 u4CommandSize = pBuffPacket->GetPacketLen();
 
 		if(NULL != pConnectHandler)
 		{
@@ -1199,7 +1198,7 @@ bool CConnectManager::SendMessage(uint32 u4ConnectID, IBuffPacket* pBuffPacket, 
 			ACE_Time_Value tvInterval = ACE_OS::gettimeofday() - tvSendBegin;
 			uint32 u4SendCost = (uint32)(tvInterval.msec());
 			pConnectHandler->SetSendQueueTimeCost(u4SendCost);
-			App_CommandAccount::instance()->SaveCommandData_Mutex(u2CommandID, (uint8)u4SendCost, PACKET_TCP, u4PacketSize, u4CommandSize, COMMAND_TYPE_OUT);
+			//App_CommandAccount::instance()->SaveCommandData_Mutex(u2CommandID, (uint8)u4SendCost, PACKET_TCP, u4PacketSize, u4CommandSize, COMMAND_TYPE_OUT);
 			return true;
 		}
 		else
