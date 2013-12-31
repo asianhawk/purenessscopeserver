@@ -29,6 +29,7 @@ class CLogFile {
 public:
 	CLogFile(const char* pFileRoot)
 	{
+		m_nDisplay          = 0;
 		m_nType             = 0;
 		m_StrServerName     = "";
 		m_StrlogType        = "ServerError";
@@ -54,11 +55,21 @@ public:
 		sprintf_safe(szDateBuff, MAX_TIME_SIZE, "%04d-%02d-%02d %02d:%02d:%02d%02d,", dt.year(), dt.month(), dt.day(), dt.hour(), dt.minute(), dt.second(), dt.microsec()/10000);
 		strLog = szDateBuff + *pStrLog + '\n';
 
-		int nLen = m_File.send(strLog.c_str(), strLog.length());
-		if(nLen != (int)strLog.length())
+		if(m_nDisplay == 0)
 		{
-			OUR_DEBUG((LM_INFO,"[%s]Write error[%s].\n", m_StrlogName.c_str(), strLog.c_str()));
+			//计入日志
+			int nLen = m_File.send(strLog.c_str(), strLog.length());
+			if(nLen != (int)strLog.length())
+			{
+				OUR_DEBUG((LM_INFO,"[%s]Write error[%s].\n", m_StrlogName.c_str(), strLog.c_str()));
+			}
 		}
+		else
+		{
+			//输出到屏幕
+			OUR_DEBUG((LM_INFO,"%s.\n", strLog.c_str()));
+		}
+
 		return 0;
 	};
 
@@ -66,6 +77,18 @@ public:
 	{
 		return m_StrlogName;
 	};
+
+	void SetDisplay(int nDisplay)
+	{
+		if(nDisplay == 0)
+		{
+			m_nDisplay = 0;
+		}
+		else
+		{
+			m_nDisplay = 1;
+		}
+	}
 
 	void SetLoggerClass(int nType)
 	{
@@ -159,6 +182,7 @@ private:
 	ACE_TString         m_StrlogName;         //模块名字
 	ACE_TString         m_StrlogType;         //日志类型
 	ACE_TString         m_StrServerName;      //日志类型
+	int                 m_nDisplay;           //显示还是记录文件    
 	int                 m_nType;              //模块ID
 	ACE_FILE_Connector  m_Connector;          //I/O操作连接器
 	ACE_FILE_IO         m_File;

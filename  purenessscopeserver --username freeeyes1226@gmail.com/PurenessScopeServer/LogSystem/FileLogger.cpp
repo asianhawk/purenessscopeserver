@@ -56,6 +56,7 @@ bool CFileLogger::Init()
 	CXmlOpeation objXmlOpeation;
 	uint16 u2LogID                  = 0;
 	uint8 u1FileClass               = 0;
+	uint8 u1DisPlay                 = 0;
 	char szFile[MAX_BUFF_1024]      = {'\0'};
 	char szFileName[MAX_BUFF_100]   = {'\0'};
 	char szServerName[MAX_BUFF_100] = {'\0'};
@@ -88,12 +89,14 @@ bool CFileLogger::Init()
 	OUR_DEBUG((LM_ERROR, "[CFileLogger::readConfig]m_strRoot=%s\n", m_szLogRoot));
 
 	//添加子类的个数
-	TiXmlElement* pNextTiXmlElement    = NULL;
-	TiXmlElement* pNextTiXmlElementPos = NULL;
-	TiXmlElement* pNextTiXmlElementIdx = NULL;
+	TiXmlElement* pNextTiXmlElement        = NULL;
+	TiXmlElement* pNextTiXmlElementPos     = NULL;
+	TiXmlElement* pNextTiXmlElementIdx     = NULL;
+	TiXmlElement* pNextTiXmlElementDisplay = NULL;
 
 	while(true)
 	{
+		//得到日志id
 		pData = objXmlOpeation.GetData("LogInfo", "logid", pNextTiXmlElementIdx);  
 		if(pData != NULL)
 		{
@@ -105,6 +108,7 @@ bool CFileLogger::Init()
 			break;
 		}
 
+		//得到日志名称
 		pData = objXmlOpeation.GetData("LogInfo", "logname", pNextTiXmlElement);
 		if(pData != NULL)
 		{
@@ -116,11 +120,24 @@ bool CFileLogger::Init()
 			break;
 		}
 
+		//得到日志类型
 		pData = objXmlOpeation.GetData("LogInfo", "logtype", pNextTiXmlElementPos);  
 		if(pData != NULL)
 		{
 			u1FileClass = (uint8)atoi(pData);                                                      
 			OUR_DEBUG((LM_ERROR, "[CFileLogger::readConfig]u1FileClass=%d\n", u1FileClass));
+		}
+		else
+		{
+			break;
+		}
+
+		//得到日志输出来源，0为输出到文件，1为输出到屏幕
+		pData = objXmlOpeation.GetData("LogInfo", "Display", pNextTiXmlElementDisplay);  
+		if(pData != NULL)
+		{
+			u1DisPlay = (uint8)atoi(pData);                                                      
+			OUR_DEBUG((LM_ERROR, "[CFileLogger::readConfig]u1DisPlay=%d\n", u1DisPlay));
 		}
 		else
 		{
@@ -141,6 +158,7 @@ bool CFileLogger::Init()
 		pLogFile->SetLoggerType((int)u2LogID);
 		pLogFile->SetLoggerClass((int)u1FileClass);
 		pLogFile->SetServerName(szServerName);
+		pLogFile->SetDisplay(u1DisPlay);
 		pLogFile->Run();
 
 		m_mapLogFile.insert(mapLogFile::value_type(pLogFile->GetLoggerType(), pLogFile));
