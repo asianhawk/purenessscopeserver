@@ -50,6 +50,12 @@ public:
 		return true;
 	};
 
+	void ReConnect(int nServerID)
+	{
+		//数据重连成功接口
+		OUR_DEBUG((LM_ERROR, "[CPostServerData::ReConnect]ReConnect(%d).\n", nServerID));
+	}
+
 	void SetServerObject(CServerObject* pServerObject)
 	{
 		m_pServerObject = pServerObject;

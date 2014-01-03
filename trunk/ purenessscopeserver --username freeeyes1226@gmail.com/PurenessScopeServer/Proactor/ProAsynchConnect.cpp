@@ -1,4 +1,5 @@
 #include "ProAsynchConnect.h"
+#include "ClientProConnectManager.h"
 
 CProAsynchConnect::CProAsynchConnect(void)
 {
@@ -32,16 +33,20 @@ int CProAsynchConnect::validate_connection(const ACE_Asynch_Connect::Result& res
 	ACE_HANDLE h = result.connect_handle();
 	if (!nRet || h == ACE_INVALID_HANDLE)
 	{
-		OUR_DEBUG((LM_ERROR, "[CProAsynchConnect::validate_connection](%s:%d) connection fails(%d).\n", remote.get_host_addr(), remote.get_port_number(), nRet));
 		SetConnectState(false);
 
 		_ProConnectState_Info* pProConnectStateInfo = (_ProConnectState_Info* )result.act();
 
 		if(NULL != pProConnectStateInfo)
 		{
-			m_nServerID = 0;
+			m_nServerID = pProConnectStateInfo->m_nServerID;
 			SAFE_DELETE(pProConnectStateInfo);
 		}
+
+		ACE_INET_Addr remoteaddr = App_ClientProConnectManager::instance()->GetServerAddr(m_nServerID);
+		App_ClientProConnectManager::instance()->SetServerConnectState(m_nServerID, SERVER_CONNECT_FAIL);
+		OUR_DEBUG((LM_ERROR, "[CProAsynchConnect::validate_connection](%s:%d) connection fails(ServerID=%d).\n", remoteaddr.get_host_addr(), remoteaddr.get_port_number(), m_nServerID));
+		m_nServerID = 0;
 
 		return 1;
 	}
