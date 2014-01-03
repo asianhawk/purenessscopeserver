@@ -181,6 +181,16 @@ enum
 	THREAD_BLOCK     = 3,   //线程阻塞
 };
 
+//对应服务器间通讯的传输状态
+enum EM_Server_Connect_State
+{
+	SERVER_CONNECT_READY = 0,
+	SERVER_CONNECT_FIRST,
+	SERVER_CONNECT_OK,
+	SERVER_CONNECT_FAIL,
+	SERVER_CONNECT_RECONNECT,
+};
+
 //日志编号声明
 #define LOG_SYSTEM                      1000
 #define LOG_SYSTEM_ERROR                1001

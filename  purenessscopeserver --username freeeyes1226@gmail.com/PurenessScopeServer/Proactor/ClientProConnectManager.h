@@ -26,24 +26,27 @@ public:
 	~CProactorClientInfo();
 
 	bool Init(const char* pIP, int nPort, uint8 u1IPType, int nServerID, CProAsynchConnect* pProAsynchConnect, IClientMessage* pClientMessage);  //初始化链接地址和端口
-	bool Run(bool blIsReadly);                                      //开始链接
-	bool SendData(ACE_Message_Block* pmblk);                        //发送数据
-	bool ConnectError(int nError);                                  //链接错误，报错
-	int  GetServerID();                                             //得到服务器ID
-	bool Close();                                                   //关闭服务器链接
-	void SetProConnectClient(CProConnectClient* pProConnectClient); //设置ProConnectClient指针
-	CProConnectClient* GetProConnectClient();                       //得到ProConnectClient指针
-	IClientMessage* GetClientMessage();                             //获得当前的消息处理指针
-	ACE_INET_Addr GetServerAddr();                                  //获得服务器的地址 
+	bool Run(bool blIsReadly, EM_Server_Connect_State emState = SERVER_CONNECT_RECONNECT);     //开始链接
+	bool SendData(ACE_Message_Block* pmblk);                                                   //发送数据
+	bool ConnectError(int nError);                                                             //链接错误，报错
+	int  GetServerID();                                                                        //得到服务器ID
+	bool Close();                                                                              //关闭服务器链接
+	void SetProConnectClient(CProConnectClient* pProConnectClient);                            //设置ProConnectClient指针
+	CProConnectClient* GetProConnectClient();                                                  //得到ProConnectClient指针
+	IClientMessage* GetClientMessage();                                                        //获得当前的消息处理指针
+	ACE_INET_Addr GetServerAddr();                                                             //获得服务器的地址
+	EM_Server_Connect_State GetServerConnectState();                                           //得到当前连接状态
+	void SetServerConnectState(EM_Server_Connect_State objState);                              //设置当前连接状态
 
 private:
-	ACE_INET_Addr      m_AddrServer;               //远程服务器的地址
-	CProConnectClient* m_pProConnectClient;        //当前链接对象
-	CProAsynchConnect* m_pProAsynchConnect;        //异步链接对象
-	IClientMessage*    m_pClientMessage;           //回调函数类，回调返回错误和返回数据方法
-	char               m_szServerIP[MAX_BUFF_20];  //远端服务器地址
-	int                m_nPort;                    //远端服务器端口
-	int                m_nServerID;                //服务器ID，由用户起名，用于区别连接
+	ACE_INET_Addr             m_AddrServer;               //远程服务器的地址
+	CProConnectClient*        m_pProConnectClient;        //当前链接对象
+	CProAsynchConnect*        m_pProAsynchConnect;        //异步链接对象
+	IClientMessage*           m_pClientMessage;           //回调函数类，回调返回错误和返回数据方法
+	char                      m_szServerIP[MAX_BUFF_20];  //远端服务器地址
+	int                       m_nPort;                    //远端服务器端口
+	int                       m_nServerID;                //服务器ID，由用户起名，用于区别连接
+	EM_Server_Connect_State   m_emConnectState;           //连接状态
 };
 
 //管理所有连接到其他服务器的管理类
@@ -69,6 +72,8 @@ public:
 	void CancelConnectTask();                                                                                                  //关闭重连定时器
 	void Close();                                                                                                              //关闭所有连接 
 	bool GetConnectState(int nServerID);                                                                                       //得到指定连接的当前状态
+	ACE_INET_Addr GetServerAddr(int nServerID);                                                                                //得到指定服务器的远程地址连接信息
+	bool SetServerConnectState(int nServerID, EM_Server_Connect_State objState);                                               //设置指定连接的连接状态
 
 	void GetConnectInfo(vecClientConnectInfo& VecClientConnectInfo);      //返回当前存活链接的信息（TCP）
 	void GetUDPConnectInfo(vecClientConnectInfo& VecClientConnectInfo);   //返回当前存活链接的信息（UDP）
