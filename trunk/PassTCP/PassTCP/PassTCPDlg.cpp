@@ -382,6 +382,8 @@ void CPassTCPDlg::InitView()
 
 	m_reSendText.SetOptions(ECOOP_XOR, ECO_WANTRETURN);
 
+	SetRichTextColor(COLOR_TEXT_BULE);
+
 	m_txtServerIP.SetWindowText(_T("127.0.0.1"));
 	m_txtPort.SetWindowText(_T("10002"));
 	m_txtThreadCount.SetWindowText(_T("1"));
@@ -794,6 +796,7 @@ void CPassTCPDlg::OnCbnSelchangeCombo1()
 			{
 				//如果没有内容就不转换
 				m_nCurrTextStyle = nCurrTextStyle;
+				SetRichTextColor(COLOR_TEXT_BULE);
 				return;
 			}
 
@@ -836,6 +839,8 @@ void CPassTCPDlg::OnCbnSelchangeCombo1()
 			delete[] pwText;
 			delete[] pSendData;
 			delete[] pErSendBuff;
+
+			SetRichTextColor(COLOR_TEXT_BULE);
 		}
 		else
 		{
@@ -853,6 +858,7 @@ void CPassTCPDlg::OnCbnSelchangeCombo1()
 			{
 				//如果没有内容就不转换
 				m_nCurrTextStyle = nCurrTextStyle;
+				SetRichTextColor(COLOR_TEXT_RED);
 				return;
 			}
 
@@ -885,9 +891,29 @@ void CPassTCPDlg::OnCbnSelchangeCombo1()
 			delete[] pwText;
 			delete[] pSendData;
 			delete[] pTextData;
+
+			SetRichTextColor(COLOR_TEXT_RED);
 		}
 
 		m_nCurrTextStyle = nCurrTextStyle;
 
 	}
+}
+
+void CPassTCPDlg::SetRichTextColor(int nColor)
+{
+	::CHARFORMAT2   cf; 
+	memset(&cf, 0x00, sizeof(cf)); 
+	cf.cbSize        =   sizeof(cf); 
+	if(nColor == COLOR_TEXT_BULE)
+	{
+		cf.crTextColor   =   RGB(0, 0, 255); 
+	}
+	else if(nColor == COLOR_TEXT_RED)
+	{
+		cf.crTextColor   =   RGB(255, 0, 0); 
+	}
+	cf.dwMask        =   CFM_COLOR;
+
+	m_reSendText.SetDefaultCharFormat(cf);//设置输入框内所有字符的字体
 }
