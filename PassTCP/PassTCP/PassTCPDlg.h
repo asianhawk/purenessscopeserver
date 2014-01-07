@@ -15,6 +15,9 @@ using namespace std;
 typedef vector<CClientTcpSocket* > vecClientTcpSocket;
 typedef vector<CClientUdpSocket* > vecClientUdpSocket;
 
+#define COLOR_TEXT_BULE 1
+#define COLOR_TEXT_RED  2
+
 // CPassTCPDlg 对话框
 class CPassTCPDlg : public CDialog
 {
@@ -44,6 +47,8 @@ private:
   void InitView();
   void ClearResult();
   void Close();
+
+  void SetRichTextColor(int nColor);
 
 private:
   CTime m_tmBegin;             //压测开始时间
