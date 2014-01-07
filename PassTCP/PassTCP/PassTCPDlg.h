@@ -39,8 +39,6 @@ protected:
 	afx_msg void OnPaint();
 	afx_msg HCURSOR OnQueryDragIcon();
 	DECLARE_MESSAGE_MAP()
-public:
-  afx_msg void OnBnClickedButton1();
 
 private:
   void InitView();
@@ -51,6 +49,7 @@ private:
   CTime m_tmBegin;             //压测开始时间
   bool  m_blIsRun;             //压测是否在进行
   CTime m_tmEnd;               //压测停止时间
+  int   m_nCurrTextStyle;      //当前文本风格  
 
 public:
   CEdit m_txtServerIP;
@@ -59,7 +58,6 @@ public:
   CEdit m_txtRecvTimeout;
   CEdit m_txtSocketInterval;
   CEdit m_txtRecvLength;
-  CEdit m_txtSendData;
   CButton m_chkIsAlwayConnect;
   CButton m_chkRadomaDelay;
   CButton m_chkIsRecv;
@@ -78,6 +76,9 @@ public:
   CEdit m_txtPacketTimewait;
   CEdit m_txtSendByteCount;
   CEdit m_txtRecvByteCount;
+  CComboBox m_cbSendBuffStyle;
+  CRichEditCtrl m_reSendText;
+  //CEdit m_reSendText;
   int m_nRadio;
   
   vecClientTcpSocket m_vecClientTcpSocket;
@@ -86,5 +87,7 @@ public:
   afx_msg void OnBnClickedButton2();
   afx_msg void OnTimer(UINT_PTR nIDEvent);
   afx_msg void OnBnClickedButton3();
-
+  afx_msg void OnCbnSelchangeCombo1();
+  afx_msg void OnBnClickedButton1();
+  
 };

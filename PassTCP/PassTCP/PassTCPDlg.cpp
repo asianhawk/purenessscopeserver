@@ -82,7 +82,6 @@ void CPassTCPDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_EDIT3, m_txtThreadCount);
 	DDX_Control(pDX, IDC_EDIT13, m_txtRecvTimeout);
 	DDX_Control(pDX, IDC_EDIT4, m_txtSocketInterval);
-	DDX_Control(pDX, IDC_EDIT5, m_txtSendData);
 	DDX_Control(pDX, IDC_CHECK1, m_chkIsAlwayConnect);
 	DDX_Control(pDX, IDC_CHECK3, m_chkRadomaDelay);
 	DDX_Control(pDX, IDC_CHECK2, m_chkIsRecv);
@@ -103,6 +102,9 @@ void CPassTCPDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_EDIT16, m_txtPacketTimewait);
 	DDX_Control(pDX, IDC_EDIT17, m_txtSendByteCount);
 	DDX_Control(pDX, IDC_EDIT18, m_txtRecvByteCount);
+	DDX_Control(pDX, IDC_COMBO1, m_cbSendBuffStyle);
+	DDX_Control(pDX, IDC_RICHEDIT21, m_reSendText);
+	//DDX_Control(pDX, IDC_EDIT5, m_reSendText);
 }
 
 BEGIN_MESSAGE_MAP(CPassTCPDlg, CDialog)
@@ -115,6 +117,7 @@ BEGIN_MESSAGE_MAP(CPassTCPDlg, CDialog)
 	ON_BN_CLICKED(IDC_BUTTON2, &CPassTCPDlg::OnBnClickedButton2)
 	ON_WM_TIMER()
 	ON_BN_CLICKED(IDC_BUTTON3, &CPassTCPDlg::OnBnClickedButton3)
+	ON_CBN_SELCHANGE(IDC_COMBO1, &CPassTCPDlg::OnCbnSelchangeCombo1)
 END_MESSAGE_MAP()
 
 
@@ -243,7 +246,7 @@ void CPassTCPDlg::OnBnClickedButton1()
 		m_txtPacketTimewait.GetWindowText(strData);
 		pSocket_Info->m_nPacketTimewait = _ttoi((LPCTSTR)strData);
 
-		m_txtSendData.GetWindowText(strData);
+		m_reSendText.GetWindowText(strData);
 
 		nSrcLen = WideCharToMultiByte(CP_ACP, 0, strData, strData.GetLength(), NULL, 0, NULL, NULL);
 		int nBufferSize = WideCharToMultiByte(CP_ACP, 0, strData, -1, NULL, 0, NULL, NULL);  
@@ -251,11 +254,23 @@ void CPassTCPDlg::OnBnClickedButton1()
 		nDecLen = WideCharToMultiByte(CP_ACP, 0, strData, nSrcLen, pSendData, nBufferSize, NULL,NULL);
 		pSendData[nDecLen] = '\0';
 
-		CConvertBuffer objConvertBuffer;
-		//获得要转换的数据块大小
-		pSocket_Info->InitSendSize(objConvertBuffer.GetBufferSize(pSendData, nDecLen));
-		//将数据串转换成二进制串
-		objConvertBuffer.Convertstr2charArray(pSendData, strlen(pSendData), (unsigned char*)pSocket_Info->m_pSendBuff, pSocket_Info->m_nSendLength);
+		if(m_cbSendBuffStyle.GetCurSel() == 0)
+		{
+			//如果是二进制模式
+			CConvertBuffer objConvertBuffer;
+			//获得要转换的数据块大小
+			pSocket_Info->InitSendSize(objConvertBuffer.GetBufferSize(pSendData, nDecLen));
+			//将数据串转换成二进制串
+			objConvertBuffer.Convertstr2charArray(pSendData, strlen(pSendData), (unsigned char*)pSocket_Info->m_pSendBuff, pSocket_Info->m_nSendLength);
+		}
+		else
+		{
+			//如果是文本模式
+			int nSendSize = nDecLen;
+			pSocket_Info->InitSendSize(nDecLen);
+			memcpy_s(pSocket_Info->m_pSendBuff, nDecLen, pSendData, nDecLen);
+		}
+
 		delete[] pSendData;
 
 		if(m_chkIsAlwayConnect.GetCheck() == BST_CHECKED)
@@ -365,6 +380,8 @@ void CPassTCPDlg::InitView()
 	m_chkIsRecv.SetCheck(BST_CHECKED);
 	m_ChkIsBroken.SetCheck(BST_CHECKED);
 
+	m_reSendText.SetOptions(ECOOP_XOR, ECO_WANTRETURN);
+
 	m_txtServerIP.SetWindowText(_T("127.0.0.1"));
 	m_txtPort.SetWindowText(_T("10002"));
 	m_txtThreadCount.SetWindowText(_T("1"));
@@ -372,13 +389,18 @@ void CPassTCPDlg::InitView()
 	m_txtPacketTimewait.SetWindowText(_T("0"));
 	m_txtSocketInterval.SetWindowText(_T("0"));
 	m_txtRecvLength.SetWindowText(_T("14"));
-	m_txtSendData.SetWindowText(_T("0a 00 00 00 00 10 be cd aa 8f 3c 01 00 00"));
+	m_reSendText.SetWindowText(_T("0a 00 00 00 00 10 be cd aa 8f 3c 01 00 00"));
 	m_txtClientUdpPort.SetWindowText(_T("20002"));
 
 	m_txtSendByteCount.SetWindowText(_T("0"));
 	m_txtRecvByteCount.SetWindowText(_T("0"));
 
 	m_nRadio = 1;
+
+	m_cbSendBuffStyle.InsertString(0, _T("二进制模式"));
+	m_cbSendBuffStyle.InsertString(1, _T("文本模式"));
+	m_cbSendBuffStyle.SetCurSel(0);
+	m_nCurrTextStyle = 0;
 
 	ClearResult();
 
@@ -748,4 +770,124 @@ void CPassTCPDlg::OnBnClickedButton3()
 
 	MessageBox(_T("导出压测报告成功"), _T("提示信息"), MB_OK);
 
+}
+
+void CPassTCPDlg::OnCbnSelchangeCombo1()
+{
+	//文本编制模式，根据用户的选项，变化文本的内容
+	int nCurrTextStyle = m_cbSendBuffStyle.GetCurSel();
+	if(nCurrTextStyle != m_nCurrTextStyle)
+	{
+		if(nCurrTextStyle == 0)  //讲文本转化为二进制
+		{
+			//当风格发生改变的时候变化
+			CString strData;
+			m_reSendText.GetWindowText(strData);
+
+			int nSrcLen = WideCharToMultiByte(CP_ACP, 0, strData, strData.GetLength(), NULL, 0, NULL, NULL);
+			int nBufferSize = WideCharToMultiByte(CP_ACP, 0, strData, -1, NULL, 0, NULL, NULL);  
+			char* pSendData = new char[nBufferSize + 1];
+			int nDecLen = WideCharToMultiByte(CP_ACP, 0, strData, nSrcLen, pSendData, nBufferSize, NULL,NULL);
+			pSendData[nDecLen] = '\0';
+
+			if(nDecLen <= 0)
+			{
+				//如果没有内容就不转换
+				m_nCurrTextStyle = nCurrTextStyle;
+				return;
+			}
+
+			//转化后的字符串
+			int nConvertSize = (nBufferSize + 1)*4;
+			char* pErSendBuff = new char[nConvertSize];
+			memset(pErSendBuff, 0, nConvertSize);
+
+			for(int i = 0; i < nDecLen; i++)
+			{
+				char szLog[4] = {'\0'};
+				if( i != nDecLen - 1)
+				{
+					sprintf_s(szLog, 4, "%02X ", (unsigned char)pSendData[i]);
+				}
+				else
+				{
+					sprintf_s(szLog, 4, "%02X", (unsigned char)pSendData[i]);
+				}
+				
+				if(i == 0)
+				{
+					sprintf_s(pErSendBuff, nConvertSize, "%s%s", pErSendBuff, szLog);
+				}
+				else
+				{
+					sprintf_s(pErSendBuff, nConvertSize, "%s %s", pErSendBuff, szLog);
+				}
+			}
+
+			//将转换后的二进制，显示在文本框内
+			wchar_t *pwText = new wchar_t[nConvertSize];
+
+			nSrcLen = MultiByteToWideChar (CP_ACP, 0, pErSendBuff, -1, NULL, 0);
+			nBufferSize = MultiByteToWideChar (CP_ACP, 0, pErSendBuff, -1, pwText, nSrcLen);
+			pwText[nBufferSize] = '\0';
+
+			m_reSendText.SetWindowText(pwText);
+
+			delete[] pwText;
+			delete[] pSendData;
+			delete[] pErSendBuff;
+		}
+		else
+		{
+			//将二进制转化成文本
+			CString strData;
+			m_reSendText.GetWindowText(strData);
+
+			int nSrcLen = WideCharToMultiByte(CP_ACP, 0, strData, strData.GetLength(), NULL, 0, NULL, NULL);
+			int nBufferSize = WideCharToMultiByte(CP_ACP, 0, strData, -1, NULL, 0, NULL, NULL);  
+			char* pSendData = new char[nBufferSize + 1];
+			int nDecLen = WideCharToMultiByte(CP_ACP, 0, strData, nSrcLen, pSendData, nBufferSize, NULL,NULL);
+			pSendData[nDecLen] = '\0';
+
+			if(nDecLen <= 0)
+			{
+				//如果没有内容就不转换
+				m_nCurrTextStyle = nCurrTextStyle;
+				return;
+			}
+
+			int nTextSize = 0;
+			if(nDecLen % 3 != 0)
+			{
+				nTextSize = nDecLen / 3 + 2;
+			}
+			else
+			{
+				nTextSize = nDecLen / 3 + 1;
+			}
+
+			char* pTextData = new char[nTextSize];
+			memset(pTextData, 0, nTextSize);
+
+			CConvertBuffer objConvertBuffer;
+			//将数据串转换成二进制串
+			objConvertBuffer.Convertstr2charArray(pSendData, strlen(pSendData), (unsigned char*)pTextData, nTextSize);
+
+			//将转换后的二进制，显示在文本框内
+			wchar_t *pwText = new wchar_t[nTextSize + 2];
+
+			nSrcLen = MultiByteToWideChar (CP_ACP, 0, pTextData, -1, NULL, 0);
+			nBufferSize = MultiByteToWideChar (CP_ACP, 0, pTextData, -1, pwText, nSrcLen);
+			pwText[nBufferSize] = '\0';
+
+			m_reSendText.SetWindowText(pwText);
+
+			delete[] pwText;
+			delete[] pSendData;
+			delete[] pTextData;
+		}
+
+		m_nCurrTextStyle = nCurrTextStyle;
+
+	}
 }
