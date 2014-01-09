@@ -1,12 +1,41 @@
 #include "BaseCommand.h"
+#ifndef __LINUX__
+#include "ace/Select_Reactor.h"
+#else
+#include "ace/Dev_Poll_Reactor.h"
+#endif
+
+//全局的Reactor反应器，用于转发专门使用。
+ACE_Reactor* g_pReactor = NULL;
 
 void* Worker(void *arg) 
 {
+#ifndef __LINUX__	
+	OUR_DEBUG((LM_ERROR, "[Worker]***__WINDOWS__****.\n"));
+	ACE_Select_Reactor* selectreactor = new ACE_Select_Reactor();
+	g_pReactor = new ACE_Reactor(selectreactor, 1);
+	//g_pReactor = ACE_Reactor::instance();
+#else
+	OUR_DEBUG((LM_ERROR, "[Worker]***__LINUX__****.\n"));
+	//如果是Linux，这里设置为默认使用epoll，最大文件句柄数在这里需要根据需要设置一下
+	//目前默认的是1000
+	//文件打开句柄数值为，当前数值+前端允许打开的最大连接数+10
+	ACE_Dev_Poll_Reactor* devreactor = new ACE_Dev_Poll_Reactor(1000);
+	g_pReactor = new ACE_Reactor(devreactor, 1);
+#endif	
+	
 	while(true)
 	{
-		ACE_Reactor::instance()->handle_events(); 
+		if(g_pReactor != NULL)
+		{
+#ifndef __LINUX__
+			g_pReactor->handle_events();
+#else
+			g_pReactor->run_reactor_event_loop(); 
+#endif
+		}
 	}
-
+	
 	return NULL; 
 } 
 
@@ -78,8 +107,6 @@ int CBaseCommand::DoMessage(IMessage* pMessage, bool& bDeleteFlag)
 
 void CBaseCommand::Init()
 {
-	m_objReactorConnect.open(ACE_Reactor::instance());
-
 	//启动反应器线程
 	ACE_thread_t threadId;
 	ACE_hthread_t threadHandle;
@@ -91,6 +118,12 @@ void CBaseCommand::Init()
 		&threadId,
 		&threadHandle
 		);
+	
+	//等待10毫秒后，绑定g_pReactor	
+	ACE_Time_Value tvSleep(0, 10 * 1000);
+	ACE_OS::sleep(tvSleep);		
+		
+	m_objReactorConnect.open(g_pReactor);	
 }
 
 void CBaseCommand::Do_Proxy_Connect(IMessage* pMessage)
@@ -107,10 +140,15 @@ void CBaseCommand::Do_Proxy_Connect(IMessage* pMessage)
 
 	//设置关联关系
 	pProxyClient->SetServerObject(pMessage->GetMessageBase()->m_u4ConnectID, m_pServerObject);
-	pProxyClient->reactor(ACE_Reactor::instance());
+	pProxyClient->reactor(g_pReactor);
 
 	//连接远程服务器
-	m_objReactorConnect.connect(pProxyClient, AddrProxyServer);
+	int nError = m_objReactorConnect.connect(pProxyClient, AddrProxyServer);
+	if(nError != 0)
+	{
+		OUR_DEBUG((LM_ERROR, "[CBaseCommand::Do_Proxy_Connect]Connect Fail.\n"));
+		return;
+	}
 }
 
 void CBaseCommand::Do_Proxy_DisConnect( IMessage* pMessage )
