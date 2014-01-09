@@ -72,7 +72,9 @@ int CProxyClient::open( void* )
 	App_ProxyManager::instance()->Insert(m_u4ConnectID, this);
 
 	//注册读事件
-	ACE_Reactor::instance()->register_handler(this,  ACE_Event_Handler::READ_MASK);
+	this->reactor()->register_handler(this,  ACE_Event_Handler::READ_MASK);
+		
+	OUR_DEBUG((LM_ERROR, "[CProxyClient::open]open OK.\n"));
 
 	return 0;
 
@@ -94,6 +96,7 @@ int CProxyClient::handle_input( ACE_HANDLE fd /*= ACE_INVALID_HANDLE*/ )
 	}
 	else
 	{
+		//OUR_DEBUG((LM_ERROR, "[CProxyClient::handle_input] ConnectID = %d, nDataLen=%d.\n", m_u4ConnectID, nDataLen));
 		//这里把收到的数据发送给客户端
 		if(NULL != m_pServerObject)
 		{
