@@ -1,44 +1,4 @@
 #include "BaseCommand.h"
-#ifndef __LINUX__
-#include "ace/Select_Reactor.h"
-#else
-#include "ace/Dev_Poll_Reactor.h"
-#endif
-
-//全局的Reactor反应器，用于转发专门使用。
-ACE_Reactor* g_pReactor = NULL;
-
-void* Worker(void *arg) 
-{
-#ifndef __LINUX__	
-	OUR_DEBUG((LM_ERROR, "[Worker]***__WINDOWS__****.\n"));
-	ACE_Select_Reactor* selectreactor = new ACE_Select_Reactor();
-	g_pReactor = new ACE_Reactor(selectreactor, 1);
-	//g_pReactor = ACE_Reactor::instance();
-#else
-	OUR_DEBUG((LM_ERROR, "[Worker]***__LINUX__****.\n"));
-	//如果是Linux，这里设置为默认使用epoll，最大文件句柄数在这里需要根据需要设置一下
-	//目前默认的是1000
-	//文件打开句柄数值为，当前数值+前端允许打开的最大连接数+10
-	ACE_Dev_Poll_Reactor* devreactor = new ACE_Dev_Poll_Reactor(1000);
-	g_pReactor = new ACE_Reactor(devreactor, 1);
-#endif	
-	
-	while(true)
-	{
-		if(g_pReactor != NULL)
-		{
-#ifndef __LINUX__
-			g_pReactor->handle_events();
-#else
-			g_pReactor->run_reactor_event_loop(); 
-#endif
-		}
-	}
-	
-	return NULL; 
-} 
-
 
 CBaseCommand::CBaseCommand(void)
 {
@@ -107,29 +67,21 @@ int CBaseCommand::DoMessage(IMessage* pMessage, bool& bDeleteFlag)
 
 void CBaseCommand::Init()
 {
-	//启动反应器线程
-	ACE_thread_t threadId;
-	ACE_hthread_t threadHandle;
+	uint32 u4WorkThreadCount = m_pServerObject->GetMessageManager()->GetWorkThreadCount();
+	OUR_DEBUG((LM_ERROR, "[CBaseCommand::DoMessage] WorkThread Count=%d.\n", u4WorkThreadCount));
 
-	ACE_Thread::spawn(
-		(ACE_THR_FUNC)Worker,        //线程执行函数
-		NULL,                        //执行函数参数
-		THR_JOINABLE | THR_NEW_LWP,
-		&threadId,
-		&threadHandle
-		);
-	
-	//等待10毫秒后，绑定g_pReactor	
-	ACE_Time_Value tvSleep(0, 10 * 1000);
-	ACE_OS::sleep(tvSleep);		
-		
-	m_objReactorConnect.open(g_pReactor);	
+	App_ProxyThreadManager::instance()->Init(u4WorkThreadCount);
+
+
 }
 
 void CBaseCommand::Do_Proxy_Connect(IMessage* pMessage)
 {
 	ACE_INET_Addr AddrProxyServer;
 	AddrProxyServer.set((int)PROXY_SERVER_PORT, PROXY_SERVER_IP);
+
+	//获得当前的工作线程ID
+	uint32 u4ThreadID = pMessage->GetMessageBase()->m_u4WorkThreadID;
 
 	CProxyClient* pProxyClient = new CProxyClient();
 	if(NULL == pProxyClient)
@@ -139,11 +91,12 @@ void CBaseCommand::Do_Proxy_Connect(IMessage* pMessage)
 	}
 
 	//设置关联关系
+	pProxyClient->SetWorkThreadID(u4ThreadID);
 	pProxyClient->SetServerObject(pMessage->GetMessageBase()->m_u4ConnectID, m_pServerObject);
-	pProxyClient->reactor(g_pReactor);
+	pProxyClient->reactor(App_ProxyThreadManager::instance()->GetProxyClientReactor(u4ThreadID));
 
 	//连接远程服务器
-	int nError = m_objReactorConnect.connect(pProxyClient, AddrProxyServer);
+	int nError = App_ProxyThreadManager::instance()->GetProxyClientConnector(u4ThreadID)->connect(pProxyClient, AddrProxyServer);
 	if(nError != 0)
 	{
 		OUR_DEBUG((LM_ERROR, "[CBaseCommand::Do_Proxy_Connect]Connect Fail.\n"));
@@ -153,7 +106,10 @@ void CBaseCommand::Do_Proxy_Connect(IMessage* pMessage)
 
 void CBaseCommand::Do_Proxy_DisConnect( IMessage* pMessage )
 {
-	CProxyClient* pProxyClient = App_ProxyManager::instance()->FindProxyClient(pMessage->GetMessageBase()->m_u4ConnectID);
+	//获得当前的工作线程ID
+	uint32 u4ThreadID = pMessage->GetMessageBase()->m_u4WorkThreadID;
+
+	CProxyClient* pProxyClient = App_ProxyThreadManager::instance()->GetProxyClientManager(u4ThreadID)->FindProxyClient(pMessage->GetMessageBase()->m_u4ConnectID);
 	if(NULL != pProxyClient)
 	{
 		//需要关闭远程的连接
@@ -163,7 +119,10 @@ void CBaseCommand::Do_Proxy_DisConnect( IMessage* pMessage )
 
 void CBaseCommand::Do_Proxy_Data( IMessage* pMessage )
 {
-	CProxyClient* pProxyClient = App_ProxyManager::instance()->FindProxyClient(pMessage->GetMessageBase()->m_u4ConnectID);
+	//获得当前的工作线程ID
+	uint32 u4ThreadID = pMessage->GetMessageBase()->m_u4WorkThreadID;
+
+	CProxyClient* pProxyClient =  App_ProxyThreadManager::instance()->GetProxyClientManager(u4ThreadID)->FindProxyClient(pMessage->GetMessageBase()->m_u4ConnectID);
 	if(NULL != pProxyClient)
 	{
 		_PacketInfo BodyPacket;

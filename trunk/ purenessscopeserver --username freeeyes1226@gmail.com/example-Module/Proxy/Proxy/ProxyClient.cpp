@@ -2,11 +2,12 @@
 
 CProxyClient::CProxyClient( void )
 {
-	m_nIOCount      = 0;
-	m_u4RecvAllSize = 0;
-	m_u4SendAllSize = 0;
-	m_u4ConnectID   = 0;
-	m_pServerObject = NULL;
+	m_nIOCount       = 0;
+	m_u4RecvAllSize  = 0;
+	m_u4SendAllSize  = 0;
+	m_u4ConnectID    = 0;
+	m_u4WorkThreadID = 0;
+	m_pServerObject  = NULL;
 }
 
 CProxyClient::~CProxyClient( void )
@@ -32,7 +33,7 @@ bool CProxyClient::Close()
 		//关闭远程和客户端的连接
 		if(NULL != m_pServerObject)
 		{
-			uint32 u4ConnectID = App_ProxyManager::instance()->FindConnectID(this);
+			uint32 u4ConnectID = App_ProxyThreadManager::instance()->GetProxyClientManager(m_u4WorkThreadID)->FindConnectID(this);
 			if(0 != u4ConnectID)
 			{
 				m_pServerObject->GetConnectManager()->CloseConnect(u4ConnectID);
@@ -40,7 +41,7 @@ bool CProxyClient::Close()
 		}
 
 		//删除映射关系
-		App_ProxyManager::instance()->DeleteByProxyClient(this);
+		App_ProxyThreadManager::instance()->GetProxyClientManager(m_u4WorkThreadID)->DeleteByProxyClient(this);
 
 		//回归用过的指针
 		delete this;
@@ -69,7 +70,7 @@ int CProxyClient::open( void* )
 	m_nIOCount = 1;
 
 	//添加映射关系
-	App_ProxyManager::instance()->Insert(m_u4ConnectID, this);
+	App_ProxyThreadManager::instance()->GetProxyClientManager(m_u4WorkThreadID)->Insert(m_u4ConnectID, this);
 
 	//注册读事件
 	this->reactor()->register_handler(this,  ACE_Event_Handler::READ_MASK);
@@ -174,4 +175,78 @@ void CProxyClient::SetServerObject(uint32 u4ConnectID, CServerObject* pServerObj
 {
 	m_u4ConnectID   = u4ConnectID;
 	m_pServerObject = pServerObject;
+}
+
+void CProxyClient::SetWorkThreadID(uint32 u4WorkThreadID)
+{
+	m_u4WorkThreadID = u4WorkThreadID;
+}
+
+uint32 CProxyClient::GetWorkThreadID()
+{
+	return m_u4WorkThreadID;
+}
+
+//******************************************************************
+
+void* Worker(void *arg) 
+{
+	_ProxyClientConnector* pProxyClientConnector = (_ProxyClientConnector* )arg;
+
+	ACE_Reactor* pReactor = NULL;
+
+#ifndef __LINUX__	
+	OUR_DEBUG((LM_ERROR, "[Worker]***__WINDOWS__****.\n"));
+	ACE_Select_Reactor* selectreactor = new ACE_Select_Reactor();
+	pReactor = new ACE_Reactor(selectreactor, 1);
+	//g_pReactor = ACE_Reactor::instance();
+#else
+	OUR_DEBUG((LM_ERROR, "[Worker]***__LINUX__****.\n"));
+	//如果是Linux，这里设置为默认使用epoll，最大文件句柄数在这里需要根据需要设置一下
+	//目前默认的是1000
+	//文件打开句柄数值为，当前数值+前端允许打开的最大连接数+10
+	ACE_Dev_Poll_Reactor* devreactor = new ACE_Dev_Poll_Reactor(1000);
+	pReactor = new ACE_Reactor(devreactor, 1);
+#endif	
+
+	pProxyClientConnector->m_objReactorConnect.open(pReactor);	
+	pProxyClientConnector->m_pReactor = pReactor;
+
+	while(true)
+	{
+		if(pReactor != NULL)
+		{
+#ifndef __LINUX__
+			pReactor->handle_events();
+#else
+			pReactor->run_reactor_event_loop(); 
+#endif
+		}
+	}
+
+	return NULL; 
+} 
+
+
+void CProxyClientThreadManager::Init( int nThreadCount )
+{
+	//按照工作线程初始化指定数量的CProxyClientManager
+	for(int i = 0; i < nThreadCount; i++)
+	{
+		_ProxyClientConnector* pProxyClientConnector = new _ProxyClientConnector();
+		pProxyClientConnector->m_ProxyClientManager = new CProxyClientManager();
+		m_vecProxyClientManager.push_back(pProxyClientConnector);
+
+		//启动反应器线程
+		ACE_thread_t threadId;
+		ACE_hthread_t threadHandle;
+
+		ACE_Thread::spawn(
+			(ACE_THR_FUNC)Worker,        //线程执行函数
+			(_ProxyClientConnector* )pProxyClientConnector,   //执行函数参数
+			THR_JOINABLE | THR_NEW_LWP,
+			&threadId,
+			&threadHandle
+			);	
+	}
 }

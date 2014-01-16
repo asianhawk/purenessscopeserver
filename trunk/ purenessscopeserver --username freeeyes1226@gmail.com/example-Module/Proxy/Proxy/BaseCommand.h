@@ -1,6 +1,4 @@
 #pragma once
-#include "ace/Thread.h" 
-
 #include "IBuffPacket.h"
 #include "ClientCommand.h"
 #include "ProxyClient.h"
@@ -31,7 +29,6 @@ private:
 	void Do_Proxy_Data(IMessage* pMessage);             //发送代理数据
 
 private:
-  CProxyClientConnector    m_objReactorConnect;
   CServerObject*           m_pServerObject;
   int                      m_nCount;
 
