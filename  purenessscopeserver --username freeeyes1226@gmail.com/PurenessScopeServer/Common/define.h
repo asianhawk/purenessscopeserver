@@ -607,40 +607,54 @@ private:
 #define __TIMECOST(cost) CTimeCost timecost(cost, __FUNCTION__, __FILE__, __LINE__);
 
 //************************************************************************
+//add by freeeyes
+//获得对自己大小端的自我判定
+//添加在mainConfig中，是因为没必要在define.h中判定
+//在框架里自己判定是否转换大小端
+enum
+{
+	O32_LITTLE_ENDIAN = 0x03020100ul,
+	O32_BIG_ENDIAN = 0x00010203ul,
+	O32_PDP_ENDIAN = 0x01000302ul
+};
+
+static const union { unsigned char bytes[4]; uint32 value; } o32_host_order =
+{ { 0, 1, 2, 3 } };
+
+#define O32_HOST_ORDER (o32_host_order.value)
 
 //定义一个对64位长整形的网络字节序的转换
 inline uint64 hl64ton(uint64 u8Data)   
 {   
-	uint64 u8Ret  = 0;   
-	uint32 u4high = 0;   //高四位
-	uint32 u4low  = 0;   //低四位
-
-	u4low  = u8Data & 0xFFFFFFFF;
-	u4high = (u8Data >> 32) & 0xFFFFFFFF;
-	u4low  = ACE_HTONL(u4low);   
-	u4high = ACE_HTONL(u4high);   
-	u8Ret  = u4low;
-	u8Ret <<= 32;   
-	u8Ret |= u4high;   
-	return u8Ret;   
+	if(O32_HOST_ORDER == O32_LITTLE_ENDIAN)
+	{
+		union { uint32 lv[2]; uint64 llv; } u;  
+		u.lv[0] = htonl(u8Data >> 32);  
+		u.lv[1] = htonl(u8Data & 0xFFFFFFFFULL);  
+		return u.llv;   
+	}
+	else
+	{
+		//如果本身是大端就不理
+		return u8Data;
+	}
+  
 }
 
 //定义一个队64位长整形的主机字节序的转换
 inline uint64 ntohl64(uint64 u8Data)   
 {   
-	uint64 u8Ret  = 0;   
-	uint32 u4high = 0;   //高四位
-	uint32 u4low  = 0;   //低四位
-
-	u4low   = u8Data & 0xFFFFFFFF;
-	u8Data  = (u8Data >> 32) & 0xFFFFFFFF;
-	u4low   = ACE_NTOHL(u4low);   
-	u4high  = ACE_NTOHL(u4high);   
-
-	u8Ret = u4low;
-	u8Ret<<= 32;   
-	u8Ret = u4high;   
-	return u8Ret;   
+	if(O32_HOST_ORDER == O32_LITTLE_ENDIAN)
+	{
+		union { uint32 lv[2]; uint64 llv; } u;  
+		u.llv = u8Data;  
+		return ((uint64)ntohl(u.lv[0]) << 32) | (uint64)ntohl(u.lv[1]);
+	}
+	else
+	{
+		//如果本身是大端就不理
+		return u8Data;
+	}
 }
 
 //定义一个函数，可支持字符串替换，目前先不考虑支持中文

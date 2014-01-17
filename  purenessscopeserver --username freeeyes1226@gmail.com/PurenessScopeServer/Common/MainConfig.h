@@ -25,6 +25,8 @@ struct _ServerInfo
 	}
 };
 
+//远程管理器支持
+//记录允许远程维护接口进入的数据key的内容。
 struct _ConsoleKey
 {
 	char m_szKey[MAX_BUFF_100];
@@ -36,6 +38,7 @@ struct _ConsoleKey
 };
 
 typedef vector<_ConsoleKey> vecConsoleKey;
+using namespace std;
 
 struct _ConsoleClientIP
 {
@@ -47,7 +50,11 @@ struct _ConsoleClientIP
 	}
 };
 
-using namespace std;
+enum ENUM_CHAR_ORDER
+{
+	SYSTEM_LITTLE_ORDER = 0,   //小端字序
+	SYSTEM_BIG_ORDER,          //大端字序
+};
 
 class CMainConfig
 {
@@ -128,6 +135,7 @@ public:
 	uint32 GetCoreFileSize();
 	uint16 GetTcpNodelay();
 	uint16 GetBacklog();
+	ENUM_CHAR_ORDER GetCharOrder();
 
 private:
 	CXmlOpeation m_MainConfig;
@@ -197,6 +205,8 @@ private:
 	uint8      m_u1Monitor;                        //设置当前的监控开关是否打开，0是关闭，1是打开
 	uint32     m_u4CoreFileSize;                   //Core文件的尺寸大小
 	uint16     m_u2Backlog;                        //设置的Backlog值
+
+	ENUM_CHAR_ORDER m_u1CharOrder;                      //当前字节序
 
 	typedef vector<_ServerInfo> vecServerInfo;
 	vecServerInfo m_vecServerInfo;
