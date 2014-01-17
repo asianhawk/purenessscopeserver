@@ -61,6 +61,18 @@ CMainConfig::CMainConfig(void)
 
 	m_szWindowsServiceName[0] = '\0';
 	m_szDisplayServiceName[0] = '\0';
+
+	//ÅÐ¶¨×Ö½ÚÐò
+	if(O32_HOST_ORDER == O32_LITTLE_ENDIAN)
+	{
+		m_u1CharOrder = SYSTEM_LITTLE_ORDER;
+		OUR_DEBUG((LM_INFO, "[CMainConfig::CMainConfig]SYSYTEM SYSTEM_LITTLE_ORDER.\n"));
+	}
+	else
+	{
+		m_u1CharOrder = SYSTEM_BIG_ORDER;
+		OUR_DEBUG((LM_INFO, "[CMainConfig::CMainConfig]SYSYTEM SYSTEM_BIG_ORDER.\n"));
+	}
 }
 
 CMainConfig::~CMainConfig(void)
@@ -945,4 +957,9 @@ uint16 CMainConfig::GetTcpNodelay()
 uint16 CMainConfig::GetBacklog()
 {
 	return m_u2Backlog;
+}
+
+ENUM_CHAR_ORDER CMainConfig::GetCharOrder()
+{
+	return m_u1CharOrder;
 }
