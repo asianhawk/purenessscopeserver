@@ -115,9 +115,6 @@ export PATH你把这个加到你的文档中吧
 然后编译example-Module里面的你想测试的模块。把生成的so或者dll放在PurenessScopeServer工程下的相应目录下(Windows是Windows_bin，Linux是Linux_Bin)，
 并修改main.conf文件中的ModuleString，你也可以把你的所有逻辑so放在一个你指定的目录下并设置ModulePath。（具体请参考，配置文件说明书）
 
-PSClient工程编译需要依赖duilib，请去http://www.duilib.com/下载duilib的源代码并编译，把编译后的duilib.lib放在PSClient的lib文件夹下。
-并把duilib.dll放在PSClient的bin目录下。
-
 附注：
 目前Pss支持加载为windows服务，如果要想Pss以windows服务启动
 首先确保自己在管理员权限下。

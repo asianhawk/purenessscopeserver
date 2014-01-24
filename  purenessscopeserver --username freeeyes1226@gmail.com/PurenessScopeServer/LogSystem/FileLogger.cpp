@@ -1,8 +1,14 @@
 #include "FileLogger.h"
 
+
+
+//********************************************************
+
 CFileLogger::CFileLogger()
 {
 	m_nCount       = 0;
+	m_u4BlockSize  = 0;
+	m_u4PoolCount  = 0;
 	m_szLogRoot[0] = '\0';
 }
 
@@ -20,7 +26,7 @@ CFileLogger::~CFileLogger()
 	OUR_DEBUG((LM_INFO, "[CFileLogger::~CFileLogger]End.\n"));
 }
 
-int CFileLogger::DoLog(int nLogType, ACE_TString* pLogText)
+int CFileLogger::DoLog(int nLogType, _LogBlockInfo* pLogBlockInfo)
 {
 	mapLogFile::iterator f = m_mapLogFile.find(nLogType);
 	if(f == m_mapLogFile.end())
@@ -30,7 +36,7 @@ int CFileLogger::DoLog(int nLogType, ACE_TString* pLogText)
 	else
 	{
 		CLogFile* pLogFile = (CLogFile* )f->second;
-		pLogFile->doLog(pLogText);
+		pLogFile->doLog(pLogBlockInfo);
 	}		
 
 	return 0;
@@ -87,6 +93,20 @@ bool CFileLogger::Init()
 		sprintf_safe(m_szLogRoot, MAX_BUFF_100, "%s", pData);
 	}
 	OUR_DEBUG((LM_ERROR, "[CFileLogger::readConfig]m_strRoot=%s\n", m_szLogRoot));
+
+	//得到日志池配置信息，日志块的大小
+	pData = objXmlOpeation.GetData("LogPool", "BlockSize");
+	if(pData != NULL)
+	{
+		m_u4BlockSize = (uint32)ACE_OS::atoi(pData);
+	}
+
+	//得到日志池配置信息，缓冲池中日志块的个数
+	pData = objXmlOpeation.GetData("LogPool", "PoolCount");
+	if(pData != NULL)
+	{
+		m_u4PoolCount = (uint32)ACE_OS::atoi(pData);
+	}
 
 	//添加子类的个数
 	TiXmlElement* pNextTiXmlElement        = NULL;
@@ -152,7 +172,7 @@ bool CFileLogger::Init()
 			continue;
 		}
 
-		CLogFile* pLogFile = new CLogFile(m_szLogRoot);
+		CLogFile* pLogFile = new CLogFile(m_szLogRoot, m_u4BlockSize);
 
 		pLogFile->SetLoggerName(szFileName);
 		pLogFile->SetLoggerType((int)u2LogID);
@@ -183,3 +203,14 @@ bool CFileLogger::Close()
 
 	return true;
 }
+
+uint32 CFileLogger::GetBlockSize()
+{
+	return m_u4BlockSize;
+}
+
+uint32 CFileLogger::GetPoolCount()
+{
+	return m_u4PoolCount;
+}
+
