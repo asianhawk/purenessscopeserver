@@ -330,11 +330,12 @@ int CLogManager::WriteLog(int nLogType, const char* fmt, ...)
 	//从日志块池里面找到一块空余的日志块
 	m_Logger_Mutex.acquire();
 	_LogBlockInfo* pLogBlockInfo = m_objLogBlockPool.GetLogBlockInfo();
-	m_Logger_Mutex.release();
+	
 
 	if(NULL == pLogBlockInfo)
 	{
 		OUR_DEBUG((LM_ERROR,"[CLogManager::WriteLog] m_objLogBlockPool is full!\n"));
+		m_Logger_Mutex.release();
 		return -1;
 	}
 
@@ -358,6 +359,7 @@ int CLogManager::WriteLog(int nLogType, const char* fmt, ...)
 		m_objLogBlockPool.ReturnBlockInfo(pLogBlockInfo);
 	}
 
+	m_Logger_Mutex.release();
 	return 0;
 }
 
@@ -368,11 +370,11 @@ int CLogManager::WriteLogBinary(int nLogType, const char* pData, int nLen)
 	//从日志块池里面找到一块空余的日志块
 	m_Logger_Mutex.acquire();
 	_LogBlockInfo* pLogBlockInfo = m_objLogBlockPool.GetLogBlockInfo();
-	m_Logger_Mutex.release();
 
 	if(NULL == pLogBlockInfo)
 	{
 		OUR_DEBUG((LM_ERROR,"[ILogManager::WriteLogBinary] m_objLogBlockPool is full!\n"));	
+		m_Logger_Mutex.release();
 		return -1;
 	}
 
@@ -380,6 +382,7 @@ int CLogManager::WriteLogBinary(int nLogType, const char* pData, int nLen)
 	if((uint32)(nLen * 5) >= m_objLogBlockPool.GetBlockSize())
 	{
 		OUR_DEBUG((LM_ERROR,"[ILogManager::WriteLogBinary] write length is more than BlockSize!\n"));
+		m_Logger_Mutex.release();
 		return -1;
 	}
 
@@ -405,5 +408,6 @@ int CLogManager::WriteLogBinary(int nLogType, const char* pData, int nLen)
 		m_objLogBlockPool.ReturnBlockInfo(pLogBlockInfo);
 	}
 
+	m_Logger_Mutex.release();
 	return nRet;
 }
