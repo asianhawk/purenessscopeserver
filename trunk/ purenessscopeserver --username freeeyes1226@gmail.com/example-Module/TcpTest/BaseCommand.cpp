@@ -76,6 +76,9 @@ int CBaseCommand::DoMessage(IMessage* pMessage, bool& bDeleteFlag)
     //(*pBodyPacket) >> u2CommandID;
     //(*pBodyPacket) >> u8ClientTime;
 
+	//测试记录二进制日志
+	//m_pServerObject->GetLogManager()->WriteLogBinary(LOG_SYSTEM, BodyPacket.m_pData, BodyPacket.m_nDataLen);
+
 	IBuffPacket* pResponsesPacket = m_pServerObject->GetPacketManager()->Create();
 	uint16 u2PostCommandID = COMMAND_BASE;
 

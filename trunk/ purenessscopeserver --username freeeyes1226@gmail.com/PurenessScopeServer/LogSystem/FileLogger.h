@@ -27,47 +27,52 @@ using namespace std;
 //单元模式日志类
 class CLogFile {
 public:
-	CLogFile(const char* pFileRoot)
+	CLogFile(const char* pFileRoot, uint32 u4BufferSize)
 	{
 		m_nDisplay          = 0;
 		m_nType             = 0;
 		m_StrServerName     = "";
 		m_StrlogType        = "ServerError";
+		m_pBuffer           = new char[u4BufferSize];   //这里是用于日志拼接时间所用
+		m_u4BufferSize      = u4BufferSize;
 		sprintf_safe(m_szFilRoot, MAX_BUFF_100, "%s", pFileRoot);
 	};
 
 	virtual ~CLogFile()
 	{
 		OUR_DEBUG((LM_INFO,"[CLogFile::~CLogFile].\n"));
+		SAFE_DELETE_ARRAY(m_pBuffer);
+		m_u4BufferSize = 0;
 		m_File.close();
 		OUR_DEBUG((LM_INFO,"[CLogFile::~CLogFile] End.\n"));
-	};	
+	};
 
-	virtual int doLog(ACE_TString * pStrLog)
+	virtual int doLog(_LogBlockInfo* pLogBlockInfo)
 	{
 		//每次自动检测
 		CheckTime();
 
 		ACE_Date_Time dt;
 		char szDateBuff[MAX_TIME_SIZE] = {'\0'};
-		ACE_TString strLog;
 
 		sprintf_safe(szDateBuff, MAX_TIME_SIZE, "%04d-%02d-%02d %02d:%02d:%02d%02d,", dt.year(), dt.month(), dt.day(), dt.hour(), dt.minute(), dt.second(), dt.microsec()/10000);
-		strLog = szDateBuff + *pStrLog + '\n';
+		
+		//拼接实际的日志字符串
+		sprintf_safe(m_pBuffer, m_u4BufferSize, "%s %s\n", szDateBuff, pLogBlockInfo->m_pBlock);
 
 		if(m_nDisplay == 0)
 		{
 			//计入日志
-			int nLen = m_File.send(strLog.c_str(), strLog.length());
-			if(nLen != (int)strLog.length())
+			int nLen = m_File.send(m_pBuffer, strlen(m_pBuffer));
+			if(nLen != (int)strlen(m_pBuffer))
 			{
-				OUR_DEBUG((LM_INFO,"[%s]Write error[%s].\n", m_StrlogName.c_str(), strLog.c_str()));
+				OUR_DEBUG((LM_INFO,"[%s]Write error[%s].\n", m_StrlogName.c_str(), m_pBuffer));
 			}
 		}
 		else
 		{
 			//输出到屏幕
-			OUR_DEBUG((LM_INFO,"%s.\n", strLog.c_str()));
+			OUR_DEBUG((LM_INFO,"%s.\n", m_pBuffer));
 		}
 
 		return 0;
@@ -189,6 +194,8 @@ private:
 	ACE_FILE_Addr       m_FileAddr; 
 	char                m_szLogTime[MAX_TIME_SIZE];
 	char                m_szFilRoot[MAX_BUFF_100];   //路径的主目录
+	char*               m_pBuffer;                   //日志缓冲指针
+	uint32              m_u4BufferSize;              //日志缓冲最大大小 
 };
 
 class CFileLogger : public CServerLogger
@@ -197,20 +204,26 @@ public:
 	CFileLogger();
 	~CFileLogger();
 
-	int DoLog(int nLogType, ACE_TString* pLogText);
+	int DoLog(int nLogType, _LogBlockInfo* pLogBlockInfo);
 	int GetLogTypeCount();
 	int GetLogType(int nIndex);
 
 	bool Init();
 	bool Close();
 
+	uint32 GetBlockSize();
+	uint32 GetPoolCount();
+
 private:
 	typedef map<uint16, CLogFile*> mapLogFile;
 	typedef vector<uint16>         vecLogType; 
-	mapLogFile                  m_mapLogFile;
-	vecLogType                  m_vecLogType;
-	char                        m_szLogRoot[MAX_BUFF_100];	
-	int                         m_nCount;
+	mapLogFile                     m_mapLogFile;
+	vecLogType                     m_vecLogType;
+	char                           m_szLogRoot[MAX_BUFF_100];	
+	int                            m_nCount;
+
+	uint32                         m_u4BlockSize;
+	uint32                         m_u4PoolCount;
 };
 
 #endif

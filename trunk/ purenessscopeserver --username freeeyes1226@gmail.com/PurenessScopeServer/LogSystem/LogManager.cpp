@@ -8,6 +8,94 @@
 
 Mutex_Allocator _log_service_mb_allocator; 
 
+CLogBlockPool::CLogBlockPool()
+{
+	//初始化，日志池
+	m_pLogBlockInfo = NULL;
+
+	m_u4MaxBlockSize = 0;
+	m_u4PoolCount    = 0;
+	m_u4CurrIndex    = 0;
+}
+
+CLogBlockPool::~CLogBlockPool()
+{
+	Close();
+}
+
+void CLogBlockPool::Init(uint32 u4BlockSize, uint32 u4PoolCount)
+{
+	//初始化，日志池
+	if(NULL != m_pLogBlockInfo)
+	{
+		Close();
+	}
+
+	m_pLogBlockInfo = new _LogBlockInfo[u4PoolCount];
+	if(NULL == m_pLogBlockInfo)
+	{
+		OUR_DEBUG((LM_INFO, "[CLogBlockPool::CLogBlockPool]CLogBlockPool new (%d) fail.\n", u4PoolCount));
+	}
+
+	for(uint32 i = 0; i < u4PoolCount; i++)
+	{
+		m_pLogBlockInfo[i].m_pBlock = new char[u4BlockSize];
+	}
+
+	m_u4MaxBlockSize = u4BlockSize;
+	m_u4PoolCount    = u4PoolCount;
+	m_u4CurrIndex    = 0;
+
+}
+
+void CLogBlockPool::Close()
+{
+	for(uint32 i = 0; i < m_u4PoolCount; i++)
+	{
+		SAFE_DELETE_ARRAY(m_pLogBlockInfo[i].m_pBlock);
+	}
+
+	SAFE_DELETE_ARRAY(m_pLogBlockInfo);
+}
+
+_LogBlockInfo* CLogBlockPool::GetLogBlockInfo()
+{
+	if(NULL == m_pLogBlockInfo)
+	{
+		return NULL;
+	}
+
+	_LogBlockInfo* pLogBlockInfo = NULL;
+	if(m_u4CurrIndex  == m_u4PoolCount - 1)
+	{
+		m_u4CurrIndex = 0;
+	}
+
+	pLogBlockInfo = &m_pLogBlockInfo[m_u4CurrIndex];
+
+	if(pLogBlockInfo->m_blIsUsed == false)
+	{
+		pLogBlockInfo->m_blIsUsed = true;
+	}
+
+	m_u4CurrIndex++;
+
+	memset(pLogBlockInfo->m_pBlock, 0, m_u4MaxBlockSize);
+	return pLogBlockInfo;
+}
+
+void CLogBlockPool::ReturnBlockInfo(_LogBlockInfo* pLogBlockInfo)
+{
+	memset(pLogBlockInfo->m_pBlock, 0, m_u4MaxBlockSize);
+	pLogBlockInfo->m_blIsUsed = false;
+}
+
+uint32 CLogBlockPool::GetBlockSize()
+{
+	return m_u4MaxBlockSize;
+}
+//******************************************************************
+
 CLogManager::CLogManager(void)
 {
 	m_blRun         = false;
@@ -61,18 +149,19 @@ int CLogManager::svc(void)
 			continue;
 		}
 
-		ACE_TString* pstrLogText = *((ACE_TString**)mb->base());
-		if (!pstrLogText)
+		_LogBlockInfo* pLogBlockInfo = *((_LogBlockInfo**)mb->base());
+		if (!pLogBlockInfo)
 		{
 			OUR_DEBUG((LM_ERROR,"[CLogManager::svc] CLogManager mb log == NULL!\n"));
 			mb->release();
 			continue;
 		}
 
-		ProcessLog(mb->msg_type(), pstrLogText);
+		ProcessLog(mb->msg_type(), pLogBlockInfo);
 		mb->release();
 		//OUR_DEBUG((LM_ERROR,"[CLogManager::svc] delete pstrLogText BEGIN!\n"));
-		SAFE_DELETE(pstrLogText);
+		//回收日志块
+		m_objLogBlockPool.ReturnBlockInfo(pLogBlockInfo);
 		//OUR_DEBUG((LM_ERROR,"[CLogManager::svc] delete pstrLogText END!\n"));
 
 	}
@@ -117,7 +206,7 @@ bool CLogManager::IsRun()
 	return m_blRun;
 }
 
-int CLogManager::PutLog(int nLogType, ACE_TString *pLogText)
+int CLogManager::PutLog(int nLogType, _LogBlockInfo* pLogBlockInfo)
 {
 	ACE_Message_Block* mb = NULL;
 
@@ -140,8 +229,8 @@ int CLogManager::PutLog(int nLogType, ACE_TString *pLogText)
 
 	if(mb)
 	{
-		ACE_TString** loadin = (ACE_TString **)mb->base();
-		*loadin = pLogText;
+		_LogBlockInfo** loadin = (_LogBlockInfo **)mb->base();
+		*loadin = pLogBlockInfo;
 
 		int msgcount = (int)msg_queue()->message_count();
 		if (msgcount >= m_nQueueMax) 
@@ -154,7 +243,7 @@ int CLogManager::PutLog(int nLogType, ACE_TString *pLogText)
 		xtime = ACE_OS::gettimeofday();
 		if(this->putq(mb, &xtime) == -1)
 		{
-			OUR_DEBUG((LM_ERROR,"[CLogManager::PutLog] CLogManager putq error(%s)!\n", pLogText->c_str()));
+			OUR_DEBUG((LM_ERROR,"[CLogManager::PutLog] CLogManager putq error(%s)!\n", pLogBlockInfo->m_pBlock));
 			mb->release();
 			return -1;
 		}
@@ -185,6 +274,10 @@ int CLogManager::RegisterLog(CServerLogger* pServerLogger)
 		m_mapServerLogger.AddMapData(nLogType, pServerLogger);
 	}
 
+	//初始化日志池
+	OUR_DEBUG((LM_ERROR,"[CLogManager::RegisterLog] GetBlockSize=%d, GetPoolCount=%d!\n", pServerLogger->GetBlockSize(), pServerLogger->GetPoolCount()));	
+	m_objLogBlockPool.Init(pServerLogger->GetBlockSize(), pServerLogger->GetPoolCount());
+
 	return 0;
 }
 
@@ -213,7 +306,7 @@ int CLogManager::UnRegisterLog(CServerLogger* pServerLogger)
 	return 0;
 }
 
-int CLogManager::ProcessLog(int nLogType, ACE_TString* pLogText)
+int CLogManager::ProcessLog(int nLogType, _LogBlockInfo* pLogBlockInfo)
 {
 	CServerLogger* pServerLogger = NULL;
 
@@ -223,9 +316,9 @@ int CLogManager::ProcessLog(int nLogType, ACE_TString* pLogText)
 		return -1;
 	}
 
-	m_Logger_Mutex.acquire();
-	pServerLogger->DoLog(nLogType, pLogText);
-	m_Logger_Mutex.release();
+	//m_Logger_Mutex.acquire();
+	pServerLogger->DoLog(nLogType, pLogBlockInfo);
+	//m_Logger_Mutex.release();
 	return 0;
 }
 
@@ -234,34 +327,83 @@ int CLogManager::ProcessLog(int nLogType, ACE_TString* pLogText)
 int CLogManager::WriteLog(int nLogType, const char* fmt, ...)
 {
 	int  nRet = 0;
-	char szTemp[MAX_BUFF_1024*5] = {'\0'};
+	//从日志块池里面找到一块空余的日志块
+	m_Logger_Mutex.acquire();
+	_LogBlockInfo* pLogBlockInfo = m_objLogBlockPool.GetLogBlockInfo();
+	m_Logger_Mutex.release();
+
+	if(NULL == pLogBlockInfo)
+	{
+		OUR_DEBUG((LM_ERROR,"[CLogManager::WriteLog] m_objLogBlockPool is full!\n"));
+		return -1;
+	}
+
 	va_list ap;
 	va_start(ap, fmt);
-	ACE_OS::vsnprintf(szTemp,sizeof(szTemp)-1,fmt, ap);
+	ACE_OS::vsnprintf(pLogBlockInfo->m_pBlock, m_objLogBlockPool.GetBlockSize() - 1, fmt, ap);
 	va_end(ap);
-	ACE_TString* pstrLog= new ACE_TString(szTemp,ACE_OS::strlen(szTemp));
-	if (pstrLog)
-	{
 
-		if (IsRun()) 
+	pLogBlockInfo->m_u4Length = (uint32)strlen(pLogBlockInfo->m_pBlock);
+
+	if (IsRun()) 
+	{
+		nRet = PutLog(nLogType, pLogBlockInfo);
+		if (nRet) 
 		{
-			nRet = PutLog(nLogType, pstrLog);
-			if (nRet) 
-			{
-				delete pstrLog;
-				pstrLog = NULL;
-			}
-		} 
-		else 
-		{
-			delete pstrLog;
-			pstrLog = NULL;
+			m_objLogBlockPool.ReturnBlockInfo(pLogBlockInfo);
 		}
-	}
+	} 
 	else 
 	{
-		nRet = -1;
+		m_objLogBlockPool.ReturnBlockInfo(pLogBlockInfo);
 	}
-	return nRet;
+
+	return 0;
 }
 
+
+int CLogManager::WriteLogBinary(int nLogType, const char* pData, int nLen)
+{
+	int nRet = 0;
+	//从日志块池里面找到一块空余的日志块
+	m_Logger_Mutex.acquire();
+	_LogBlockInfo* pLogBlockInfo = m_objLogBlockPool.GetLogBlockInfo();
+	m_Logger_Mutex.release();
+
+	if(NULL == pLogBlockInfo)
+	{
+		OUR_DEBUG((LM_ERROR,"[ILogManager::WriteLogBinary] m_objLogBlockPool is full!\n"));	
+		return -1;
+	}
+
+	//把二进制转换成明文存储
+	if((uint32)(nLen * 5) >= m_objLogBlockPool.GetBlockSize())
+	{
+		OUR_DEBUG((LM_ERROR,"[ILogManager::WriteLogBinary] write length is more than BlockSize!\n"));
+		return -1;
+	}
+
+	char szLog[10]  = {'\0'};
+	for(int i = 0; i < nLen; i++)
+	{
+		sprintf_safe(szLog, 10, "0x%02X ", (unsigned char)pData[i]);
+		sprintf_safe(pLogBlockInfo->m_pBlock, m_objLogBlockPool.GetBlockSize(), "%s%s", pLogBlockInfo->m_pBlock, szLog);
+	}
+
+	pLogBlockInfo->m_u4Length = (uint32)(nLen * 5);
+
+	if (IsRun()) 
+	{
+		nRet = PutLog(nLogType, pLogBlockInfo);
+		if (nRet) 
+		{
+			m_objLogBlockPool.ReturnBlockInfo(pLogBlockInfo);
+		}
+	} 
+	else 
+	{
+		m_objLogBlockPool.ReturnBlockInfo(pLogBlockInfo);
+	}
+
+	return nRet;
+}
