@@ -16,6 +16,7 @@
 #include "BuffPacket.h"
 #include "MainConfig.h"
 #include "TimerManager.h"
+#include "RandomNumber.h"
 
 #ifdef WIN32
 #include "ProConnectHandle.h"
@@ -99,7 +100,8 @@ public:
 	uint16            m_u2ThreadTimeCheck;   //线程自检时间
 	uint32            m_u4MaxQueue;          //线程中最大消息对象个数
 	uint32            m_u4HighMask;          //线程高水位
-	uint32            m_u4LowMask;           //线程低水位 
+	uint32            m_u4LowMask;           //线程低水位
+	CRandomNumber     m_objRandomNumber;     //随机数，仅UDP使用
 };
 
 
