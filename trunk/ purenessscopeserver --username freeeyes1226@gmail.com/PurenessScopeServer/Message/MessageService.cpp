@@ -429,12 +429,28 @@ bool CMessageServiceGroup::Init(uint32 u4ThreadCount, uint32 u4MaxQueue, uint32 
 		m_vecMessageService.push_back(pMessageService);
 	}
 
+	//初始化随机范围，仅UDP协议包需要
+	m_objRandomNumber.SetRange(0, u4ThreadCount - 1);
+
 	return true;
 }
 
 bool CMessageServiceGroup::PutMessage(CMessage* pMessage)
 {
-	uint32 u4ThreadID = pMessage->GetMessageBase()->m_u4ConnectID % (uint32)m_vecMessageService.size();
+	//判断是否为TCP包，如果是则按照ConnectID区分。UDP则随机分配一个
+	uint32 u4ThreadID = 0;
+
+	if(pMessage->GetMessageBase()->m_u1PacketType == PACKET_TCP)
+	{
+		u4ThreadID = pMessage->GetMessageBase()->m_u4ConnectID % (uint32)m_vecMessageService.size();
+	}
+	else
+	{
+		//如果是UDP协议，则获取当前随机数值
+		u4ThreadID = m_objRandomNumber.GetRandom();
+	}
+	
+
 	CMessageService* pMessageService = (CMessageService* )m_vecMessageService[u4ThreadID];
 	if(NULL != pMessageService)
 	{

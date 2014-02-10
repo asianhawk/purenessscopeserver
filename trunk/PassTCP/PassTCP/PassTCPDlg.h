@@ -70,6 +70,7 @@ public:
   CButton m_chkRadomSendCount;
   CButton m_chkIsWriteLog;
   CButton m_chkSendOne;
+  CButton m_chkLuaAdvance;
   CEdit m_txtSuccessConnect;
   CEdit m_txtSuccessSend;
   CEdit m_txtSuccessRecv;
@@ -81,9 +82,9 @@ public:
   CEdit m_txtPacketTimewait;
   CEdit m_txtSendByteCount;
   CEdit m_txtRecvByteCount;
+  CEdit m_txtLuaFilePath;
   CComboBox m_cbSendBuffStyle;
   CRichEditCtrl m_reSendText;
-  //CEdit m_reSendText;
   int m_nRadio;
   
   vecClientTcpSocket m_vecClientTcpSocket;
@@ -94,5 +95,6 @@ public:
   afx_msg void OnBnClickedButton3();
   afx_msg void OnCbnSelchangeCombo1();
   afx_msg void OnBnClickedButton1();
+  afx_msg void OnBnClickedButton4();
   
 };

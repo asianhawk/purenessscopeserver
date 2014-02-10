@@ -180,24 +180,26 @@ private:
 //线程连接信息
 struct _Socket_Info
 {
-	char  m_szSerevrIP[MAX_BUFF_20];   //远程服务器的IP
-	int   m_nPort;                     //远程服务器的端口
-	int   m_nThreadID;                 //线程ID
-	int   m_nRecvTimeout;              //接收数据超时时间（单位是毫秒）
-	int   m_nDelaySecond;              //短连接间延时（单位是毫秒）
-	int   m_nPacketTimewait;           //数据包发送间隔(单位是毫秒)
-	int   m_nSendLength;               //发送字符串长度
-	int   m_nRecvLength;               //接收字符串长度限定
-	char* m_pSendBuff;                 //发送数据长度
-	bool  m_blIsAlwayConnect;          //是否长连接
-	bool  m_blIsRadomaDelay;           //是否随机延时
-	bool  m_blIsRecv;                  //是否接收回应包
-	bool  m_blIsBroken;                //是否断线重连
-	bool  m_blIsSendCount;             //是否随机数据包数
-	bool  m_blIsWriteFile;             //是否写入文件
-	bool  m_blIsSendOne;               //是否只发一次
-	int   m_nConnectType;              //链接类型，0是TCP，1是UDP
-	int   m_nUdpClientPort;            //UDP客户端接收数据端口
+	char  m_szSerevrIP[MAX_BUFF_20];      //远程服务器的IP
+	int   m_nPort;                        //远程服务器的端口
+	int   m_nThreadID;                    //线程ID
+	int   m_nRecvTimeout;                 //接收数据超时时间（单位是毫秒）
+	int   m_nDelaySecond;                 //短连接间延时（单位是毫秒）
+	int   m_nPacketTimewait;              //数据包发送间隔(单位是毫秒)
+	int   m_nSendLength;                  //发送字符串长度
+	int   m_nRecvLength;                  //接收字符串长度限定
+	char* m_pSendBuff;                    //发送数据长度
+	bool  m_blIsAlwayConnect;             //是否长连接
+	bool  m_blIsRadomaDelay;              //是否随机延时
+	bool  m_blIsRecv;                     //是否接收回应包
+	bool  m_blIsBroken;                   //是否断线重连
+	bool  m_blIsSendCount;                //是否随机数据包数
+	bool  m_blIsWriteFile;                //是否写入文件
+	bool  m_blIsSendOne;                  //是否只发一次
+	bool  m_blLuaAdvance;                 //是否启动Lua高级模式 
+	int   m_nConnectType;                 //链接类型，0是TCP，1是UDP
+	int   m_nUdpClientPort;               //UDP客户端接收数据端口
+	char  m_szLuaFileName[MAX_BUFF_1024]; //高级模式的Lua文件名
 
 	_Socket_Info()
 	{
@@ -217,8 +219,10 @@ struct _Socket_Info
 		m_blIsSendCount    = false;
 		m_blIsWriteFile    = false;
 		m_blIsSendOne      = false;
+		m_blLuaAdvance     = false;
 		m_nConnectType     = 0;
 		m_nUdpClientPort   = 0;
+		m_szLuaFileName[0] = '\0';
 	}
 
 	~_Socket_Info()

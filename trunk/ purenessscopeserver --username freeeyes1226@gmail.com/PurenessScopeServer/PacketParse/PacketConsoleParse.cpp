@@ -7,7 +7,7 @@ CConsolePacketParse::CConsolePacketParse(void)
 	m_u4PacketHead      = PACKET_HEAD;
 
 	//这里修改属于你的包解析版本号
-	sprintf_safe(m_szPacketVersion, MAX_BUFF_20, "0.90");
+	sprintf_safe(m_szPacketVersion, MAX_BUFF_20, "0.92");
 
 	//这里设置你的包模式
 	m_u1PacketMode      = PACKET_WITHHEAD;

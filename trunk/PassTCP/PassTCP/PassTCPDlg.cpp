@@ -105,6 +105,8 @@ void CPassTCPDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_COMBO1, m_cbSendBuffStyle);
 	DDX_Control(pDX, IDC_RICHEDIT21, m_reSendText);
 	//DDX_Control(pDX, IDC_EDIT5, m_reSendText);
+	DDX_Control(pDX, IDC_EDIT19, m_txtLuaFilePath);
+	DDX_Control(pDX, IDC_CHECK8, m_chkLuaAdvance);
 }
 
 BEGIN_MESSAGE_MAP(CPassTCPDlg, CDialog)
@@ -118,6 +120,7 @@ BEGIN_MESSAGE_MAP(CPassTCPDlg, CDialog)
 	ON_WM_TIMER()
 	ON_BN_CLICKED(IDC_BUTTON3, &CPassTCPDlg::OnBnClickedButton3)
 	ON_CBN_SELCHANGE(IDC_COMBO1, &CPassTCPDlg::OnCbnSelchangeCombo1)
+	ON_BN_CLICKED(IDC_BUTTON4, &CPassTCPDlg::OnBnClickedButton4)
 END_MESSAGE_MAP()
 
 
@@ -248,30 +251,42 @@ void CPassTCPDlg::OnBnClickedButton1()
 
 		m_reSendText.GetWindowText(strData);
 
-		nSrcLen = WideCharToMultiByte(CP_ACP, 0, strData, strData.GetLength(), NULL, 0, NULL, NULL);
-		int nBufferSize = WideCharToMultiByte(CP_ACP, 0, strData, -1, NULL, 0, NULL, NULL);  
-		pSendData = new char[nBufferSize];
-		nDecLen = WideCharToMultiByte(CP_ACP, 0, strData, nSrcLen, pSendData, nBufferSize, NULL,NULL);
-		pSendData[nDecLen] = '\0';
 
-		if(m_cbSendBuffStyle.GetCurSel() == 0)
+		int nBufferSize = 0;
+		if(m_chkLuaAdvance.GetCheck() == BST_CHECKED)
 		{
-			//如果是二进制模式
-			CConvertBuffer objConvertBuffer;
-			//获得要转换的数据块大小
-			pSocket_Info->InitSendSize(objConvertBuffer.GetBufferSize(pSendData, nDecLen));
-			//将数据串转换成二进制串
-			objConvertBuffer.Convertstr2charArray(pSendData, strlen(pSendData), (unsigned char*)pSocket_Info->m_pSendBuff, pSocket_Info->m_nSendLength);
+			//如果是Lua文件模式，直接初始化一个100k的数据块
+			//然后根据脚本去组织发送数据
+			pSocket_Info->InitSendSize(100 * MAX_BUFF_1024);
 		}
 		else
 		{
-			//如果是文本模式
-			int nSendSize = nDecLen;
-			pSocket_Info->InitSendSize(nDecLen);
-			memcpy_s(pSocket_Info->m_pSendBuff, nDecLen, pSendData, nDecLen);
-		}
+			nSrcLen = WideCharToMultiByte(CP_ACP, 0, strData, strData.GetLength(), NULL, 0, NULL, NULL);
+			nBufferSize = WideCharToMultiByte(CP_ACP, 0, strData, -1, NULL, 0, NULL, NULL);  
+			pSendData = new char[nBufferSize];
+			nDecLen = WideCharToMultiByte(CP_ACP, 0, strData, nSrcLen, pSendData, nBufferSize, NULL,NULL);
+			pSendData[nDecLen] = '\0';
 
-		delete[] pSendData;
+			if(m_cbSendBuffStyle.GetCurSel() == 0)
+			{
+				//如果是二进制模式
+				CConvertBuffer objConvertBuffer;
+				//获得要转换的数据块大小
+				pSocket_Info->InitSendSize(objConvertBuffer.GetBufferSize(pSendData, nDecLen));
+				//将数据串转换成二进制串
+				objConvertBuffer.Convertstr2charArray(pSendData, strlen(pSendData), (unsigned char*)pSocket_Info->m_pSendBuff, pSocket_Info->m_nSendLength);
+			}
+			else
+			{
+				//如果是文本模式
+				int nSendSize = nDecLen;
+				pSocket_Info->InitSendSize(nDecLen);
+				memcpy_s(pSocket_Info->m_pSendBuff, nDecLen, pSendData, nDecLen);
+			}
+
+			delete[] pSendData;
+
+		}
 
 		if(m_chkIsAlwayConnect.GetCheck() == BST_CHECKED)
 		{
@@ -334,6 +349,32 @@ void CPassTCPDlg::OnBnClickedButton1()
 		else
 		{
 			pSocket_Info->m_blIsSendOne = false;
+		}
+
+		//是否开启高级模式
+		if(m_chkLuaAdvance.GetCheck() == BST_CHECKED)
+		{
+			pSocket_Info->m_blLuaAdvance = true;
+
+			//如果打开高级模式，则读取文件
+			m_txtLuaFilePath.GetWindowText(strData);
+
+			if(strData == "")
+			{
+				MessageBox(_T("您已经开启了高级模式，必须设置必要的Lua文件名。"));
+				delete pSocket_Info;
+				delete pSocket_State_Info;
+				return;
+			}
+
+			nSrcLen = WideCharToMultiByte(CP_ACP, 0, strData, strData.GetLength(), NULL, 0, NULL, NULL);
+			int nBufferSize = WideCharToMultiByte(CP_ACP, 0, strData, -1, NULL, 0, NULL, NULL);  
+			nDecLen = WideCharToMultiByte(CP_ACP, 0, strData, nSrcLen, pSocket_Info->m_szLuaFileName, nBufferSize, NULL,NULL);
+			pSocket_Info->m_szLuaFileName[nDecLen] = '\0';
+		}
+		else
+		{
+			pSocket_Info->m_blLuaAdvance = false;
 		}
 
 		//默认TCP类型，0是TCP，1是UDP
@@ -916,4 +957,28 @@ void CPassTCPDlg::SetRichTextColor(int nColor)
 	cf.dwMask        =   CFM_COLOR;
 
 	m_reSendText.SetDefaultCharFormat(cf);//设置输入框内所有字符的字体
+}
+
+void CPassTCPDlg::OnBnClickedButton4()
+{
+	//打开Lua文件夹
+	//首先判断高级选项是否已经打开
+	if(m_chkLuaAdvance.GetCheck() != BST_CHECKED)
+	{
+		MessageBox(_T("请先选择启用高级模式开关。"), _T("提示信息"), MB_OK);
+		return;
+	}
+
+	//打开当前路径
+	TCHAR szBuffer[2048] = {'\0'};
+	GetCurrentDirectory(2048, szBuffer);
+
+	CFileDialog dlgFile(TRUE, _T( "*lua" ), NULL, OFN_FILEMUSTEXIST | OFN_HIDEREADONLY, _T("Lua文件(*.lua)|*.lua|"));
+	dlgFile.m_ofn.lpstrInitialDir = szBuffer;
+
+	if (dlgFile.DoModal() == IDOK) 
+	{
+		CString strLuaFile = dlgFile.GetPathName();
+		m_txtLuaFilePath.SetWindowText(strLuaFile);
+	}
 }

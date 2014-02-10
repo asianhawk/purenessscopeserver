@@ -1,7 +1,8 @@
 #pragma once
 
-#include "define.h"
 #include <time.h>
+#include "define.h"
+#include "LuaFn.h"
 
 class CClientTcpSocket
 {
@@ -26,4 +27,5 @@ private:
   _Socket_Info*       m_pSocket_Info;
   _Socket_State_Info* m_pSocket_State_Info;
   bool                m_blRun;
+  CLuaFn              m_objLuaFn;
 };

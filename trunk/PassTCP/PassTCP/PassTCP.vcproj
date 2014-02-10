@@ -45,6 +45,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
+				AdditionalIncludeDirectories="../LuaLib;./Lua"
 				PreprocessorDefinitions="WIN32;_WINDOWS;_DEBUG"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -67,8 +68,9 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="ws2_32.lib"
+				AdditionalDependencies="ws2_32.lib LuaLib.lib"
 				LinkIncremental="2"
+				AdditionalLibraryDirectories="./Bin"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				TargetMachine="1"
@@ -278,6 +280,42 @@
 				RelativePath=".\res\PassTCP.rc2"
 				>
 			</File>
+		</Filter>
+		<Filter
+			Name="Lua"
+			>
+			<Filter
+				Name="头文件"
+				>
+				<File
+					RelativePath=".\Lua\LuaDefine.h"
+					>
+				</File>
+				<File
+					RelativePath=".\Lua\LuaFn.h"
+					>
+				</File>
+				<File
+					RelativePath=".\Lua\LuaFn_Tcp.h"
+					>
+				</File>
+				<File
+					RelativePath=".\Lua\LuaFnRegister.h"
+					>
+				</File>
+				<File
+					RelativePath=".\Lua\ParamData.h"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="源文件"
+				>
+				<File
+					RelativePath=".\Lua\LuaFn.cpp"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<File
 			RelativePath=".\ReadMe.txt"

@@ -58,6 +58,38 @@ void CClientTcpSocket::Run()
 		return;
 	}
 
+	//查看是否开启高级模式
+	if(m_pSocket_Info->m_blLuaAdvance == true)
+	{
+		m_objLuaFn.InitClass();
+
+		bool blState = m_objLuaFn.LoadLuaFile(m_pSocket_Info->m_szLuaFileName);
+		if(false == blState)
+		{
+			printf_s("[Main]Open Lua file error.\n");
+			return;
+		}
+
+		//开始调用Lua脚本，去组织数据块
+		CParamGroup objIn;
+		CParamGroup objOut;
+
+		_ParamData* pParam1 = new _ParamData((char* )m_pSocket_Info->m_pSendBuff, "void", sizeof(int));
+		objIn.Push(pParam1);
+
+		_ParamData* pParam2 = new _ParamData((char* )&m_pSocket_Info->m_nSendLength, "int", sizeof(int));
+		objIn.Push(pParam2);
+
+		int nSendLength = 0;
+		_ParamData* pParamOut = new _ParamData((char* )&nSendLength, "int", sizeof(int));
+		objOut.Push(pParamOut);
+
+		m_objLuaFn.CallFileFn("PassTcp_CreateSendData", objIn, objOut);
+
+		int* pLength = (int* )pParamOut->GetParam();
+		m_pSocket_Info->m_nSendLength = (int)(*pLength);
+	}
+
 	//看看是否是长连接，如果是长连接，则只处理一次。
 	bool blIsConnect = false;
 
@@ -124,7 +156,7 @@ void CClientTcpSocket::Run()
 				int nSendCount = RandomValue(1, 10);
 				for(int i = 0; i < nSendCount; i++)
 				{
-					memcpy(&szSendBuffData[i * m_pSocket_Info->m_nSendLength], m_pSocket_Info->m_pSendBuff, m_pSocket_Info->m_nSendLength);
+					MEMCOPY_SAFE(&szSendBuffData[i * m_pSocket_Info->m_nSendLength], m_pSocket_Info->m_pSendBuff, MAX_BUFF_1024 * 100);
 				}
 
 				nPacketCount = nSendCount;
