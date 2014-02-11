@@ -251,31 +251,92 @@ void CClientTcpSocket::Run()
 					}
 					else
 					{
-						m_pSocket_State_Info->m_nRecvByteCount += nCurrRecvLen;
-						nTotalRecvLen -= nCurrRecvLen;
-						if(nTotalRecvLen == 0)
+						//如果是高级模式，这里调用Lua接口方法
+						if(m_pSocket_Info->m_blLuaAdvance == true)
 						{
-							//接收完成
-							m_pSocket_State_Info->m_nSuccessRecv += nPacketCount;
-							blRecvFlag = true;
+							int nState = 0;
 
-							//如果需要记录日志，则将数据计入日志
-							if(m_pSocket_Info->m_blIsWriteFile == true)
+							CParamGroup objRecvIn;
+							CParamGroup objRecvOut;
+
+							_ParamData* pParam1   = new _ParamData((char* )szRecvBuffData, "void", sizeof(int));
+							_ParamData* pParam2   = new _ParamData((char* )&nCurrRecvLen, "int", sizeof(int));
+							_ParamData* pParamOut = new _ParamData((char* )&nState, "int", sizeof(int));
+
+							objRecvIn.Push(pParam1);
+							objRecvIn.Push(pParam2);
+							objRecvOut.Push(pParamOut);
+
+							//调用接收函数
+							m_objLuaFn.CallFileFn("PassTcp_GetRecvData", objRecvIn, objRecvOut);
+
+							int* pReturn = (int* )pParamOut->GetParam();
+							nState = (int)(*pReturn);
+
+							objRecvIn.Close(true);
+							objRecvOut.Close(true);
+
+							//判断脚本返回值
+							if(nState == 0)
 							{
-								WriteFile_RecvBuff(szRecvBuffData, nRecvAllSize);
-							}
+								//接收验证成功
+								m_pSocket_State_Info->m_nSuccessRecv += nPacketCount;
+								blRecvFlag = true;
 
-							break;
+								//如果需要记录日志，则将数据计入日志
+								if(m_pSocket_Info->m_blIsWriteFile == true)
+								{
+									WriteFile_RecvBuff(szRecvBuffData, nRecvAllSize);
+								}
+
+								break;
+							}
+							else if(nState == 1)
+							{
+								//继续接收
+								nBeginRecv += nCurrRecvLen;
+							}
+							else
+							{
+								//接收包验证失败
+								m_pSocket_State_Info->m_nFailRecv += nPacketCount;
+								blRecvFlag = true;
+
+								//如果需要记录日志，则将数据计入日志
+								if(m_pSocket_Info->m_blIsWriteFile == true)
+								{
+									WriteFile_RecvBuff(szRecvBuffData, nRecvAllSize);
+								}
+
+								break;
+							}
 						}
 						else
 						{
-							nBeginRecv += nCurrRecvLen;
+							//如果不是高级模式，则采用配置的判定准则
+							m_pSocket_State_Info->m_nRecvByteCount += nCurrRecvLen;
+							nTotalRecvLen -= nCurrRecvLen;
+							if(nTotalRecvLen == 0)
+							{
+								//接收完成
+								m_pSocket_State_Info->m_nSuccessRecv += nPacketCount;
+								blRecvFlag = true;
+
+								//如果需要记录日志，则将数据计入日志
+								if(m_pSocket_Info->m_blIsWriteFile == true)
+								{
+									WriteFile_RecvBuff(szRecvBuffData, nRecvAllSize);
+								}
+
+								break;
+							}
+							else
+							{
+								nBeginRecv += nCurrRecvLen;
+							}
 						}
 					}
 				} 
-				int nEnd = GetTickCount();
-				int nV = nEnd - nBegin;
-				int a = 1;
 			}
 
 			//如果有数据包间隔，则sleep指定的时间

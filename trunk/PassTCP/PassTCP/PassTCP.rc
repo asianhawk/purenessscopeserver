@@ -150,7 +150,6 @@ BEGIN
     LTEXT           "Lua控制文件路径",IDC_STATIC,20,104,55,8
     PUSHBUTTON      "打开文件夹",IDC_BUTTON4,75,121,50,14
     CONTROL         "启用高级模式",IDC_CHECK8,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,19,122,52,10
-    LTEXT           "此功能正在施工中，请稍后再用。",IDC_STATIC,133,124,109,8
 END
 
 

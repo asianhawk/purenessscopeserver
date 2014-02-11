@@ -32,7 +32,7 @@ public:
 	void SetParam(void* pParam, const char* szType, int nTypeLen)
 	{
 		m_pParam = pParam;
-		sprintf(m_szType, "%s", szType);
+		sprintf_s(m_szType, MAX_PARAM_200, "%s", szType);
 		m_TypeLen = nTypeLen;
 	};
 
@@ -100,13 +100,16 @@ public:
 		m_vecParamData.clear();
 	};
 
-	void Close()
+	void Close(bool blIsDelete = true)
 	{
 		for(int i = 0; i < (int)m_vecParamData.size(); i++)
 		{
 			_ParamData* pParamData = m_vecParamData[i];
-			delete pParamData;
-			pParamData = NULL;
+			if(blIsDelete == true)
+			{
+				delete pParamData;
+				pParamData = NULL;
+			}
 		}
 		m_vecParamData.clear();
 	};

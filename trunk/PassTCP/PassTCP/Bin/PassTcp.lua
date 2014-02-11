@@ -37,10 +37,29 @@ end
 --接收到的数据事件
 function PassTcp_GetRecvData(szData, nLen)
     --得到接收数据
-	--szData是当前收到的数据块，
+	--szData是当前收到的数据块
 	--nLen是收到的数据库块长度
+	--函数的返回，是一个int类型
+	--目前这么定义，   0：接收数据包成功，验证合法。成功的数据包+1
+	--                 1：接收的包没有结束，还需继续接收
+	--                 2：接收数据包验证失败，即是错误的数据包+1
 	
-	return true;
+	--判断接收数据包的长度
+	nCurrIndex = 0;
+	nPacketLength = Lua_Tcp_Buffer_Out_Int32(szData, nCurrIndex, nLen);
+	if nPacketLength ~= 10 then
+		return 2;
+	end
+	
+	--判断接收的返回命令ID是否正确
+	nCurrIndex = 4
+	nCommandID = Lua_Tcp_Buffer_Out_Int16(szData, nCurrIndex, nLen);
+	if nCommandID ~= 4096 then
+		return 2;
+	end
+	
+	--包验证成功
+	return 0;
 end
 
 

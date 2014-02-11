@@ -106,6 +106,9 @@ bool CLuaFn::InitClass()
 	m_LuaFnRegister.AddFunc("Lua_Tcp_Buffer_In_Int16", Lua_Tcp_Buffer_In_Int16);
 	m_LuaFnRegister.AddFunc("Lua_Tcp_Buffer_In_Int8", Lua_Tcp_Buffer_In_Int8);
 	m_LuaFnRegister.AddFunc("Lua_Tcp_Buffer_In_Block", Lua_Tcp_Buffer_In_Block);
+	m_LuaFnRegister.AddFunc("Lua_Tcp_Buffer_Out_Int32", Lua_Tcp_Buffer_Out_Int32);
+	m_LuaFnRegister.AddFunc("Lua_Tcp_Buffer_Out_Int16", Lua_Tcp_Buffer_Out_Int16);
+	m_LuaFnRegister.AddFunc("Lua_Tcp_Buffer_Out_Int8", Lua_Tcp_Buffer_Out_Int8);
 
 	for(int i = 0; i < m_LuaFnRegister.GetSize(); i++)
 	{
@@ -162,7 +165,7 @@ bool CLuaFn::GetLuaGlobal_String(const char* pGlobalName, string& strGlobal)
 bool CLuaFn::GetLuaGlobal_ArrayCount(const char* pGlobalName, int& nCount)
 {
 	char szCommand[MAX_LUA_BUFF_200] = {'\0'};
-	sprintf(szCommand, "return #%s;", pGlobalName);
+	sprintf_s(szCommand, MAX_LUA_BUFF_200, "return #%s;", pGlobalName);
 	luaL_dostring(m_pState, szCommand);
 	nCount = (int)lua_tonumber(m_pState, -1);
 	lua_pop(m_pState, -1);
@@ -172,7 +175,7 @@ bool CLuaFn::GetLuaGlobal_ArrayCount(const char* pGlobalName, int& nCount)
 bool CLuaFn::GetLuaGlobal_ArrayIndex(const char* pGlobalName, int nIndex, string& strGlobal)
 {
 	char szCommand[MAX_LUA_BUFF_200] = {'\0'};
-	sprintf(szCommand, "return %s[%d];", pGlobalName, nIndex);
+	sprintf_s(szCommand, MAX_LUA_BUFF_200, "return %s[%d];", pGlobalName, nIndex);
 	luaL_dostring(m_pState, szCommand);
 	strGlobal = (string)lua_tostring(m_pState, -1);
 	lua_pop(m_pState, -1);

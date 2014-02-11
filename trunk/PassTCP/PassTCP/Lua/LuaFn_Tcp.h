@@ -112,4 +112,77 @@ static int Lua_Tcp_Buffer_In_Block(lua_State* pState)
 	return 1;
 }
 
+//数据流，流出一个int
+static int Lua_Tcp_Buffer_Out_Int32(lua_State* pState)
+{
+	int nCount = lua_gettop(pState);
+
+	int nMaxLength  = (int)lua_tonumber(pState, 3);
+	int nCurrIndex  = (int)lua_tonumber(pState, 2);
+	char* pData     = (char* )lua_touserdata(pState, 1);
+
+	//格式化流入的数据
+	if(nCurrIndex + sizeof(int) >= nMaxLength || nCurrIndex < 0 || NULL == pData)
+	{
+		lua_pushnumber(pState, (int)0);
+	}
+	else
+	{
+		int nData = 0;
+		MEMCOPY_SAFE(&nData, &pData[nCurrIndex], sizeof(int));
+		lua_pushnumber(pState, (int)nData);
+	}
+
+	return 1;
+}
+
+//数据流，流出一个short
+static int Lua_Tcp_Buffer_Out_Int16(lua_State* pState)
+{
+	int nCount = lua_gettop(pState);
+
+	int nMaxLength  = (int)lua_tonumber(pState, 3);
+	int nCurrIndex  = (int)lua_tonumber(pState, 2);
+	char* pData     = (char* )lua_touserdata(pState, 1);
+
+	//格式化流入的数据
+	if(nCurrIndex + sizeof(short) >= nMaxLength || nCurrIndex < 0 || NULL == pData)
+	{
+		lua_pushnumber(pState, (int)0);
+	}
+	else
+	{
+		int nData = 0;
+		MEMCOPY_SAFE(&nData, &pData[nCurrIndex], sizeof(short));
+		lua_pushnumber(pState, (int)nData);
+	}
+
+	return 1;
+}
+
+//数据流，流出一个字节
+static int Lua_Tcp_Buffer_Out_Int8(lua_State* pState)
+{
+	int nCount = lua_gettop(pState);
+
+	int nMaxLength  = (int)lua_tonumber(pState, 3);
+	int nCurrIndex  = (int)lua_tonumber(pState, 2);
+	char* pData     = (char* )lua_touserdata(pState, 1);
+
+	//格式化流入的数据
+	if(nCurrIndex + sizeof(char) >= nMaxLength || nCurrIndex < 0 || NULL == pData)
+	{
+		lua_pushnumber(pState, (int)0);
+	}
+	else
+	{
+		int nData = 0;
+		MEMCOPY_SAFE(&nData, &pData[nCurrIndex], sizeof(char));
+		lua_pushnumber(pState, (int)nData);
+	}
+
+	return 1;
+}
+
+
 #endif
