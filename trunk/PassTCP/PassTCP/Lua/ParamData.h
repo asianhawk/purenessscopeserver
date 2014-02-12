@@ -89,16 +89,29 @@ public:
 class CParamGroup
 {
 public:
-	CParamGroup() {};
+	CParamGroup() { m_blIsDelete = true; };
 	~CParamGroup()
 	{ 
-		Close(); 
+		if(m_blIsDelete == true)
+		{
+			Close(); 
+		}
+		else
+		{
+			Close(false); 
+		}
 	};
 
 	void Init()
 	{
 		m_vecParamData.clear();
 	};
+
+	//是否执行析构释放当前所有参数指针
+	void NeedRetrieve(bool blIsDelete)
+	{
+		m_blIsDelete = blIsDelete;
+	}
 
 	void Close(bool blIsDelete = true)
 	{
@@ -142,6 +155,7 @@ public:
 private:
 	typedef vector<_ParamData*> vecParamData;
 	vecParamData m_vecParamData;
+	bool         m_blIsDelete;
 };
 
 

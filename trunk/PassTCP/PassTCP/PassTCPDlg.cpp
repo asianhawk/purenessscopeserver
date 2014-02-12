@@ -393,6 +393,7 @@ void CPassTCPDlg::OnBnClickedButton1()
 			//TCP·¢ËÍ
 			CClientTcpSocket* pClientTcpSocket = new CClientTcpSocket();
 			pClientTcpSocket->SetSocketThread(pSocket_Info, pSocket_State_Info);
+			pClientTcpSocket->SetThreadID(i);
 
 			DWORD  ThreadID = 0;
 			CreateThread(NULL, NULL, ThreadProc, (LPVOID)pClientTcpSocket, NULL, &ThreadID);
