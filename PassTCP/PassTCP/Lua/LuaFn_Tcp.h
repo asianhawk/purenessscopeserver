@@ -122,7 +122,7 @@ static int Lua_Tcp_Buffer_Out_Int32(lua_State* pState)
 	char* pData     = (char* )lua_touserdata(pState, 1);
 
 	//格式化流入的数据
-	if(nCurrIndex + sizeof(int) >= nMaxLength || nCurrIndex < 0 || NULL == pData)
+	if(nCurrIndex + (int)sizeof(int) >= nMaxLength || nCurrIndex < 0 || NULL == pData)
 	{
 		lua_pushnumber(pState, (int)0);
 	}
@@ -146,7 +146,7 @@ static int Lua_Tcp_Buffer_Out_Int16(lua_State* pState)
 	char* pData     = (char* )lua_touserdata(pState, 1);
 
 	//格式化流入的数据
-	if(nCurrIndex + sizeof(short) >= nMaxLength || nCurrIndex < 0 || NULL == pData)
+	if(nCurrIndex + (int)sizeof(short) >= nMaxLength || nCurrIndex < 0 || NULL == pData)
 	{
 		lua_pushnumber(pState, (int)0);
 	}
@@ -170,7 +170,7 @@ static int Lua_Tcp_Buffer_Out_Int8(lua_State* pState)
 	char* pData     = (char* )lua_touserdata(pState, 1);
 
 	//格式化流入的数据
-	if(nCurrIndex + sizeof(char) >= nMaxLength || nCurrIndex < 0 || NULL == pData)
+	if(nCurrIndex + (int)sizeof(char) >= nMaxLength || nCurrIndex < 0 || NULL == pData)
 	{
 		lua_pushnumber(pState, (int)0);
 	}

@@ -35,10 +35,47 @@ void CClientUdpSocket::Run()
 	SOCKET sckClient;
 	SOCKET sckServer;
 
+	//此部分为兼容Lua参数而设计
+	//为了减少不必要的new和delete操作，所以参数在这里先声明好
+	_ParamData* pSendParam1   = NULL;
+	_ParamData* pSendParam2   = NULL;
+	_ParamData* pSendParam3   = NULL;
+	_ParamData* pSendParamOut = NULL;
+	_ParamData* pRecvParam1   = NULL;
+	_ParamData* pRecvParam2   = NULL;
+	_ParamData* pRecvParam3   = NULL;
+	_ParamData* pRecvParamOut = NULL;
+
+	int nLuaBufferMaxLength = m_pSocket_Info->m_nSendLength;
+
 	if(m_pSocket_Info == NULL || m_pSocket_State_Info == NULL)
 	{
 		m_blRun = false;
 		return;
+	}
+
+	//如果是高级模式
+	if(m_pSocket_Info->m_blLuaAdvance == true)
+	{
+		m_objLuaFn.InitClass();
+
+		bool blState = m_objLuaFn.LoadLuaFile(m_pSocket_Info->m_szLuaFileName);
+		if(false == blState)
+		{
+			printf_s("[Main]Open Lua file error.\n");
+			return;
+		}
+
+		//初始化所有要使用的Lua参数
+		pSendParam1   = new _ParamData();
+		pSendParam2   = new _ParamData();
+		pSendParam3   = new _ParamData();
+		pSendParamOut = new _ParamData();
+		pRecvParam1   = new _ParamData();
+		pRecvParam2   = new _ParamData();
+		pRecvParam3   = new _ParamData();
+		pRecvParamOut = new _ParamData(); 
+
 	}
 
 	//看看是否是长连接，如果是长连接，则只处理一次。
@@ -70,6 +107,37 @@ void CClientUdpSocket::Run()
 
 	while(m_blRun)
 	{
+		//查看是否开启高级模式
+		if(m_pSocket_Info->m_blLuaAdvance == true)
+		{
+			//重置缓冲最大长度
+			m_pSocket_Info->m_nSendLength = nLuaBufferMaxLength;
+
+			//开始调用Lua脚本，去组织数据块
+			CParamGroup objIn;
+			CParamGroup objOut;
+
+			objIn.NeedRetrieve(false);
+			objOut.NeedRetrieve(false);
+
+			pSendParam1->SetParam((char* )m_pSocket_Info->m_pSendBuff, "void", sizeof(int));
+			pSendParam2->SetParam((char* )&m_pSocket_Info->m_nSendLength, "int", sizeof(int));
+			pSendParam3->SetParam((char* )&m_nThreadID, "int", sizeof(int));
+			int nSendLength = 0;
+			pSendParamOut->SetParam((char* )&nSendLength, "int", sizeof(int));
+
+			objIn.Push(pSendParam1);
+			objIn.Push(pSendParam2);
+			objIn.Push(pSendParam3);
+			objOut.Push(pSendParamOut);
+
+			m_objLuaFn.CallFileFn("PassTcp_CreateSendData", objIn, objOut);
+
+			int* pLength = (int* )pSendParamOut->GetParam();
+			m_pSocket_Info->m_nSendLength = (int)(*pLength);
+		}
+
+
 		if(blIsConnect == false)
 		{
 			DWORD dwSleepTime = (DWORD)m_pSocket_Info->m_nDelaySecond;
@@ -198,24 +266,96 @@ void CClientUdpSocket::Run()
 					}
 					else
 					{
-						nTotalRecvLen -= nCurrRecvLen;
-						if(nTotalRecvLen == 0)
+						//如果是高级模式，这里调用Lua接口方法
+						if(m_pSocket_Info->m_blLuaAdvance == true)
 						{
-							//接收完成
-							m_pSocket_State_Info->m_nSuccessRecv += nPacketCount;
-							blRecvFlag = true;
+							m_pSocket_State_Info->m_nRecvByteCount += nCurrRecvLen;
+							int nState = 0;
 
-							//如果需要记录日志，则将数据计入日志
-							if(m_pSocket_Info->m_blIsWriteFile == true)
+							CParamGroup objRecvIn;
+							CParamGroup objRecvOut;
+
+							objRecvIn.NeedRetrieve(false);
+							objRecvOut.NeedRetrieve(false);
+
+							pRecvParam1->SetParam((char* )szRecvBuffData, "void", sizeof(int));
+							pRecvParam2->SetParam((char* )&nCurrRecvLen, "int", sizeof(int));
+							pRecvParam3->SetParam((char* )&m_nThreadID, "int", sizeof(int));
+
+							pRecvParamOut->SetParam((char* )&nState, "int", sizeof(int));
+
+							objRecvIn.Push(pRecvParam1);
+							objRecvIn.Push(pRecvParam2);
+							objRecvIn.Push(pRecvParam3);
+							objRecvOut.Push(pRecvParamOut);
+
+							//调用接收函数
+							m_objLuaFn.CallFileFn("PassTcp_GetRecvData", objRecvIn, objRecvOut);
+
+							int* pReturn = (int* )pRecvParamOut->GetParam();
+							nState = (int)(*pReturn);
+
+							objRecvIn.Close(false);
+							objRecvOut.Close(false);
+
+							//判断脚本返回值
+							if(nState == 0)
 							{
-								WriteFile_RecvBuff(szRecvBuffData, nRecvAllSize);
-							}
+								//接收验证成功
+								m_pSocket_State_Info->m_nSuccessRecv += nPacketCount;
+								blRecvFlag = true;
 
-							break;
+								//如果需要记录日志，则将数据计入日志
+								if(m_pSocket_Info->m_blIsWriteFile == true)
+								{
+									WriteFile_RecvBuff(szRecvBuffData, nRecvAllSize);
+								}
+
+								break;
+							}
+							else if(nState == 1)
+							{
+								//继续接收
+								nBeginRecv += nCurrRecvLen;
+							}
+							else
+							{
+								//接收包验证失败
+								m_pSocket_State_Info->m_nFailRecv += nPacketCount;
+								blRecvFlag = true;
+
+								//如果需要记录日志，则将数据计入日志
+								if(m_pSocket_Info->m_blIsWriteFile == true)
+								{
+									WriteFile_RecvBuff(szRecvBuffData, nRecvAllSize);
+								}
+
+								break;
+							}
 						}
 						else
 						{
-							nBeginRecv += nCurrRecvLen;
+							//如果不是高级模式，则采用配置的判定准则
+							m_pSocket_State_Info->m_nRecvByteCount += nCurrRecvLen;
+							nTotalRecvLen -= nCurrRecvLen;
+							if(nTotalRecvLen == 0)
+							{
+								//接收完成
+								m_pSocket_State_Info->m_nSuccessRecv += nPacketCount;
+								blRecvFlag = true;
+
+								//如果需要记录日志，则将数据计入日志
+								if(m_pSocket_Info->m_blIsWriteFile == true)
+								{
+									WriteFile_RecvBuff(szRecvBuffData, nRecvAllSize);
+								}
+
+								break;
+							}
+							else
+							{
+								nBeginRecv += nCurrRecvLen;
+							}
 						}
 					}
 				}
@@ -353,4 +493,9 @@ bool CClientUdpSocket::WriteFile_Error( const char* pError, int nErrorNumber )
 
 	fclose(pFile);
 	return true;
+}
+
+void CClientUdpSocket::SetThreadID( int nThreadID )
+{
+	m_nThreadID = nThreadID;
 }
