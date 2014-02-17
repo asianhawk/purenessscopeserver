@@ -83,6 +83,9 @@ public:
   CEdit m_txtSendByteCount;
   CEdit m_txtRecvByteCount;
   CEdit m_txtLuaFilePath;
+  CEdit m_txtSendCount;
+  CEdit m_txtMinTime;
+  CEdit m_txtMaxTime;
   CComboBox m_cbSendBuffStyle;
   CRichEditCtrl m_reSendText;
   int m_nRadio;
@@ -96,5 +99,5 @@ public:
   afx_msg void OnCbnSelchangeCombo1();
   afx_msg void OnBnClickedButton1();
   afx_msg void OnBnClickedButton4();
-  
+
 };

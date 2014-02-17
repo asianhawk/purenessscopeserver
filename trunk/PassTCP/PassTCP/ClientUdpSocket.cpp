@@ -107,6 +107,13 @@ void CClientUdpSocket::Run()
 
 	while(m_blRun)
 	{
+		unsigned int tBegin = (unsigned int)GetTickCount();
+		if(m_pSocket_Info->m_nSendCount != 0 && m_pSocket_State_Info->m_nSuccessSend >= m_pSocket_Info->m_nSendCount)
+		{
+			//发送指定数目的数据包完成
+			break;
+		}
+
 		//查看是否开启高级模式
 		if(m_pSocket_Info->m_blLuaAdvance == true)
 		{
@@ -168,6 +175,13 @@ void CClientUdpSocket::Run()
 			if(m_pSocket_Info->m_blIsSendCount == true)
 			{
 				int nSendCount = RandomValue(1, 10);
+
+				//这里追加一个逻辑，记录当前发包的总数是否匹配，随机数不能超过当前发包总数
+				if(m_pSocket_Info->m_nSendCount != 0 && nSendCount + m_pSocket_State_Info->m_nSuccessSend > m_pSocket_Info->m_nSendCount)
+				{
+					nSendCount = m_pSocket_Info->m_nSendCount - m_pSocket_State_Info->m_nSuccessSend;
+				}
+
 				for(int i = 0; i < nSendCount; i++)
 				{
 					memcpy(&szSendBuffData[i * m_pSocket_Info->m_nSendLength], m_pSocket_Info->m_pSendBuff, m_pSocket_Info->m_nSendLength);
@@ -311,6 +325,26 @@ void CClientUdpSocket::Run()
 									WriteFile_RecvBuff(szRecvBuffData, nRecvAllSize);
 								}
 
+								//计算最小时间和最大时间
+								int tTime = (int)((unsigned int)GetTickCount() - tBegin);
+								if(tTime > 0 && m_pSocket_State_Info->m_nMinRecvTime == 0)
+								{
+									m_pSocket_State_Info->m_nMinRecvTime = tTime;
+								}
+								else if(tTime < m_pSocket_State_Info->m_nMinRecvTime)
+								{
+									m_pSocket_State_Info->m_nMinRecvTime = tTime;
+								}
+
+								if(tTime > 0 && m_pSocket_State_Info->m_nMaxRecvTime == 0)
+								{
+									m_pSocket_State_Info->m_nMaxRecvTime = tTime;
+								}
+								else if(tTime > m_pSocket_State_Info->m_nMaxRecvTime)
+								{
+									m_pSocket_State_Info->m_nMaxRecvTime = tTime;
+								}
+
 								break;
 							}
 							else if(nState == 1)
@@ -348,6 +382,26 @@ void CClientUdpSocket::Run()
 								if(m_pSocket_Info->m_blIsWriteFile == true)
 								{
 									WriteFile_RecvBuff(szRecvBuffData, nRecvAllSize);
+								}
+
+								//计算最小时间和最大时间
+								int tTime = (int)((unsigned int)GetTickCount() - tBegin);
+								if(tTime > 0 && m_pSocket_State_Info->m_nMinRecvTime == 0)
+								{
+									m_pSocket_State_Info->m_nMinRecvTime = tTime;
+								}
+								else if(tTime < m_pSocket_State_Info->m_nMinRecvTime)
+								{
+									m_pSocket_State_Info->m_nMinRecvTime = tTime;
+								}
+
+								if(tTime > 0 && m_pSocket_State_Info->m_nMaxRecvTime == 0)
+								{
+									m_pSocket_State_Info->m_nMaxRecvTime = tTime;
+								}
+								else if(tTime > m_pSocket_State_Info->m_nMaxRecvTime)
+								{
+									m_pSocket_State_Info->m_nMaxRecvTime = tTime;
 								}
 
 								break;

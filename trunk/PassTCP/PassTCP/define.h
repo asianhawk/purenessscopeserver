@@ -199,6 +199,7 @@ struct _Socket_Info
 	bool  m_blLuaAdvance;                 //是否启动Lua高级模式 
 	int   m_nConnectType;                 //链接类型，0是TCP，1是UDP
 	int   m_nUdpClientPort;               //UDP客户端接收数据端口
+	int   m_nSendCount;                   //发送总数据包数
 	char  m_szLuaFileName[MAX_BUFF_1024]; //高级模式的Lua文件名
 
 	_Socket_Info()
@@ -211,6 +212,7 @@ struct _Socket_Info
 		m_nDelaySecond     = 0;
 		m_nSendLength      = 0;
 		m_nRecvLength      = 0;
+		m_nSendCount       = 0;
 		m_pSendBuff        = NULL;
 		m_blIsAlwayConnect = false;
 		m_blIsRadomaDelay  = false;
@@ -259,6 +261,8 @@ struct _Socket_State_Info
 	int m_nFailRecv;                  //接收失败数
 	int m_nSendByteCount;             //发送字节数
 	int m_nRecvByteCount;             //接收字节数
+	int m_nMinRecvTime;               //最小接收时间
+	int m_nMaxRecvTime;               //最大接收时间 
 
 	_Socket_State_Info()
 	{
@@ -271,6 +275,8 @@ struct _Socket_State_Info
 		m_nFailRecv       = 0;
 		m_nSendByteCount  = 0;
 		m_nRecvByteCount  = 0;
+		m_nMinRecvTime    = 0;
+		m_nMaxRecvTime    = 0;
 	}
 };
 

@@ -40,7 +40,10 @@
 #define IDC_COMBO1                      1030
 #define IDC_CHECK8                      1031
 #define IDC_RICHEDIT21                  1032
+#define IDC_EDIT20                      1033
+#define IDC_EDIT21                      1034
 #define IDC_EDIT19                      1035
+#define IDC_EDIT22                      1036
 #define IDC_BUTTON4                     1037
 
 // Next default values for new objects
