@@ -107,6 +107,9 @@ void CPassTCPDlg::DoDataExchange(CDataExchange* pDX)
 	//DDX_Control(pDX, IDC_EDIT5, m_reSendText);
 	DDX_Control(pDX, IDC_EDIT19, m_txtLuaFilePath);
 	DDX_Control(pDX, IDC_CHECK8, m_chkLuaAdvance);
+	DDX_Control(pDX, IDC_EDIT20, m_txtSendCount);
+	DDX_Control(pDX, IDC_EDIT21, m_txtMinTime);
+	DDX_Control(pDX, IDC_EDIT22, m_txtMaxTime);
 }
 
 BEGIN_MESSAGE_MAP(CPassTCPDlg, CDialog)
@@ -225,7 +228,12 @@ void CPassTCPDlg::OnBnClickedButton1()
 
 	m_txtThreadCount.GetWindowText(strData);
 	int nThreadCount = _ttoi((LPCTSTR)strData);
+	m_txtSendCount.GetWindowText(strData);
+	int nAllSendCount = _ttoi((LPCTSTR)strData);
 
+	//根据线程数计算发送量
+	int nThreadSendCount = nAllSendCount / nThreadCount;
+	 
 	for(int i = 0; i < nThreadCount; i++)
 	{
 		//读取线程信息
@@ -248,6 +256,16 @@ void CPassTCPDlg::OnBnClickedButton1()
 		pSocket_Info->m_nUdpClientPort = _ttoi((LPCTSTR)strData);
 		m_txtPacketTimewait.GetWindowText(strData);
 		pSocket_Info->m_nPacketTimewait = _ttoi((LPCTSTR)strData);
+
+		if(i == nThreadCount - 1)
+		{
+			pSocket_Info->m_nSendCount = nThreadSendCount + ( nAllSendCount % nThreadSendCount);
+		}
+		else
+		{
+			pSocket_Info->m_nSendCount = nThreadSendCount;
+		}
+		
 
 		m_reSendText.GetWindowText(strData);
 
@@ -439,6 +457,10 @@ void CPassTCPDlg::InitView()
 	m_txtSendByteCount.SetWindowText(_T("0"));
 	m_txtRecvByteCount.SetWindowText(_T("0"));
 
+	m_txtSendCount.SetWindowText(_T("0"));
+	m_txtMinTime.SetWindowText(_T("0"));
+	m_txtMaxTime.SetWindowText(_T("0"));
+
 	m_nRadio = 1;
 
 	m_cbSendBuffStyle.InsertString(0, _T("二进制模式"));
@@ -557,6 +579,8 @@ void CPassTCPDlg::OnTimer(UINT_PTR nIDEvent)
 		int nCurrConnect    = 0;
 		int nSendByteCount  = 0;
 		int nRecvByteCount  = 0;
+		int nMinTime        = 0;
+		int nMaxTime        = 0;
 
 		int nConnectType = 0;
 		switch(GetCheckedRadioButton(IDC_RADIO1, IDC_RADIO2))
@@ -588,6 +612,24 @@ void CPassTCPDlg::OnTimer(UINT_PTR nIDEvent)
 						nCurrConnect    += pSocket_State_Info->m_nCurrectSocket;
 						nSendByteCount  += pSocket_State_Info->m_nSendByteCount;
 						nRecvByteCount  += pSocket_State_Info->m_nRecvByteCount;
+
+						if(i == 0)
+						{
+							nMinTime = pSocket_State_Info->m_nMinRecvTime;
+							nMaxTime = pSocket_State_Info->m_nMaxRecvTime;
+						}
+						else
+						{
+							if(nMinTime > pSocket_State_Info->m_nMinRecvTime)
+							{
+								nMinTime = pSocket_State_Info->m_nMinRecvTime;
+							}
+
+							if(nMaxTime < pSocket_State_Info->m_nMaxRecvTime)
+							{
+								nMaxTime = pSocket_State_Info->m_nMaxRecvTime;
+							}
+						}
 					}
 				}
 			}
@@ -612,6 +654,10 @@ void CPassTCPDlg::OnTimer(UINT_PTR nIDEvent)
 			m_txtSendByteCount.SetWindowText(strData);
 			strData.Format(_T("%d"), nRecvByteCount);
 			m_txtRecvByteCount.SetWindowText(strData);
+			strData.Format(_T("%d"), nMinTime);
+			m_txtMinTime.SetWindowText(strData);
+			strData.Format(_T("%d"), nMaxTime);
+			m_txtMaxTime.SetWindowText(strData);
 		}
 		else
 		{
@@ -630,6 +676,24 @@ void CPassTCPDlg::OnTimer(UINT_PTR nIDEvent)
 						nFailSend       += pSocket_State_Info->m_nFailSend;
 						nFailRecv       += pSocket_State_Info->m_nFailRecv;
 						nCurrConnect    += pSocket_State_Info->m_nCurrectSocket;
+					}
+
+					if(i == 0)
+					{
+						nMinTime = pSocket_State_Info->m_nMinRecvTime;
+						nMaxTime = pSocket_State_Info->m_nMaxRecvTime;
+					}
+					else
+					{
+						if(nMinTime > pSocket_State_Info->m_nMinRecvTime)
+						{
+							nMinTime = pSocket_State_Info->m_nMinRecvTime;
+						}
+
+						if(nMaxTime < pSocket_State_Info->m_nMaxRecvTime)
+						{
+							nMaxTime = pSocket_State_Info->m_nMaxRecvTime;
+						}
 					}
 				}
 			}
@@ -650,6 +714,10 @@ void CPassTCPDlg::OnTimer(UINT_PTR nIDEvent)
 			m_txtFailRecv.SetWindowText(strData);
 			strData.Format(_T("%d"), nCurrConnect);
 			m_txtCurrConnect.SetWindowText(strData);
+			strData.Format(_T("%d"), nMinTime);
+			m_txtMinTime.SetWindowText(strData);
+			strData.Format(_T("%d"), nMaxTime);
+			m_txtMaxTime.SetWindowText(strData);
 		}
 	}
 
@@ -755,6 +823,14 @@ void CPassTCPDlg::OnBnClickedButton3()
 
 	m_txtFailRecv.GetWindowText(strData);
 	sprintf_s(szLogText, 1024, "接收失败数据包数:%d\n", _ttoi((LPCTSTR)strData));
+	fwrite(szLogText, strlen(szLogText), sizeof(char), pFile);
+
+	m_txtMinTime.GetWindowText(strData);
+	sprintf_s(szLogText, 1024, "最小单包响应时间:%d\n", _ttoi((LPCTSTR)strData));
+	fwrite(szLogText, strlen(szLogText), sizeof(char), pFile);
+
+	m_txtMaxTime.GetWindowText(strData);
+	sprintf_s(szLogText, 1024, "最大单包响应时间:%d\n", _ttoi((LPCTSTR)strData));
 	fwrite(szLogText, strlen(szLogText), sizeof(char), pFile);
 
 	//连接成功百分比
