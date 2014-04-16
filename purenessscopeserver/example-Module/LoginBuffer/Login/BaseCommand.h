@@ -50,6 +50,10 @@ public:
 
 	~CPostServerData() {};
 
+	void ReConnect(int nServerID)
+	{
+	}
+
 	bool RecvData(ACE_Message_Block* mbRecv)
 	{
 		//判断返回数据块是否小于0
