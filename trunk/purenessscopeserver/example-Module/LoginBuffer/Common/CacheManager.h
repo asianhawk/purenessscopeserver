@@ -105,7 +105,15 @@ protected:
 	//***********************************************
 	_CacheBlock* Get_CacheBlock_By_Index(uint32 u4Index) 
 	{
-		return (_CacheBlock* )m_SMOption.GetBuffer(u4Index);
+		return (void* )m_SMOption.GetBuffer(u4Index);
+	};
+
+	//***********************************************
+	//得到指定位置头维护信息
+	//***********************************************
+	_SMHeader* Get_SMHead_By_Index(uint32 u4Index)
+	{
+		return m_SMOption.GetHeader(u4Index);
 	};
 
 	//***********************************************
