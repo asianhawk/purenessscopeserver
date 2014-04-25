@@ -825,6 +825,10 @@
 					>
 				</File>
 				<File
+					RelativePath=".\Common\MyACELoggingStrategy.h"
+					>
+				</File>
+				<File
 					RelativePath=".\Common\ProfileTime.h"
 					>
 				</File>
@@ -1003,6 +1007,10 @@
 							UsePrecompiledHeader="0"
 						/>
 					</FileConfiguration>
+				</File>
+				<File
+					RelativePath=".\Common\MyACELoggingStrategy.cpp"
+					>
 				</File>
 				<File
 					RelativePath=".\Common\ProfileTime.cpp"
