@@ -221,7 +221,7 @@ void CProConnectHandle::open(ACE_HANDLE h, ACE_Message_Block&)
 	if(false == App_IPAccount::instance()->AddIP((string)m_addrRemote.get_host_addr(), m_addrRemote.get_port_number()))
 	{
 		OUR_DEBUG((LM_ERROR, "[CProConnectHandle::open]IP connect frequently.\n", m_addrRemote.get_host_addr()));
-		App_ForbiddenIP::instance()->AddTempIP(m_addrRemote.get_host_addr(), App_MainConfig::instance()->GetForbiddenTime());
+		App_ForbiddenIP::instance()->AddTempIP(m_addrRemote.get_host_addr(), App_MainConfig::instance()->GetIPAlert()->m_u4IPTimeout);
 		Close();
 		return;
 	}
@@ -234,7 +234,10 @@ void CProConnectHandle::open(ACE_HANDLE h, ACE_Message_Block&)
 	}
 
 	//初始化检查器
-	m_TimeConnectInfo.Init(App_MainConfig::instance()->GetValid(), App_MainConfig::instance()->GetValidPacketCount(), App_MainConfig::instance()->GetValidRecvSize());
+	m_TimeConnectInfo.Init(App_MainConfig::instance()->GetClientDataAlert()->m_u4RecvPacketCount, 
+		App_MainConfig::instance()->GetClientDataAlert()->m_u4RecvDataMax, 
+		App_MainConfig::instance()->GetClientDataAlert()->m_u4SendPacketCount,
+		App_MainConfig::instance()->GetClientDataAlert()->m_u4SendDataMax);
 
 	//写入连接日志
 	AppLogManager::instance()->WriteLog(LOG_SYSTEM_CONNECT, "Connection from [%s:%d] DisposeTime = %d.",m_addrRemote.get_host_addr(), m_addrRemote.get_port_number(), tvOpen.msec());
@@ -822,6 +825,19 @@ bool CProConnectHandle::PutSendPacket(ACE_Message_Block* pMbData)
 	}
 
 	//OUR_DEBUG ((LM_ERROR, "[CConnectHandler::PutSendPacket] Connectid=%d, m_nIOCount=%d!\n", GetConnectID(), m_nIOCount));
+	//统计发送数量
+	ACE_Date_Time dtNow;
+	if(false == m_TimeConnectInfo.SendCheck((uint8)dtNow.minute(), 1, pMbData->length()))
+	{
+		//超过了限定的阀值，需要关闭链接，并记录日志
+		AppLogManager::instance()->WriteLog(LOG_SYSTEM_CONNECTABNORMAL, "[TCP]IP=%s,Prot=%d,SendPacketCount=%d, SendSize=%d.", m_addrRemote.get_host_addr(), m_addrRemote.get_port_number(), m_TimeConnectInfo.m_u4SendPacketCount, m_TimeConnectInfo.m_u4SendSize);
+		//设置封禁时间
+		App_ForbiddenIP::instance()->AddTempIP(m_addrRemote.get_host_addr(), App_MainConfig::instance()->GetIPAlert()->m_u4IPTimeout);
+		OUR_DEBUG((LM_ERROR, "[CProConnectHandle::PutSendPacket] ConnectID = %d, Send Data is more than limit.\n", GetConnectID()));
+		//断开连接
+		Close(2);
+		return false;
+	}
 
 	//异步发送方法
 	if(NULL != pMbData)
@@ -832,7 +848,7 @@ bool CProConnectHandle::PutSendPacket(ACE_Message_Block* pMbData)
 		//比较水位标，是否超过一定数值，也就是说发快收慢的时候，如果超过一定数值，断开连接
 		if(m_u4ReadSendSize - m_u4SuccessSendSize >= App_MainConfig::instance()->GetSendDataMask())
 		{
-			OUR_DEBUG ((LM_ERROR, "[CConnectHandler::PutSendPacket]ConnectID = %d, SingleConnectMaxSendBuffer is more than(%d)!\n", GetConnectID(), m_u4ReadSendSize - m_u4SuccessSendSize));
+			OUR_DEBUG ((LM_ERROR, "[CProConnectHandle::PutSendPacket]ConnectID = %d, SingleConnectMaxSendBuffer is more than(%d)!\n", GetConnectID(), m_u4ReadSendSize - m_u4SuccessSendSize));
 			AppLogManager::instance()->WriteLog(LOG_SYSTEM_SENDQUEUEERROR, "]Connection from [%s:%d], SingleConnectMaxSendBuffer is more than(%d)!.", m_addrRemote.get_host_addr(), m_addrRemote.get_port_number(), m_u4ReadSendSize - m_u4SuccessSendSize);
 			pMbData->release();
 			//断开连接
@@ -843,7 +859,7 @@ bool CProConnectHandle::PutSendPacket(ACE_Message_Block* pMbData)
 		//OUR_DEBUG ((LM_ERROR, "[CConnectHandler::PutSendPacket] Connectid=%d, length=%d!\n", GetConnectID(), pMbData->length()));
 		if(0 != m_Writer.write(*pMbData, pMbData->length()))
 		{
-			OUR_DEBUG ((LM_ERROR, "[CConnectHandler::PutSendPacket] Connectid=%d mb=%d m_writer.write error(%d)!\n", GetConnectID(),  pMbData->length(), errno));
+			OUR_DEBUG ((LM_ERROR, "[CProConnectHandle::PutSendPacket] Connectid=%d mb=%d m_writer.write error(%d)!\n", GetConnectID(),  pMbData->length(), errno));
 			pMbData->release();
 			Close();
 			return false;
@@ -861,7 +877,7 @@ bool CProConnectHandle::PutSendPacket(ACE_Message_Block* pMbData)
 	}
 	else
 	{
-		OUR_DEBUG ((LM_ERROR,"[CConnectHandler::PutSendPacket] Connectid=%d mb is NULL!\n", GetConnectID()));
+		OUR_DEBUG ((LM_ERROR,"[CProConnectHandle::PutSendPacket] Connectid=%d mb is NULL!\n", GetConnectID()));
 		Close();
 		return false;
 	}
@@ -937,13 +953,13 @@ bool CProConnectHandle::CheckMessage()
 		m_ThreadWriteLock.release();
 
 		ACE_Date_Time dtNow;
-		if(false == m_TimeConnectInfo.Check((uint8)dtNow.minute(), 1, m_u4AllRecvSize))
+		if(false == m_TimeConnectInfo.RecvCheck((uint8)dtNow.minute(), 1, m_u4AllRecvSize))
 		{
 			//超过了限定的阀值，需要关闭链接，并记录日志
-			AppLogManager::instance()->WriteLog(LOG_SYSTEM_CONNECTABNORMAL, "[TCP]IP=%s,Prot=%d,PacketCount=%d, RecvSize=%d.", m_addrRemote.get_host_addr(), m_addrRemote.get_port_number(), m_TimeConnectInfo.m_u4PacketCount, m_TimeConnectInfo.m_u4RecvSize);
+			AppLogManager::instance()->WriteLog(LOG_SYSTEM_CONNECTABNORMAL, "[TCP]IP=%s,Prot=%d,PacketCount=%d, RecvSize=%d.", m_addrRemote.get_host_addr(), m_addrRemote.get_port_number(), m_TimeConnectInfo.m_u4RecvPacketCount, m_TimeConnectInfo.m_u4RecvSize);
 			App_PacketParsePool::instance()->Delete(m_pPacketParse);
 			//设置封禁时间
-			App_ForbiddenIP::instance()->AddTempIP(m_addrRemote.get_host_addr(), App_MainConfig::instance()->GetForbiddenTime());
+			App_ForbiddenIP::instance()->AddTempIP(m_addrRemote.get_host_addr(), App_MainConfig::instance()->GetIPAlert()->m_u4IPTimeout);
 			OUR_DEBUG((LM_ERROR, "[CProConnectHandle::CheckMessage] ConnectID = %d, PutMessageBlock is check invalid.\n", GetConnectID()));
 			return false;
 		}
@@ -1046,6 +1062,9 @@ CProConnectManager::CProConnectManager(void)
 	m_szError[0]         = '\0';
 	m_blRun              = false;
 
+	m_u4TimeConnect      = 0;
+	m_u4TimeDisConnect   = 0;
+
 	m_tvCheckConnect     = ACE_OS::gettimeofday();
 
 	m_SendMessagePool.Init();
@@ -1070,6 +1089,8 @@ void CProConnectManager::CloseAll()
 		{
 			pConnectHandler->Close();
 		}
+
+		m_u4TimeDisConnect++;
 	}
 
 	m_mapConnectManager.clear();
@@ -1085,6 +1106,11 @@ bool CProConnectManager::Close(uint32 u4ConnectID)
 	if(f != m_mapConnectManager.end())
 	{
 		m_mapConnectManager.erase(f);
+		m_u4TimeDisConnect++;
+
+		//加入链接统计功能
+		App_ConnectAccount::instance()->AddDisConnect();
+
 		return true;
 	}
 	else
@@ -1107,6 +1133,10 @@ bool CProConnectManager::CloseConnect(uint32 u4ConnectID)
 		if(pConnectHandler != NULL)
 		{
 			pConnectHandler->ServerClose();
+			m_u4TimeDisConnect++;
+
+			//加入链接统计功能
+			App_ConnectAccount::instance()->AddDisConnect();
 		}
 		return true;
 	}
@@ -1138,7 +1168,11 @@ bool CProConnectManager::AddConnect(uint32 u4ConnectID, CProConnectHandle* pConn
 	pConnectHandler->SetConnectID(u4ConnectID);
 	//加入map
 	m_mapConnectManager.insert(mapConnectManager::value_type(u4ConnectID, pConnectHandler));
+	m_u4TimeConnect++;
 	m_ThreadWriteLock.release();
+
+	//加入链接统计功能
+	App_ConnectAccount::instance()->AddConnect();
 
 	return true;
 }
@@ -1349,8 +1383,25 @@ int CProConnectManager::handle_timeout(const ACE_Time_Value &tv, const void *arg
 	ACE_Time_Value tvInterval(tvNow - m_tvCheckConnect);
 	if(tvInterval.sec() >= MAX_MSG_HANDLETIME)
 	{
-		AppLogManager::instance()->WriteLog(LOG_SYSTEM_CONNECT, "[CProConnectManager]CurrConnectCount = %d.", GetCount());
-		m_tvCheckConnect = tvNow;
+		AppLogManager::instance()->WriteLog(LOG_SYSTEM_CONNECT, "[CProConnectManager]CurrConnectCount = %d,TimeInterval=%d, TimeConnect=%d, TimeDisConnect=%d.", 
+			GetCount(), MAX_MSG_HANDLETIME, m_u4TimeConnect, m_u4TimeDisConnect);
+
+		//重置单位时间连接数和断开连接数
+		m_u4TimeConnect    = 0;
+		m_u4TimeDisConnect = 0;
+		m_tvCheckConnect   = tvNow;
+	}
+
+	//检测单位时间连接数是否超越阀值
+	if(App_ConnectAccount::instance()->CheckConnectCount() == false)
+	{
+		AppLogManager::instance()->WriteLog(LOG_SYSTEM_CONNECT, "[CProConnectManager]CheckConnectCount is more than limit.");
+	}
+
+	//检测单位时间连接断开数是否超越阀值
+	if(App_ConnectAccount::instance()->CheckDisConnectCount() == false)
+	{
+		AppLogManager::instance()->WriteLog(LOG_SYSTEM_CONNECT, "[CProConnectManager]CheckDisConnectCount is more than limit.");
 	}
 
 	return 0;

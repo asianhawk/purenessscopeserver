@@ -29,6 +29,7 @@ using namespace std;
 #endif
 
 #define MAINCONFIG            "main.xml"
+#define ALERTCONFIG           "alert.xml"
 #define FORBIDDENIP_FILE      "forbiddenIP.xml"
 
 #define MAX_BUFF_9    9
