@@ -60,6 +60,7 @@ int CBaseCommand::DoMessage(IMessage* pMessage, bool& bDeleteFlag)
     uint64     u8ClientTime = 0;
 
     //OUR_DEBUG((LM_INFO, "[CBaseCommand::DoMessage] CommandID = %d", COMMAND_BASE));
+	m_pServerObject->GetLogManager()->WriteToMail(LOG_SYSTEM, 1, "²âÊÔÓÊ¼þ", "²âÊÔ");
 
     IBuffPacket* pBodyPacket = m_pServerObject->GetPacketManager()->Create();
     if(NULL == pBodyPacket)
