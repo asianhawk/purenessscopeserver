@@ -162,7 +162,7 @@ int authEmail(const ACE_HANDLE socketFd, const unsigned char *mailAddr, const un
 
 	/* Send: AUTH LOGIN */
 	char szLOGIN[50] = {'\0'};
-	ACE_OS::sprintf(szLOGIN, "EHLO Here\r\n");
+	ACE_OS::sprintf(szLOGIN, "AUTH LOGIN\r\n");
 	safeWrite(socketFd, szLOGIN, ACE_OS::strlen("AUTH LOGIN\r\n"));
 
 	/* Recv: AUTH LOGIN */
