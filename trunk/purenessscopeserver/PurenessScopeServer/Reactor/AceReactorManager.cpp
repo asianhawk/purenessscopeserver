@@ -229,28 +229,15 @@ bool CAceReactor::Start()
 {
     OUR_DEBUG((LM_INFO, "[CAceReactor::Start] ReactorID = [%d] ReactorType = [%d] nThreadCount = [%d] Start!\n", GetReactorID(), m_nReactorType, m_nThreadCount));
 
-    if (m_nThreadCount > 0)
+    if (0 == open())
     {
-        if (0 == open())
-        {
-            return true;
-        }
-        else
-        {
-            return false;
-        }
+        return true;
     }
     else
     {
-        if (0 == svc())
-        {
-            return true;
-        }
-        else
-        {
-            return false;
-        }
+        return false;
     }
+
 }
 
 bool CAceReactor::Stop()
@@ -333,10 +320,12 @@ bool CAceReactorManager::AddNewReactor(int nReactorID, int nReactorType, int nTh
         return false;
     }
 
+		/*
     if (nReactorID == REACTOR_CLIENTDEFINE)
     {
         nThreadCount = 0;
     }
+    */
 
     pAceReactor->SetReactorID((uint32)nReactorID);
     bool blState = pAceReactor->Init(nReactorType, nThreadCount, nMaxHandleCount);
@@ -371,12 +360,12 @@ bool CAceReactorManager::StartReactor()
     //先启动非总的Rector
     for (mapAceReactor::iterator b = m_mapAceReactor.begin(); b != m_mapAceReactor.end(); b++)
     {
-        int nReactorID           = (int)b->first;
+        //int nReactorID           = (int)b->first;
         CAceReactor* pAceReactor = (CAceReactor*)b->second;
 
-        if (NULL != pAceReactor && nReactorID != REACTOR_CLIENTDEFINE)
+        if (NULL != pAceReactor)
         {
-            pAceReactor->Start();
+        		pAceReactor->Start();
         }
     }
 
@@ -408,7 +397,9 @@ bool CAceReactorManager::StopReactor()
 {
     for (mapAceReactor::iterator b = m_mapAceReactor.begin(); b != m_mapAceReactor.end(); b++)
     {
+    		int nReactorID           = (int)b->first;
         CAceReactor* pAceReactor = (CAceReactor*)b->second;
+        OUR_DEBUG((LM_ERROR, "[CAceReactorManager::StopReactor]nReactorID=%d.\n", nReactorID));
 
         if (NULL != pAceReactor)
         {
