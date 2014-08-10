@@ -90,10 +90,8 @@ int CBaseCommand::Do_Base(IMessage* pMessage)
 	_PacketInfo BodyPacket;
 	pMessage->GetPacketBody(BodyPacket);
 
-	pBodyPacket->WriteStream(BodyPacket.m_pData, BodyPacket.m_nDataLen);
+	//pBodyPacket->WriteStream(BodyPacket.m_pData, BodyPacket.m_nDataLen);
 
-	//(*pBodyPacket) >> u2CommandID;
-	//(*pBodyPacket) >> u8ClientTime;
 
 	//测试记录二进制日志
 	//m_pServerObject->GetLogManager()->WriteLogBinary(LOG_SYSTEM, BodyPacket.m_pData, BodyPacket.m_nDataLen);
@@ -113,7 +111,12 @@ int CBaseCommand::Do_Base(IMessage* pMessage)
 	if(NULL != m_pServerObject->GetConnectManager())
 	{
 		//发送全部数据
-		m_pServerObject->GetConnectManager()->PostMessage(pMessage->GetMessageBase()->m_u4ConnectID, pResponsesPacket, SENDMESSAGE_JAMPNOMAL, u2PostCommandID, PACKET_SEND_IMMEDIATLY, PACKET_IS_FRAMEWORK_RECYC);
+		m_pServerObject->GetConnectManager()->PostMessage(pMessage->GetMessageBase()->m_u4ConnectID, 
+			pResponsesPacket, 
+			SENDMESSAGE_JAMPNOMAL, 
+			u2PostCommandID, 
+			PACKET_SEND_IMMEDIATLY, 
+			PACKET_IS_FRAMEWORK_RECYC);
 	}
 	else
 	{
