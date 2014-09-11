@@ -5,18 +5,10 @@
 #include "ace/SOCK_Acceptor.h"
 #include "ace/INET_Addr.h"
 #include "ConnectHandler.h"
-#include "ConsoleHandler.h"
 
 #include <vector>
 
 using namespace std;
-
-//用于后台管理接口
-class ConnectConsoleAcceptor : public ACE_Acceptor<CConsoleHandler, ACE_SOCK_ACCEPTOR>
-{
-protected:
-	virtual int make_svc_handler(CConsoleHandler*& sh);
-};
 
 //用于普通客户端
 class ConnectAcceptor : public ACE_Acceptor<CConnectHandler, ACE_SOCK_ACCEPTOR>
@@ -32,6 +24,12 @@ public:
 		int flags,
 		int backlog);
 
+	char*  GetListenIP();
+	uint32 GetListenPort();
+
+private:
+	char   m_szListenIP[MAX_BUFF_20];
+	uint32 m_u4Port;
 };
 
 class CConnectAcceptorManager
@@ -44,7 +42,11 @@ public:
 	void Close();
 	int GetCount();
 	ConnectAcceptor* GetConnectAcceptor(int nIndex);
+	ConnectAcceptor* GetNewConnectAcceptor();
 	const char* GetError();
+
+	bool Close(const char* pIP, uint32 n4Port);
+	bool CheckIPInfo(const char* pIP, uint32 n4Port);
 
 private:
 	typedef vector<ConnectAcceptor*> vecConnectAcceptor;
@@ -54,5 +56,5 @@ private:
 };
 
 
-
+typedef ACE_Singleton<CConnectAcceptorManager, ACE_Null_Mutex> App_ConnectAcceptorManager;
 #endif

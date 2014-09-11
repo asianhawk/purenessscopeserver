@@ -12,6 +12,7 @@
 #include "MainConfig.h"
 #include "ForbiddenIP.h"
 #include "ConnectAccept.h"
+#include "ConsoleAccept.h"
 #include "AceReactorManager.h"
 #include "MessageService.h"
 #include "SigHandle.h"
@@ -24,6 +25,7 @@
 #include "ReUDPManager.h"
 #include "CommandAccount.h"
 #include "ModuleMessageManager.h"
+#include "ControlListen.h"
 
 class Frame_Logging_Strategy;
 
@@ -38,7 +40,7 @@ public:
 	bool Close();
 
 private:
-	CConnectAcceptorManager m_ConnectAcceptorManager;    //普通客户端链接
+	//CConnectAcceptorManager m_ConnectAcceptorManager;    //普通客户端链接
 	ConnectConsoleAcceptor  m_ConnectConsoleAcceptor;    //后台管理链接
 	CFileLogger*            m_pFileLogger;               //日志类型
 	Frame_Logging_Strategy* m_pFrameLoggingStrategy;   //输出对象

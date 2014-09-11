@@ -39,9 +39,9 @@ bool CServerManager::Init()
 	App_ForbiddenIP::instance()->Init(FORBIDDENIP_FILE);
 
 	//初始化连接器
-	if (!m_ConnectAcceptorManager.InitConnectAcceptor(nServerPortCount))
+	if (!App_ConnectAcceptorManager::instance()->InitConnectAcceptor(nServerPortCount))
 	{
-		OUR_DEBUG((LM_INFO, "[CServerManager::Init]%s.\n", m_ConnectAcceptorManager.GetError()));
+		OUR_DEBUG((LM_INFO, "[CServerManager::Init]%s.\n", App_ConnectAcceptorManager::instance()->GetError()));
 		return false;
 	}
 
@@ -153,7 +153,7 @@ bool CServerManager::Init()
 				pCommandAlert->m_u4CommandCount,
 				pCommandAlert->m_u4MailID);
 		}
-	}	
+	}
 
 	//初始化链接管理器
 	App_ConnectManager::instance()->Init(App_MainConfig::instance()->GetSendQueueCount());
@@ -168,6 +168,7 @@ bool CServerManager::Init()
 	App_ServerObject::instance()->SetUDPConnectManager((IUDPConnectManager*)App_ReUDPManager::instance());
 	App_ServerObject::instance()->SetTimerManager((ActiveTimer*)App_TimerManager::instance());
 	App_ServerObject::instance()->SetModuleMessageManager((IModuleMessageManager*)App_ModuleMessageManager::instance());
+	App_ServerObject::instance()->SetControlListen((IControlListen*)App_ControlListen::instance());
 	return true;
 }
 
@@ -211,7 +212,7 @@ bool CServerManager::Start()
 		}
 
 		//得到接收器
-		ConnectAcceptor* pConnectAcceptor = m_ConnectAcceptorManager.GetConnectAcceptor(i);
+		ConnectAcceptor* pConnectAcceptor = App_ConnectAcceptorManager::instance()->GetConnectAcceptor(i);
 
 		if (NULL == pConnectAcceptor)
 		{
@@ -366,7 +367,7 @@ bool CServerManager::Start()
 bool CServerManager::Close()
 {
 	OUR_DEBUG((LM_INFO, "[CServerManager::Close]Close begin....\n"));
-	m_ConnectAcceptorManager.Close();
+	App_ConnectAcceptorManager::instance()->Close();
 	m_ConnectConsoleAcceptor.close();
 	OUR_DEBUG((LM_INFO, "[CServerManager::Close]Close App_TimerManager OK.\n"));
 	App_TimerManager::instance()->deactivate();
