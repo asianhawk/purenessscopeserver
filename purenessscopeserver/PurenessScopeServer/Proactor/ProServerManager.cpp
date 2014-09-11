@@ -39,9 +39,9 @@ bool CProServerManager::Init()
 	App_ForbiddenIP::instance()->Init(FORBIDDENIP_FILE);
 
 	//初始化连接器
-	if(!m_ConnectAcceptorManager.InitConnectAcceptor(nServerPortCount))
+	if(!App_ProConnectAcceptManager::instance()->InitConnectAcceptor(nServerPortCount))
 	{
-		OUR_DEBUG((LM_INFO, "[CProServerManager::Init]%s.\n", m_ConnectAcceptorManager.GetError()));
+		OUR_DEBUG((LM_INFO, "[CProServerManager::Init]%s.\n", App_ProConnectAcceptManager::instance()->GetError()));
 		return false;
 	}
 
@@ -150,6 +150,7 @@ bool CProServerManager::Init()
 	App_ServerObject::instance()->SetUDPConnectManager((IUDPConnectManager* )App_ProUDPManager::instance());
 	App_ServerObject::instance()->SetTimerManager((ActiveTimer* )App_TimerManager::instance());
 	App_ServerObject::instance()->SetModuleMessageManager((IModuleMessageManager* )App_ModuleMessageManager::instance());
+	App_ServerObject::instance()->SetControlListen((IControlListen* )App_ProControlListen::instance());
 
 	return true;
 }
@@ -195,13 +196,16 @@ bool CProServerManager::Start()
 		}
 
 		//得到接收器
-		ProConnectAcceptor* pConnectAcceptor = m_ConnectAcceptorManager.GetConnectAcceptor(i);
+		ProConnectAcceptor* pConnectAcceptor = App_ProConnectAcceptManager::instance()->GetConnectAcceptor(i);
 
 		if(NULL == pConnectAcceptor)
 		{
 			OUR_DEBUG((LM_INFO, "[CProServerManager::Start]pConnectAcceptor[%d] is NULL.\n", i));
 			return false;
 		}
+
+		//设置监听IP信息
+		pConnectAcceptor->SetListenInfo(pServerInfo->m_szServerIP, (uint32)pServerInfo->m_nPort);
 
 		ACE_Proactor* pProactor = App_ProactorManager::instance()->GetAce_Proactor(REACTOR_CLIENTDEFINE);
 		if(NULL == pProactor)
@@ -370,7 +374,7 @@ bool CProServerManager::Start()
 bool CProServerManager::Close()
 {
 	OUR_DEBUG((LM_INFO, "[CProServerManager::Close]Close begin....\n"));
-	m_ConnectAcceptorManager.Close();
+	App_ProConnectAcceptManager::instance()->Close();
 	m_ProConsoleConnectAcceptor.cancel();
 	OUR_DEBUG((LM_INFO, "[CProServerManager::Close]Close App_TimerManager OK.\n"));
 	App_TimerManager::instance()->deactivate();

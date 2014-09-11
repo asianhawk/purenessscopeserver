@@ -322,6 +322,21 @@ int CConsoleMessage::ParseCommand(const char* pCommand, IBuffPacket* pBuffPacket
 		DoMessage_SetMaxConnectCount(CommandInfo, pBuffPacket);
 		return CONSOLE_MESSAGE_SUCCESS;
 	}
+	else if(ACE_OS::strcmp(CommandInfo.m_szCommandTitle, CONSOLEMESSAGE_ADD_LISTEN) == 0)
+	{
+		DoMessage_AddListen(CommandInfo, pBuffPacket);
+		return CONSOLE_MESSAGE_SUCCESS;
+	}
+	else if(ACE_OS::strcmp(CommandInfo.m_szCommandTitle, CONSOLEMESSAGE_DEL_LISTEN) == 0)
+	{
+		DoMessage_DelListen(CommandInfo, pBuffPacket);
+		return CONSOLE_MESSAGE_SUCCESS;
+	}
+	else if(ACE_OS::strcmp(CommandInfo.m_szCommandTitle, CONSOLEMESSATE_SHOW_LISTEN) == 0)
+	{
+		DoMessage_ShowListen(CommandInfo, pBuffPacket);
+		return CONSOLE_MESSAGE_SUCCESS;
+	}
 	else
 	{
 		return CONSOLE_MESSAGE_FAIL;
@@ -565,6 +580,48 @@ bool CConsoleMessage::GetConnectServerID(const char* pCommand, int& nServerID)
 
 	nServerID = ACE_OS::atoi(szTempData);
 
+	return true;
+}
+
+bool CConsoleMessage::GetListenInfo(const char* pCommand, _ListenInfo& objListenInfo)
+{
+	char szTempData[MAX_BUFF_100] = {'\0'};
+
+	//获得IP地址
+	char* pPosBegin = (char* )ACE_OS::strstr(pCommand, "-i ");
+	char* pPosEnd   = (char* )ACE_OS::strstr(pPosBegin + 3, " ");
+	int nLen = (int)(pPosEnd - pPosBegin - 3);
+	if(nLen >= MAX_BUFF_100 || nLen < 0)
+	{
+		return false;
+	}
+	ACE_OS::memcpy(szTempData, pPosBegin + 3, nLen);
+	szTempData[nLen] = '\0';
+	sprintf_safe(objListenInfo.m_szListenIP, 20, szTempData);
+
+	//获得Port
+	pPosBegin = (char* )ACE_OS::strstr(pCommand, "-p ");
+	pPosEnd   = (char* )ACE_OS::strstr(pPosBegin + 3, " ");
+	nLen = (int)(pPosEnd - pPosBegin - 3);
+	if(nLen >= MAX_BUFF_100 || nLen < 0)
+	{
+		return false;
+	}
+	ACE_OS::memcpy(szTempData, pPosBegin + 3, nLen);
+	szTempData[nLen] = '\0';
+	objListenInfo.m_u4Port = ACE_OS::atoi(szTempData);
+
+	//获得IP类型
+	pPosBegin = (char* )ACE_OS::strstr(pCommand, "-t ");
+	pPosEnd   = (char* )ACE_OS::strstr(pPosBegin + 3, " ");
+	nLen = (int)(pPosEnd - pPosBegin - 3);
+	if(nLen >= MAX_BUFF_100 || nLen < 0)
+	{
+		return false;
+	}
+	ACE_OS::memcpy(szTempData, pPosBegin + 3, nLen);
+	szTempData[nLen] = '\0';
+	objListenInfo.m_u1IPType = ACE_OS::atoi(szTempData);
 	return true;
 }
 
@@ -1880,6 +1937,119 @@ bool CConsoleMessage::DoMessage_SetMaxConnectCount( _CommandInfo& CommandInfo, I
 	}
 
 	(*pBuffPacket) << (uint32)0;
+
+	return true;
+}
+
+bool CConsoleMessage::DoMessage_AddListen(_CommandInfo& CommandInfo, IBuffPacket* pBuffPacket)
+{
+	_ListenInfo objListenInfo;
+
+	if(GetListenInfo(CommandInfo.m_szCommandExp, objListenInfo) == true)
+	{
+#ifdef WIN32
+		bool blState = App_ProControlListen::instance()->AddListen(objListenInfo.m_szListenIP,
+			objListenInfo.m_u4Port,
+			objListenInfo.m_u1IPType);
+
+		if(true == blState)
+		{
+			(*pBuffPacket) << (uint32)0;
+		}
+		else
+		{
+			(*pBuffPacket) << (uint32)1;
+		}
+#else
+		bool blState = App_ControlListen::instance()->AddListen(objListenInfo.m_szListenIP,
+			objListenInfo.m_u4Port,
+			objListenInfo.m_u1IPType);
+
+		if(true == blState)
+		{
+			(*pBuffPacket) << (uint32)0;
+		}
+		else
+		{
+			(*pBuffPacket) << (uint32)1;
+		}
+#endif
+	}
+
+	return true;
+}
+
+bool CConsoleMessage::DoMessage_DelListen( _CommandInfo& CommandInfo, IBuffPacket* pBuffPacket )
+{
+	_ListenInfo objListenInfo;
+
+	if(GetListenInfo(CommandInfo.m_szCommandExp, objListenInfo) == true)
+	{
+#ifdef WIN32
+		bool blState = App_ProControlListen::instance()->DelListen(objListenInfo.m_szListenIP,
+			objListenInfo.m_u4Port);
+
+		if(true == blState)
+		{
+			(*pBuffPacket) << (uint32)0;
+		}
+		else
+		{
+			(*pBuffPacket) << (uint32)1;
+		}
+#else
+		bool blState = App_ControlListen::instance()->DelListen(objListenInfo.m_szListenIP,
+			objListenInfo.m_u4Port);
+
+		if(true == blState)
+		{
+			(*pBuffPacket) << (uint32)0;
+		}
+		else
+		{
+			(*pBuffPacket) << (uint32)1;
+		}
+#endif
+	}
+
+	return true;
+}
+
+bool CConsoleMessage::DoMessage_ShowListen( _CommandInfo& CommandInfo, IBuffPacket* pBuffPacket )
+{
+	if(ACE_OS::strcmp(CommandInfo.m_szCommandExp, "-a") == 0)
+	{
+#ifdef WIN32
+		vecControlInfo objControlInfo;
+		App_ProControlListen::instance()->ShowListen(objControlInfo);
+
+		(*pBuffPacket) << (uint32)objControlInfo.size();
+		for(uint32 i = 0; i < (uint32)objControlInfo.size(); i++)
+		{
+			VCHARS_STR strIP;
+			strIP.text  = objControlInfo[i].m_szListenIP;
+			strIP.u1Len = (uint8)ACE_OS::strlen(objControlInfo[i].m_szListenIP);
+
+			(*pBuffPacket) << strIP;
+			(*pBuffPacket) << objControlInfo[i].m_u4Port;
+		}
+
+#else
+		vecControlInfo objControlInfo;
+		App_ControlListen::instance()->ShowListen(objControlInfo);
+
+		(*pBuffPacket) << (uint32)objControlInfo.size();
+		for(uint32 i = 0; i < (uint32)objControlInfo.size(); i++)
+		{
+			VCHARS_STR strIP;
+			strIP.text  = objControlInfo[i].m_szListenIP;
+			strIP.u1Len = (uint8)ACE_OS::strlen(objControlInfo[i].m_szListenIP);
+
+			(*pBuffPacket) << strIP;
+			(*pBuffPacket) << objControlInfo[i].m_u4Port;
+		}	
+#endif
+	}
 
 	return true;
 }

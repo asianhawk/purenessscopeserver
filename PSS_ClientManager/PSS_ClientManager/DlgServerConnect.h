@@ -34,8 +34,17 @@ protected:
 	DECLARE_MESSAGE_MAP()
 public:
   CListCtrl m_lcServerConnect;
-  afx_msg void OnBnClickedButton2();
-  virtual BOOL OnInitDialog();
   CEdit m_txtServerID;
+  CListCtrl m_lcServerListen;
+  CIPAddressCtrl m_txtListenIP;
+  CEdit m_txtListenPort;
+  CComboBox m_cbListenType;
+
+  virtual BOOL OnInitDialog();
+
+  afx_msg void OnBnClickedButton2();
   afx_msg void OnBnClickedButton1();
+  afx_msg void OnBnClickedButton8();
+  afx_msg void OnBnClickedButton10();
+  afx_msg void OnBnClickedButton13();
 };
