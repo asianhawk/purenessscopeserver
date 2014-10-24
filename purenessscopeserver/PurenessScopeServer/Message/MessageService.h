@@ -18,6 +18,7 @@
 #include "TimerManager.h"
 #include "RandomNumber.h"
 #include "WorkThreadAI.h"
+#include "CommandAccount.h"
 
 #ifdef WIN32
 #include "ProConnectHandle.h"
@@ -29,6 +30,13 @@
 
 //AI配置信息表
 typedef vector<_WorkThreadAIInfo> vecWorkThreadAIInfo;
+
+enum MESSAGE_SERVICE_THREAD_STATE
+{
+	THREAD_RUN = 0,               //线程正常运行
+	THREAD_MODULE_UNLOAD,         //模块重载，需要线程支持此功能 
+	THREAD_STOP,                  //线程停止 
+};
 
 class CMessageService : public ACE_Task<ACE_MT_SYNCH>
 {
@@ -55,6 +63,16 @@ public:
 	void GetAITF(vecCommandTimeout& objTimeout);            //得到所有的AI封禁数据包信息
 	void SetAI(uint8 u1AI, uint32 u4DisposeTime, uint32 u4WTCheckTime, uint32 u4WTStopTime);  //设置AI
 
+	_CommandData* GetCommandData(uint16 u2CommandID);                      //得到命令相关信息
+	_CommandFlowAccount GetCommandFlowAccount();                           //得到流量相关信息
+	void GetCommandTimeOut(vecCommandTimeOut& CommandTimeOutList);         //得到所有超时命令
+	void GetCommandAlertData(vecCommandAlertData& CommandAlertDataList);   //得到所有超过告警阀值的命令 
+	void ClearCommandTimeOut();                                            //清除所有的超时告警
+	void SaveCommandDataLog();                                             //存储统计日志
+	void SetThreadState(MESSAGE_SERVICE_THREAD_STATE emState);             //设置线程状态
+	MESSAGE_SERVICE_THREAD_STATE GetThreadState();                         //得到当前线程状态
+	uint32 GetStepState();                                                 //得到当前步数相关信息
+
 	uint32 GetThreadID();
 
 private:
@@ -74,8 +92,11 @@ private:
 	uint32                         m_u4Count;             //消息队列接受个数
 	uint32                         m_u4WorkQueuePutTime;  //入队超时时间
 
+	MESSAGE_SERVICE_THREAD_STATE   m_emThreadState;       //当前工作线程状态
+
 	_ThreadInfo                    m_ThreadInfo;          //当前线程信息
 	CWorkThreadAI                  m_WorkThreadAI;        //线程自我监控的AI逻辑  
+	CCommandAccount                m_CommandAccount;      //当前线程命令统计数据  
 };
 
 //add by freeeyes
@@ -101,6 +122,16 @@ public:
 	void GetAITO(vecCommandTimeout& objTimeout);                                              //得到所有的AI超时数据包信息
 	void GetAITF(vecCommandTimeout& objTimeout);                                              //得到所有的AI封禁数据包信息
 	void SetAI(uint8 u1AI, uint32 u4DisposeTime, uint32 u4WTCheckTime, uint32 u4WTStopTime);  //设置AI
+
+	void GetCommandData(uint16 u2CommandID, _CommandData& objCommandData);                    //获得指定命令统计信息
+	void GetFlowInfo(_CommandFlowAccount& objCommandFlowAccount);                             //获得指定流量相关信息
+
+	void GetCommandTimeOut(vecCommandTimeOut& CommandTimeOutList);                            //得到所有超时命令
+	void GetCommandAlertData(vecCommandAlertData& CommandAlertDataList);                      //得到所有超过告警阀值的命令 
+	void ClearCommandTimeOut();                                                               //清理所有的超时告警
+	void SaveCommandDataLog();                                                                //存储统计日志
+
+	bool UnloadModule(const char* pModuleName, uint8 u1State);                                //卸载或者重载指定的模块名
 
 private:
 	bool StartTimer();
