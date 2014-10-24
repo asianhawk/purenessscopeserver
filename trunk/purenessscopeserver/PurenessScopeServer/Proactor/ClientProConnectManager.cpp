@@ -83,6 +83,9 @@ bool CProactorClientInfo::Run(bool blIsReadly, EM_Server_Connect_State emState)
 			OUR_DEBUG((LM_ERROR, "[CProactorClientInfo::Run]m_pAsynchConnect open error(%d).\n", ACE_OS::last_error()));
 			return false;
 		}
+
+		ACE_Time_Value tvSleep(0, 10000);
+		ACE_OS::sleep(tvSleep);
 	}
 
 	return true;
@@ -157,10 +160,10 @@ CProConnectClient* CProactorClientInfo::GetProConnectClient()
 
 IClientMessage* CProactorClientInfo::GetClientMessage()
 {
-	//这里增加是否是连接重练的判定
-	if(m_emConnectState == SERVER_CONNECT_RECONNECT && NULL != m_pClientMessage)
+	//这里增加是否是连接重练的判定以及是否是第一次连接的回调
+	if((m_emConnectState == SERVER_CONNECT_RECONNECT || m_emConnectState == SERVER_CONNECT_FIRST) && NULL != m_pClientMessage)
 	{
-		//通知上层某一个连接已经恢复
+		//通知上层某一个连接已经恢复或者已建立
 		m_pClientMessage->ReConnect(m_nServerID);
 	}
 

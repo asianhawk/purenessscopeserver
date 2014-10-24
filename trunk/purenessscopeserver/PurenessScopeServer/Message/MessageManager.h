@@ -4,7 +4,6 @@
 #include "IMessageManager.h"
 #include "Message.h"
 #include "LoadModule.h"
-#include "CommandAccount.h"
 
 //这里修改一下，如果一个命令对应一个模块是有限制的。
 //这里改为一个信令可以对应任意数量的处理模块，这样就比较好了。
@@ -39,7 +38,6 @@ struct _ClientCommandInfo
 struct _ModuleClient
 {
 	vector<_ClientCommandInfo*> m_vecClientCommandInfo;    //一个模块所有对应命令列表
-	uint8                       m_u1ModuleState;           //模块状态，0为正常，1为正在卸载中
 };
 
 //管理工具需要此数据结构，用于回传计算模块信息
@@ -139,13 +137,13 @@ public:
 	CMessageManager(void);
 	~CMessageManager(void);
 
-	bool DoMessage(ACE_Time_Value& tvBegin, IMessage* pMessage, uint16& u2CommandID, uint32& u4TimeCost);   //执行命令
+	bool DoMessage(ACE_Time_Value& tvBegin, IMessage* pMessage, uint16& u2CommandID, uint32& u4TimeCost, uint16& u2Count);   //执行命令
 	void Close();
 
 	bool AddClientCommand(uint16 u2CommandID, CClientCommand* pClientCommand, const char* pModuleName);   //注册命令
 	bool DelClientCommand(uint16 u2CommandID, CClientCommand* pClientCommand);                            //卸载命令
  
-	bool UnloadModuleCommand(const char* pModuleName, uint8 u1State);  //卸载指定模块事件
+	bool UnloadModuleCommand(const char* pModuleName, uint8 u1State);  //卸载指定模块事件，u1State= 1 卸载，2 重载
 
 	int  GetCommandCount();                                            //得到当前注册命令的个数
 	CClientCommandList* GetClientCommandList(uint16 u2CommandID);      //得到当前命令的执行列表
@@ -154,9 +152,6 @@ public:
 
 	virtual uint32 GetWorkThreadCount();
 	virtual uint32 GetWorkThreadByIndex(uint32 u4Index);
-
-private:
-	bool CloseCommandInfo(const char* pModuleName);
 
 private:
 	typedef map<uint16, CClientCommandList*> mapClientCommand;
