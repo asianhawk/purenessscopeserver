@@ -152,16 +152,13 @@ bool CServerManager::Init()
 	App_ServerObject::instance()->SetTimerManager((ActiveTimer*)App_TimerManager::instance());
 	App_ServerObject::instance()->SetModuleMessageManager((IModuleMessageManager*)App_ModuleMessageManager::instance());
 	App_ServerObject::instance()->SetControlListen((IControlListen*)App_ControlListen::instance());
+	App_ServerObject::instance()->SetModuleInfo((IModuleInfo* )App_ModuleLoader::instance());
+
 	return true;
 }
 
 bool CServerManager::Start()
 {
-	if (0 != App_SigHandler::instance()->RegisterSignal(ACE_Reactor::instance()))
-	{
-		return false;
-	}	
-
 	//启动TCP监听
 	int nServerPortCount = App_MainConfig::instance()->GetServerPortCount();
 
@@ -318,13 +315,41 @@ bool CServerManager::Start()
 	App_ClientReConnectManager::instance()->Init(App_ReactorManager::instance()->GetAce_Reactor(REACTOR_POSTDEFINE));
 	App_ClientReConnectManager::instance()->StartConnectTask(App_MainConfig::instance()->GetConnectServerCheck());
 
-	//初始化模块加载，因为这里可能包含了中间服务器连接加载
-	bool blState = App_ModuleLoader::instance()->LoadModule(App_MainConfig::instance()->GetModulePath(), App_MainConfig::instance()->GetModuleString());
-
-	if (false == blState)
+	//启动所有反应器
+	if (!App_ReactorManager::instance()->StartReactor())
 	{
-		OUR_DEBUG((LM_INFO, "[CServerManager::Start]LoadModule is error.\n"));
+		OUR_DEBUG((LM_INFO, "[CServerManager::Start]App_ReactorManager::instance()->StartReactor is error.\n"));
 		return false;
+	}    
+
+	//初始化模块加载，因为这里可能包含了中间服务器连接加载
+	bool blState = false;
+	if(ACE_OS::strlen(App_MainConfig::instance()->GetModuleString()) > 0)
+	{
+		blState = App_ModuleLoader::instance()->LoadModule(App_MainConfig::instance()->GetModulePath(), App_MainConfig::instance()->GetModuleString());
+		if (false == blState)
+		{
+			OUR_DEBUG((LM_INFO, "[CServerManager::Start]LoadModule is error.\n"));
+			return false;
+		}
+	}
+
+	uint16 u2ModuleVCount = App_MainConfig::instance()->GetModuleInfoCount();
+	for(uint16 i = 0; i < u2ModuleVCount; i++)
+	{
+		_ModuleConfig* pModuleConfig = App_MainConfig::instance()->GetModuleInfo(i);
+		if(NULL != pModuleConfig)
+		{
+			blState = App_ModuleLoader::instance()->LoadModule(pModuleConfig->m_szModulePath, 
+				pModuleConfig->m_szModuleName, 
+				pModuleConfig->m_szModuleParam);
+
+			if(false == blState)
+			{
+				OUR_DEBUG((LM_INFO, "[CProServerManager::Start]LoadModule (%s)is error.\n", pModuleConfig->m_szModuleName));
+				return false;
+			}
+		}
 	}
 
 	//开始消息处理线程
@@ -332,14 +357,6 @@ bool CServerManager::Start()
 	//开始启动链接发送定时器
 	App_ConnectManager::instance()->StartTimer();
 
-	//启动所有Reactor对象
-	if (!App_ReactorManager::instance()->StartReactor())
-	{
-		OUR_DEBUG((LM_INFO, "[CServerManager::Start]App_ReactorManager::instance()->StartReactor is error.\n"));
-		return false;
-	}    
-
-	//最后启动反应器
 	OUR_DEBUG((LM_INFO, "[CServerManager::Start]App_ReactorManager::instance()->StartReactorDefault begin....\n"));
 
 	ACE_Thread_Manager::instance()->wait();

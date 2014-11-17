@@ -67,7 +67,7 @@ bool CReactorClientInfo::Run(bool blIsReady, EM_Server_Connect_State emState)
 	m_pConnectClient->reactor(m_pReactor);
 	m_emConnectState = emState;
 
-	if (blIsReady == true)
+	if (blIsReady == true && SERVER_CONNECT_FIRST != m_emConnectState && SERVER_CONNECT_RECONNECT != m_emConnectState)
 	{
 		if (m_pReactorConnect->connect(m_pConnectClient, m_AddrServer, ACE_Synch_Options::defaults, m_AddrLocal) == -1)
 		{
@@ -85,31 +85,41 @@ bool CReactorClientInfo::SendData(ACE_Message_Block* pmblk)
 {
 	if (NULL == m_pConnectClient)
 	{
-		//如果连接不存在，则建立链接。
-		Run(true);
-
-		if (NULL != pmblk)
+		//如果连接正在建立过程中，等待5毫秒，如果
+		if(SERVER_CONNECT_FIRST == m_emConnectState || SERVER_CONNECT_RECONNECT == m_emConnectState)
 		{
-			pmblk->release();
+			return false;
 		}
 
-		//如果消息有处理接口，则返回失败接口
-		if (NULL != m_pClientMessage)
+		if (NULL == m_pConnectClient)
 		{
-			//服务器已经断开，需要等待重新连接的结果
-			_ClientIPInfo objServerIPInfo;
-			sprintf_safe(objServerIPInfo.m_szClientIP, MAX_BUFF_20, "%s", m_AddrServer.get_host_addr());
-			objServerIPInfo.m_nPort = m_AddrServer.get_port_number();
-			m_pClientMessage->ConnectError(101, objServerIPInfo);
-		}
+			if(SERVER_CONNECT_FIRST != m_emConnectState && SERVER_CONNECT_RECONNECT != m_emConnectState)
+			{
+				//如果连接不存在，则建立链接。
+				Run(true);
+			}
 
-		return false;
+			if (NULL != pmblk)
+			{
+				pmblk->release();
+			}
+
+			//如果消息有处理接口，则返回失败接口
+			if (NULL != m_pClientMessage)
+			{
+				//服务器已经断开，需要等待重新连接的结果
+				_ClientIPInfo objServerIPInfo;
+				sprintf_safe(objServerIPInfo.m_szClientIP, MAX_BUFF_20, "%s", m_AddrServer.get_host_addr());
+				objServerIPInfo.m_nPort = m_AddrServer.get_port_number();
+				m_pClientMessage->ConnectError(101, objServerIPInfo);
+			}
+
+			return false;
+		}
 	}
-	else
-	{
-		//发送数据
-		return m_pConnectClient->SendData(pmblk);
-	}
+
+	//发送数据
+	return m_pConnectClient->SendData(pmblk);
 }
 
 int CReactorClientInfo::GetServerID()
@@ -120,20 +130,14 @@ int CReactorClientInfo::GetServerID()
 bool CReactorClientInfo::Close()
 {
 	//OUR_DEBUG((LM_ERROR, "[CReactorClientInfo::Close]Begin.\n"));
-	if (NULL == m_pConnectClient)
+	if (NULL != m_pConnectClient)
 	{
-		OUR_DEBUG((LM_ERROR, "[CReactorClientInfo::Close]End 1.\n", m_pClientMessage));
-		m_pClientMessage = NULL;
-		return false;
-	}
-	else
-	{
-		OUR_DEBUG((LM_ERROR, "[CReactorClientInfo::Close]End 2.\n"));
-		m_pClientMessage = NULL;
-		m_pConnectClient->SetClientMessage(NULL);
+		//OUR_DEBUG((LM_ERROR, "[CReactorClientInfo::Close]End 2.\n"));
 		m_pConnectClient->ClinetClose();
-		return true;
+		SetConnectClient(NULL);
 	}
+
+	return true;
 }
 
 void CReactorClientInfo::SetConnectClient(CConnectClient* pConnectClient)
@@ -416,7 +420,7 @@ bool CClientReConnectManager::Close(int nServerID)
 		pClientInfo->GetConnectClient()->ClinetClose();
 	}
 
-	pClientInfo->SetConnectClient(NULL);
+	pClientInfo->Close();
 	SAFE_DELETE(pClientInfo);
 	//从map里面删除当前存在的对象
 	m_mapConnectInfo.erase(f);
@@ -643,9 +647,6 @@ int CClientReConnectManager::handle_timeout(const ACE_Time_Value& tv, const void
 		{
 			//如果连接不存在，则重新建立连接
 			pClientInfo->Run(m_blReactorFinish);
-			//自动休眠0.1秒
-			ACE_Time_Value tvSleep(0, m_u4ConnectServerTimeout);
-			ACE_OS::sleep(tvSleep);
 		}
 	}
 
@@ -722,7 +723,7 @@ bool CClientReConnectManager::CloseByClient(int nServerID)
 	return true;
 }
 
-bool CClientReConnectManager::GetConnectState(int nServerID)
+EM_Server_Connect_State CClientReConnectManager::GetConnectState( int nServerID )
 {
 	ACE_Guard<ACE_Recursive_Thread_Mutex> guard(m_ThreadWritrLock);
 	mapReactorConnectInfo::iterator f = m_mapConnectInfo.find(nServerID);
@@ -730,26 +731,12 @@ bool CClientReConnectManager::GetConnectState(int nServerID)
 	if (f == m_mapConnectInfo.end())
 	{
 		//如果这个链接已经存在，则不创建新的链接
-		OUR_DEBUG((LM_ERROR, "[CClientReConnectManager::Close]nServerID =(%d) is exist.\n", nServerID));
-		return false;
+		OUR_DEBUG((LM_ERROR, "[CClientReConnectManager::GetConnectState]nServerID =(%d) is not exist.\n", nServerID));
+		return SERVER_CONNECT_FAIL;
 	}
 
 	CReactorClientInfo* pClientInfo = (CReactorClientInfo*)f->second;
-
-	if (NULL == pClientInfo)
-	{
-		OUR_DEBUG((LM_ERROR, "[CClientReConnectManager::Close]nServerID =(%d) pClientInfo is NULL.\n", nServerID));
-		return false;
-	}
-
-	if (NULL == pClientInfo->GetConnectClient())
-	{
-		return false;
-	}
-	else
-	{
-		return true;
-	}
+	return pClientInfo->GetServerConnectState();
 }
 
 bool CClientReConnectManager::ReConnect(int nServerID)
@@ -759,8 +746,8 @@ bool CClientReConnectManager::ReConnect(int nServerID)
 
 	if (f == m_mapConnectInfo.end())
 	{
-		//如果这个链接已经存在，则不创建新的链接
-		OUR_DEBUG((LM_ERROR, "[CClientReConnectManager::Close]nServerID =(%d) is exist.\n", nServerID));
+		//如果这个链接不存在，则不创建新的链接
+		OUR_DEBUG((LM_ERROR, "[CClientReConnectManager::Close]nServerID =(%d) is not exist.\n", nServerID));
 		return false;
 	}
 
@@ -776,9 +763,6 @@ bool CClientReConnectManager::ReConnect(int nServerID)
 	{
 		//如果连接不存在，则重新建立连接
 		pClientInfo->Run(m_blReactorFinish);
-		//自动休眠0.1秒
-		ACE_Time_Value tvSleep(0, m_u4ConnectServerTimeout);
-		ACE_OS::sleep(tvSleep);
 		return true;
 	}
 	else
@@ -822,6 +806,27 @@ bool CClientReConnectManager::SetServerConnectState(int nServerID, EM_Server_Con
 	{
 		CReactorClientInfo* pClientInfo = (CReactorClientInfo*)f->second;
 		pClientInfo->SetServerConnectState(objState);
+		return true;
+	}
+}
+
+bool CClientReConnectManager::GetServerIPInfo( int nServerID, _ClientIPInfo& objServerIPInfo )
+{
+	ACE_Guard<ACE_Recursive_Thread_Mutex> guard(m_ThreadWritrLock);
+	mapReactorConnectInfo::iterator f = m_mapConnectInfo.find(nServerID);
+
+	if (f == m_mapConnectInfo.end())
+	{
+		//如果这个链接已经存在，则不创建新的链接
+		OUR_DEBUG((LM_ERROR, "[CClientReConnectManager::Close]nServerID =(%d) is exist.\n", nServerID));
+		return false;
+	}
+	else
+	{
+		CReactorClientInfo* pClientInfo = (CReactorClientInfo*)f->second;
+		ACE_INET_Addr remote_addr = pClientInfo->GetServerAddr();
+		sprintf_safe(objServerIPInfo.m_szClientIP, MAX_BUFF_50, remote_addr.get_host_addr());
+		objServerIPInfo.m_nPort = remote_addr.get_port_number();
 		return true;
 	}
 }

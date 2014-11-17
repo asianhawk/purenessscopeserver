@@ -18,6 +18,7 @@ struct _ModuleInfo
 {
 	string           strModuleName;         //模块文件名称
 	string           strModulePath;         //模块路径
+	string           strModuleParam;        //模块启动参数 
 	ACE_Date_Time    dtCreateTime;          //模块创建时间
 	ACE_SHLIB_HANDLE hModule;
 	int (*LoadModuleData)(CServerObject* pServerObject);
@@ -32,7 +33,7 @@ struct _ModuleInfo
 	}
 };
 
-class CLoadModule
+class CLoadModule : public IModuleInfo
 {
 public:
 	CLoadModule(void);
@@ -40,7 +41,8 @@ public:
 
 	void Close();
 
-	bool LoadModule(const char* szModulePath, const char* szResourceName);
+	bool LoadModule(const char* pModulePath, const char* pModuleName, const char* pModuleParam);
+	bool LoadModule(const char* pModulePath, const char* pResourceName);
 	bool UnLoadModule(const char* szResourceName);
 
 	int  SendModuleMessage(const char* pModuleName, uint16 u2CommandID, IBuffPacket* pBuffPacket, IBuffPacket* pReturnBuffPacket);
@@ -49,10 +51,18 @@ public:
 	_ModuleInfo* GetModuleIndex(int nIndex);
 	_ModuleInfo* GetModuleInfo(const char* pModuleName);
 
+	//插件接口提供相关功能
+	bool GetModuleExist(const char* pModuleName);
+	const char* GetModuleParam(const char* pModuleName);
+	const char* GetModuleFileName(const char* pModuleName);
+	const char* GetModuleFilePath(const char* pModuleName);
+	const char* GetModuleFileDesc(const char* pModuleName);
+	uint16 GetModuleCount();
+	const char* GetModuleName(uint16 u2Index);
 
 private:
-	bool ParseModule(const char* szResourceName, vector<string>& vecModuleName);     //将字符串解析成数组
-	bool LoadModuleInfo(string strModuleName, _ModuleInfo* pModuleInfo);             //开始加载模块的接口和数据
+	bool ParseModule(const char* szResourceName, vector<string>& vecModuleName);                     //将字符串解析成数组
+	bool LoadModuleInfo(string strModuleName, _ModuleInfo* pModuleInfo, const char* pModulePath);    //开始加载模块的接口和数据
 
 private:
 	CMapTemplate<string, _ModuleInfo>  m_mapModuleInfo;

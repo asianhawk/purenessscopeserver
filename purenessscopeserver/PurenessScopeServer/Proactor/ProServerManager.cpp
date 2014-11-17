@@ -134,6 +134,7 @@ bool CProServerManager::Init()
 	App_ServerObject::instance()->SetTimerManager((ActiveTimer* )App_TimerManager::instance());
 	App_ServerObject::instance()->SetModuleMessageManager((IModuleMessageManager* )App_ModuleMessageManager::instance());
 	App_ServerObject::instance()->SetControlListen((IControlListen* )App_ProControlListen::instance());
+	App_ServerObject::instance()->SetModuleInfo((IModuleInfo* )App_ModuleLoader::instance());
 
 	return true;
 }
@@ -323,16 +324,44 @@ bool CProServerManager::Start()
 		return false;
 	}
 
+	//启动反应器
+	if(!App_ProactorManager::instance()->StartProactor())
+	{
+		OUR_DEBUG((LM_INFO, "[CProServerManager::Start]App_ProactorManager::instance()->StartProactor is error.\n"));
+		return false;
+	}
+
 	//启动中间服务器链接管理器
 	App_ClientProConnectManager::instance()->Init(App_ProactorManager::instance()->GetAce_Proactor(REACTOR_POSTDEFINE));
 	App_ClientProConnectManager::instance()->StartConnectTask(App_MainConfig::instance()->GetConnectServerCheck());
 
 	//初始化模块加载，因为这里可能包含了中间服务器连接加载
-	blState = App_ModuleLoader::instance()->LoadModule(App_MainConfig::instance()->GetModulePath(), App_MainConfig::instance()->GetModuleString());
-	if(false == blState)
+	if(ACE_OS::strlen(App_MainConfig::instance()->GetModuleString()) > 0)
 	{
-		OUR_DEBUG((LM_INFO, "[CProServerManager::Start]LoadModule is error.\n"));
-		return false;
+		blState = App_ModuleLoader::instance()->LoadModule(App_MainConfig::instance()->GetModulePath(), App_MainConfig::instance()->GetModuleString());
+		if(false == blState)
+		{
+			OUR_DEBUG((LM_INFO, "[CProServerManager::Start]LoadModule (%s)is error.\n", App_MainConfig::instance()->GetModuleString()));
+			return false;
+		}
+	}
+
+	uint16 u2ModuleVCount = App_MainConfig::instance()->GetModuleInfoCount();
+	for(uint16 i = 0; i < u2ModuleVCount; i++)
+	{
+		_ModuleConfig* pModuleConfig = App_MainConfig::instance()->GetModuleInfo(i);
+		if(NULL != pModuleConfig)
+		{
+			blState = App_ModuleLoader::instance()->LoadModule(pModuleConfig->m_szModulePath, 
+				pModuleConfig->m_szModuleName, 
+				pModuleConfig->m_szModuleParam);
+
+			if(false == blState)
+			{
+				OUR_DEBUG((LM_INFO, "[CProServerManager::Start]LoadModule (%s)is error.\n", pModuleConfig->m_szModuleName));
+				return false;
+			}
+		}
 	}
 
 	//开始消息处理线程
@@ -340,13 +369,6 @@ bool CProServerManager::Start()
 
 	//开始启动链接发送定时器
 	App_ProConnectManager::instance()->StartTimer();
-
-	//最后启动反应器
-	if(!App_ProactorManager::instance()->StartProactor())
-	{
-		OUR_DEBUG((LM_INFO, "[CProServerManager::Start]App_ProactorManager::instance()->StartProactor is error.\n"));
-		return false;
-	}
 
 	//等待服务结束	
 	ACE_Thread_Manager::instance()->wait();

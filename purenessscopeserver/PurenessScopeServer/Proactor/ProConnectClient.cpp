@@ -42,7 +42,7 @@ void CProConnectClient::Close()
 
 		App_ClientProConnectManager::instance()->CloseByClient(m_nServerID);
 
-		OUR_DEBUG((LM_DEBUG, "[CProConnectClient::Close]delete OK.\n"));
+		OUR_DEBUG((LM_DEBUG, "[CProConnectClient::Close]delete OK[0x%08x].\n", this));
 		delete this;
 	}
 }
@@ -105,6 +105,11 @@ void CProConnectClient::handle_read_stream(const ACE_Asynch_Read_Stream::Result 
 {
 	ACE_Message_Block& mb = result.message_block();
 	uint32 u4PacketLen = (uint32)result.bytes_transferred();
+
+	OUR_DEBUG((LM_DEBUG,"[CProConnectClient::handle_read_stream] m_nServerID=%d, bytes_transferred=%d, this=0x%08x.\n", 
+		m_nServerID, 
+		u4PacketLen,
+		this));
 	
 	if(!result.success() || u4PacketLen == 0)
 	{
@@ -239,7 +244,6 @@ bool CProConnectClient::SendData(ACE_Message_Block* pmblk)
 				objServerIPInfo.m_nPort = m_AddrRemote.get_port_number();
 				m_pClientMessage->ConnectError((int)ACE_OS::last_error(), objServerIPInfo);
 			}
-			Close();
 			return false;
 		}
 
