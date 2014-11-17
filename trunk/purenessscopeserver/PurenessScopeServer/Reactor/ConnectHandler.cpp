@@ -76,7 +76,7 @@ bool CConnectHandler::Close(int nIOCount)
 	if(m_nIOCount == 0)
 	{
 		//查看是否是IP追踪信息，是则记录
-		App_IPAccount::instance()->CloseIP((string)m_addrRemote.get_host_addr(), m_addrRemote.get_port_number(), m_u4AllRecvSize, m_u4AllSendSize);
+		//App_IPAccount::instance()->CloseIP((string)m_addrRemote.get_host_addr(), m_addrRemote.get_port_number(), m_u4AllRecvSize, m_u4AllSendSize);
 
 		//OUR_DEBUG((LM_ERROR, "[CConnectHandler::Close]ConnectID=%d,m_nIOCount=%d.\n", GetConnectID(), m_nIOCount));
 
@@ -208,7 +208,7 @@ int CConnectHandler::open(void*)
 	}
 
 	//检查单位时间链接次数是否达到上限
-	if(false == App_IPAccount::instance()->AddIP((string)m_addrRemote.get_host_addr(), m_addrRemote.get_port_number()))
+	if(false == App_IPAccount::instance()->AddIP((string)m_addrRemote.get_host_addr()))
 	{
 		OUR_DEBUG((LM_ERROR, "[CConnectHandler::open]IP connect frequently.\n", m_addrRemote.get_host_addr()));
 		App_ForbiddenIP::instance()->AddTempIP(m_addrRemote.get_host_addr(), App_MainConfig::instance()->GetIPAlert()->m_u4IPTimeout);
@@ -261,6 +261,7 @@ int CConnectHandler::open(void*)
 	m_u8RecvQueueTimeCost = 0;
 	m_u4RecvQueueCount    = 0;
 	m_u8SendQueueTimeCost = 0;
+	m_u4CurrSize          = 0;
 
 	m_u4ReadSendSize      = 0;
 	m_u4SuccessSendSize   = 0;
@@ -1395,7 +1396,7 @@ bool CConnectHandler::PutSendPacket(ACE_Message_Block* pMbData)
 			m_atvOutput      = ACE_OS::gettimeofday();
 
 			//如果需要统计信息
-			App_IPAccount::instance()->UpdateIP((string)m_addrRemote.get_host_addr(), m_addrRemote.get_port_number(), m_u4AllRecvSize, m_u4AllSendSize);
+			//App_IPAccount::instance()->UpdateIP((string)m_addrRemote.get_host_addr(), m_addrRemote.get_port_number(), m_u4AllRecvSize, m_u4AllSendSize);
 
 			Close();
 			return true;
@@ -1426,7 +1427,7 @@ bool CConnectHandler::CheckMessage()
 	m_u4AllRecvCount++;
 
 	//如果需要统计信息
-	App_IPAccount::instance()->UpdateIP((string)m_addrRemote.get_host_addr(), m_addrRemote.get_port_number(), m_u4AllRecvSize, m_u4AllSendSize);
+	//App_IPAccount::instance()->UpdateIP((string)m_addrRemote.get_host_addr(), m_addrRemote.get_port_number(), m_u4AllRecvSize, m_u4AllSendSize);
 
 	ACE_Date_Time dtNow;
 	if(false == m_TimeConnectInfo.RecvCheck((uint8)dtNow.minute(), 1, m_u4AllRecvSize))
@@ -1442,6 +1443,8 @@ bool CConnectHandler::CheckMessage()
 			m_TimeConnectInfo.m_u4RecvSize);
 
 		App_PacketParsePool::instance()->Delete(m_pPacketParse);
+		m_pPacketParse = NULL;
+
 		//设置封禁时间
 		App_ForbiddenIP::instance()->AddTempIP(m_addrRemote.get_host_addr(), App_MainConfig::instance()->GetIPAlert()->m_u4IPTimeout);
 		OUR_DEBUG((LM_ERROR, "[CConnectHandle::CheckMessage] ConnectID = %d, PutMessageBlock is check invalid.\n", GetConnectID()));
@@ -1452,6 +1455,8 @@ bool CConnectHandler::CheckMessage()
 	if(false == App_MakePacket::instance()->PutMessageBlock(GetConnectID(), PACKET_PARSE, m_pPacketParse))
 	{
 		App_PacketParsePool::instance()->Delete(m_pPacketParse);
+		m_pPacketParse = NULL;
+
 		OUR_DEBUG((LM_ERROR, "[CConnectHandle::CheckMessage] ConnectID = %d, PutMessageBlock is error.\n", GetConnectID()));
 	}
 
@@ -1536,6 +1541,7 @@ void CConnectHandler::ClearPacketParse()
 	m_pCurrMessage = NULL;
 
 	App_PacketParsePool::instance()->Delete(m_pPacketParse);
+	m_pPacketParse = NULL;
 }
 
 void CConnectHandler::SetConnectName(const char* pName)
@@ -1595,31 +1601,26 @@ void CConnectManager::CloseAll()
 
 	KillTimer();
 
-	for(mapConnectManager::iterator b = m_mapConnectManager.begin(); b != m_mapConnectManager.end();)
+	vector<CConnectHandler*> vecCloseConnectHandler;
+	for(mapConnectManager::iterator b = m_mapConnectManager.begin(); b != m_mapConnectManager.end(); b++)
 	{
 		mapConnectManager::iterator itr = b;
 		CConnectHandler* pConnectHandler = (CConnectHandler* )itr->second;
 		if(pConnectHandler != NULL)
 		{
-			if(true == pConnectHandler->Close())
-			{
-				itr++;
-				b = itr;
-			}
-			else
-			{
-				b++;
-			}
+			vecCloseConnectHandler.push_back(pConnectHandler);
 			m_u4TimeDisConnect++;
 
 			//加入链接统计功能
-			App_ConnectAccount::instance()->AddDisConnect();
+			//App_ConnectAccount::instance()->AddDisConnect();
 		}
-		else
-		{
-			b++;
-		}
+	}
 
+	//开始关闭所有连接
+	for(int i = 0; i < (int)vecCloseConnectHandler.size(); i++)
+	{
+		CConnectHandler* pConnectHandler = vecCloseConnectHandler[i];
+		pConnectHandler->Close();
 	}
 
 	m_mapConnectManager.clear();
@@ -2440,6 +2441,25 @@ void CConnectManager::Init( uint16 u2Index )
 		App_MainConfig::instance()->GetPacketTimeOut());
 }
 
+uint32 CConnectManager::GetCommandFlowAccount()
+{
+	return m_CommandAccount.GetFlowOut();
+}
+
+EM_Client_Connect_status CConnectManager::GetConnectState(uint32 u4ConnectID)
+{
+	mapConnectManager::iterator f = m_mapConnectManager.find(u4ConnectID);
+
+	if(f != m_mapConnectManager.end())
+	{
+		return CLIENT_CONNECT_EXIST;
+	}
+	else
+	{
+		return CLIENT_CONNECT_NO_EXIST;
+	}
+}
+
 //*********************************************************************************
 
 CConnectHandlerPool::CConnectHandlerPool(void)
@@ -3128,4 +3148,39 @@ void CConnectManagerGroup::GetCommandData( uint16 u2CommandID, _CommandData& obj
 			}
 		}
 	}
+}
+
+void CConnectManagerGroup::GetCommandFlowAccount(_CommandFlowAccount& objCommandFlowAccount)
+{
+	for(mapConnectManager::iterator b = m_mapConnectManager.begin(); b != m_mapConnectManager.end(); b++)
+	{
+		CConnectManager* pConnectManager = (CConnectManager* )b->second;
+		if(NULL != pConnectManager)
+		{
+			uint32 u4FlowOut = pConnectManager->GetCommandFlowAccount();
+			objCommandFlowAccount.m_u4FlowOut += u4FlowOut;
+		}
+	}
+}
+
+EM_Client_Connect_status CConnectManagerGroup::GetConnectState(uint32 u4ConnectID)
+{
+	//判断命中到哪一个线程组里面去
+	uint16 u2ThreadIndex = u4ConnectID % m_u2ThreadQueueCount;
+
+	mapConnectManager::iterator f = m_mapConnectManager.find(u2ThreadIndex);
+	if(f == m_mapConnectManager.end())
+	{
+		OUR_DEBUG((LM_INFO, "[CConnectManagerGroup::CloseConnect]Out of range Queue ID.\n"));
+		return CLIENT_CONNECT_NO_EXIST;
+	}
+
+	CConnectManager* pConnectManager = (CConnectManager* )f->second;
+	if(NULL == pConnectManager)
+	{
+		OUR_DEBUG((LM_INFO, "[CConnectManagerGroup::CloseConnect]No find send Queue object.\n"));
+		return CLIENT_CONNECT_NO_EXIST;		
+	}
+
+	return pConnectManager->GetConnectState(u4ConnectID);
 }

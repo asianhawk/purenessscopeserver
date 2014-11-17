@@ -77,6 +77,7 @@ public:
 	void SetIsLog(bool blIsLog);                                             //设置当前连接数据是否写入日志 
 	bool GetIsLog();                                                         //获得当前连接是否可以写入日志 
 
+
 private:
 	bool CheckMessage();                                                     //处理接收的数据
 	bool PutSendPacket(ACE_Message_Block* pMbData);                          //发送数据
@@ -174,12 +175,14 @@ public:
 	bool StartTimer();                                                                                       //开启定时器
 	bool KillTimer();                                                                                        //关闭定时器
 	_CommandData* GetCommandData(uint16 u2CommandID);                                                        //得到命令相关信息
+	uint32 GetCommandFlowAccount();                                                                          //得到出口流量信息
 
 	int         GetCount();
 	const char* GetError();
 
 	bool SetConnectName(uint32 u4ConnectID, const char* pName);                                  //设置当前连接名称
-	bool SetIsLog(uint32 u4ConnectID, bool blIsLog);                                             //设置当前连接数据是否写入日志     
+	bool SetIsLog(uint32 u4ConnectID, bool blIsLog);                                             //设置当前连接数据是否写入日志  
+	EM_Client_Connect_status GetConnectState(uint32 u4ConnectID);                                //得到指定的连接状态 
 
 private:
 	bool IsRun();
@@ -258,6 +261,8 @@ public:
 
 	bool StartTimer();                                                                                       //开启定时器
 	const char* GetError();
+	void GetCommandFlowAccount(_CommandFlowAccount& objCommandFlowAccount);                                  //得到出口流量信息
+	EM_Client_Connect_status GetConnectState(uint32 u4ConnectID);
 
 private:
 	uint32 GetGroupIndex();                                                                                  //得到当前链接的ID自增量
