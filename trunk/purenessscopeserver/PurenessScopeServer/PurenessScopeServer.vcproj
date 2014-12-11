@@ -270,6 +270,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\IObject\IModuleInfo.h"
+				>
+			</File>
+			<File
 				RelativePath=".\IObject\IModuleMessageManager.h"
 				>
 			</File>

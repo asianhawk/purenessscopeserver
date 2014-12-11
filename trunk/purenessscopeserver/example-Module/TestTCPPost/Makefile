@@ -4,9 +4,9 @@ include Makefile.define
 default:all
 
 # 主应用文件列表
-PATS = BaseCommand.o TestTCPPost.o 
+PATS = BaseCommand.o TestTCPPost.o ProxyManager.o
 
-LIB_BASE_OBJS = BaseCommand.o TestTCPPost.o 
+LIB_BASE_OBJS = BaseCommand.o TestTCPPost.o ProxyManager.o
 LIB_BASE = libTcpPostTest.so
 
 all: libTcpPostTest.so clear
