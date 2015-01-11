@@ -8,7 +8,7 @@
 
 Mutex_Allocator _msg_service_mb_allocator; 
 
-CMessageService::CMessageService(void)
+CMessageService::CMessageService()
 {
 	m_u4ThreadID      = 0;
 	m_u4MaxQueue      = MAX_MSG_THREADQUEUE;
@@ -30,7 +30,7 @@ CMessageService::CMessageService(void)
 	}
 }
 
-CMessageService::~CMessageService(void)
+CMessageService::~CMessageService()
 {
 	OUR_DEBUG((LM_INFO, "[CMessageService::~CMessageService].\n"));
 }
@@ -256,7 +256,8 @@ bool CMessageService::ProcessMessage(CMessage* pMessage, uint32 u4ThreadID)
 	if(pMessage->GetMessageBase()->m_u2Cmd != CLIENT_LINK_CONNECT 
 		&& pMessage->GetMessageBase()->m_u2Cmd != CLIENT_LINK_CDISCONNET 
 		&& pMessage->GetMessageBase()->m_u2Cmd != CLIENT_LINK_SDISCONNET
-		&& pMessage->GetMessageBase()->m_u2Cmd != CLINET_LINK_SENDTIMEOUT)
+		&& pMessage->GetMessageBase()->m_u2Cmd != CLINET_LINK_SENDTIMEOUT
+		&& pMessage->GetMessageBase()->m_u2Cmd != CLINET_LINK_SENDERROR)
 	{
 		m_ThreadInfo.m_u4RecvPacketCount++;
 		m_ThreadInfo.m_u4CurrPacketCount++;
@@ -300,7 +301,8 @@ bool CMessageService::ProcessMessage(CMessage* pMessage, uint32 u4ThreadID)
 	if(pMessage->GetMessageBase()->m_u2Cmd != CLIENT_LINK_CONNECT 
 		&& pMessage->GetMessageBase()->m_u2Cmd != CLIENT_LINK_CDISCONNET 
 		&& pMessage->GetMessageBase()->m_u2Cmd != CLIENT_LINK_SDISCONNET
-		&& pMessage->GetMessageBase()->m_u2Cmd != CLINET_LINK_SENDTIMEOUT)
+		&& pMessage->GetMessageBase()->m_u2Cmd != CLINET_LINK_SENDTIMEOUT
+		&& pMessage->GetMessageBase()->m_u2Cmd != CLINET_LINK_SENDERROR)
 	{
 		//如果AI启动了，则在这里进行AI判定
 		m_WorkThreadAI.SaveTimeout(pMessage->GetMessageBase()->m_u2Cmd, u4TimeCost);
@@ -476,7 +478,7 @@ uint32 CMessageService::GetStepState()
 	return m_ThreadInfo.m_u4State;
 }
 
-CMessageServiceGroup::CMessageServiceGroup( void )
+CMessageServiceGroup::CMessageServiceGroup()
 {
 	m_u4TimerID = 0;
 
@@ -491,9 +493,9 @@ CMessageServiceGroup::CMessageServiceGroup( void )
 	}
 }
 
-CMessageServiceGroup::~CMessageServiceGroup( void )
+CMessageServiceGroup::~CMessageServiceGroup()
 {
-
+	Close();
 }
 
 int CMessageServiceGroup::handle_timeout(const ACE_Time_Value &tv, const void *arg)
@@ -646,6 +648,7 @@ void CMessageServiceGroup::Close()
 		if(NULL != pMessageService)
 		{
 			pMessageService->Close();
+			SAFE_DELETE(pMessageService);
 		}
 	}
 
@@ -692,6 +695,7 @@ bool CMessageServiceGroup::KillTimer()
 	if(m_u4TimerID > 0)
 	{
 		App_TimerManager::instance()->cancel(m_u4TimerID);
+		m_u4TimerID = 0;
 	}
 	return true;
 }

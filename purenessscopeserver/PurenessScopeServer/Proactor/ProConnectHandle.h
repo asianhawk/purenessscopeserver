@@ -52,7 +52,7 @@ public:
 
 	void Init(uint16 u2HandlerID);                                            //Connect Pool初始化调用的函数
 
-	bool CheckAlive();                                                        //检测当前链接是否超时的函数
+	bool CheckAlive(ACE_Time_Value& tvNow);                                   //检测当前链接是否超时的函数
 	bool SendMessage(uint16 u2CommandID, IBuffPacket* pBuffPacket, bool blState, uint8 u1SendType, uint32& u4PacketSize, bool blDelete);   //发送给客户端数据的函数
 	bool Close(int nIOCount = 1, int nErrno = 0);                             //当前连接对象关闭
 	bool ServerClose(EM_Client_Close_status emStatus);                        //服务器关闭客户端链接的函数
@@ -79,6 +79,7 @@ private:
 	bool CheckMessage();                                                      //处理接收的数据
 	bool PutSendPacket(ACE_Message_Block* pMbData);                           //将发送数据放入队列
 	void ClearPacketParse(ACE_Message_Block& mbCurrBlock);                    //清理正在使用的PacketParse
+	void PutSendPacketError(ACE_Message_Block* pMbData);                      //发送失败回调
 
 private:
 	char             m_szError[MAX_BUFF_500];          //错误信息描述文字
