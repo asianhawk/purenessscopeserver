@@ -1780,7 +1780,6 @@ bool CProConnectManager::PostMessageAll( IBuffPacket* pBuffPacket, uint8 u1SendT
 
 bool CProConnectManager::SetConnectName( uint32 u4ConnectID, const char* pName )
 {
-	//ACE_Guard<ACE_Recursive_Thread_Mutex> WGrard(m_ThreadWriteLock);
 	mapConnectManager::iterator f = m_mapConnectManager.find(u4ConnectID);
 
 	if(f != m_mapConnectManager.end())
@@ -1876,7 +1875,6 @@ uint32 CProConnectManager::GetCommandFlowAccount()
 
 EM_Client_Connect_status CProConnectManager::GetConnectState(uint32 u4ConnectID)
 {
-	ACE_Guard<ACE_Recursive_Thread_Mutex> WGrard(m_ThreadWriteLock);
 	mapConnectManager::iterator f = m_mapConnectManager.find(u4ConnectID);
 
 	if(f != m_mapConnectManager.end())
