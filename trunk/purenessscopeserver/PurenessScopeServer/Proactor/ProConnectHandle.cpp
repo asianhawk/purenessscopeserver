@@ -97,7 +97,7 @@ bool CProConnectHandle::Close(int nIOCount, int nErrno)
 		objPacketParse.DisConnect(GetConnectID());
 
 		//通知逻辑接口，连接已经断开
-		OUR_DEBUG((LM_DEBUG,"[CConnectHandler::Close]Connectid=[%d] error(%d)...\n", GetConnectID(), nErrno));
+		OUR_DEBUG((LM_DEBUG,"[CProConnectHandle::Close]Connectid=[%d] error(%d)...\n", GetConnectID(), nErrno));
 		AppLogManager::instance()->WriteLog(LOG_SYSTEM_CONNECT, "Close Connection from [%s:%d] RecvSize = %d, RecvCount = %d, SendSize = %d, SendCount = %d, RecvQueueCount=%d, RecvQueueTimeCost=%I64dns, SendQueueTimeCost=%I64dns.", 
 			m_addrRemote.get_host_addr(), 
 			m_addrRemote.get_port_number(), 
@@ -115,7 +115,7 @@ bool CProConnectHandle::Close(int nIOCount, int nErrno)
 			//发送客户端链接断开消息。
 			if(false == App_MakePacket::instance()->PutMessageBlock(GetConnectID(), PACKET_CDISCONNECT, NULL))
 			{
-				OUR_DEBUG((LM_ERROR, "[CProConnectHandle::open] ConnectID = %d, PACKET_CONNECT is error.\n", GetConnectID()));
+				OUR_DEBUG((LM_ERROR, "[CProConnectHandle::Close] ConnectID = %d, PACKET_CONNECT is error.\n", GetConnectID()));
 			}
 		}
 
@@ -802,17 +802,6 @@ bool CProConnectHandle::CheckAlive(ACE_Time_Value& tvNow)
 		//如果超过了最大时间，则服务器关闭链接
 		OUR_DEBUG ((LM_ERROR, "[CProConnectHandle::CheckAlive] Connectid=%d Server Close!\n", GetConnectID()));
 
-		//调用连接断开消息
-		CPacketParse objPacketParse;
-		objPacketParse.DisConnect(GetConnectID());		
-
-		//在这里发送一个连接断开消息给逻辑
-		if(false == App_MakePacket::instance()->PutMessageBlock(GetConnectID(), PACKET_CDISCONNECT, NULL))
-		{
-			OUR_DEBUG((LM_ERROR, "[CProConnectHandle::open] ConnectID = %d, PACKET_CONNECT is error.\n", GetConnectID()));
-		}
-
-		ServerClose(CLIENT_CLOSE_IMMEDIATLY);
 		return false;
 	}
 	else
@@ -1418,30 +1407,26 @@ int CProConnectManager::handle_timeout(const ACE_Time_Value &tv, const void *arg
 {
 	ACE_Guard<ACE_Recursive_Thread_Mutex> WGrard(m_ThreadWriteLock);
 	ACE_Time_Value tvNow = ACE_OS::gettimeofday();
-
+	vector<CProConnectHandle*> vecDelProConnectHandle;
 	//为了防止多线程下的链接删除问题，先把所有的链接ID读出来，再做遍历操作，减少线程竞争的机会。
 	if(m_mapConnectManager.size() != 0)
 	{
-		for(mapConnectManager::iterator b = m_mapConnectManager.begin(); b != m_mapConnectManager.end();)
+		for(mapConnectManager::iterator b = m_mapConnectManager.begin(); b != m_mapConnectManager.end(); b++)
 		{
 			CProConnectHandle* pConnectHandler = (CProConnectHandle* )b->second;
 			if(pConnectHandler != NULL)
 			{
 				if(false == pConnectHandler->CheckAlive(tvNow))
 				{
-					//删除释放对象
-					m_mapConnectManager.erase(b++);
+					vecDelProConnectHandle.push_back(pConnectHandler);
 				}
-				else
-				{
-					b++;
-				}
-			}
-			else
-			{
-				b++;
 			}
 		}
+	}
+
+	for(uint32 i = 0; i < (uint32)vecDelProConnectHandle.size(); i++)
+	{
+		vecDelProConnectHandle[i]->ServerClose(CLIENT_CLOSE_IMMEDIATLY);
 	}
 
 	//判定是否应该记录链接日志
@@ -1875,6 +1860,7 @@ uint32 CProConnectManager::GetCommandFlowAccount()
 
 EM_Client_Connect_status CProConnectManager::GetConnectState(uint32 u4ConnectID)
 {
+	ACE_Guard<ACE_Recursive_Thread_Mutex> WGrard(m_ThreadWriteLock);
 	mapConnectManager::iterator f = m_mapConnectManager.find(u4ConnectID);
 
 	if(f != m_mapConnectManager.end())
@@ -2189,6 +2175,7 @@ bool CProConnectManagerGroup::PostMessage( vector<uint32> vecConnectID, IBuffPac
 	for(uint32 i = 0; i < (uint32)vecConnectID.size(); i++)
 	{
 		//判断命中到哪一个线程组里面去
+		u4ConnectID = vecConnectID[i];
 		uint16 u2ThreadIndex = u4ConnectID % m_u2ThreadQueueCount;
 
 		mapConnectManager::iterator f = m_mapConnectManager.find(u2ThreadIndex);
@@ -2217,6 +2204,7 @@ bool CProConnectManagerGroup::PostMessage( vector<uint32> vecConnectID, const ch
 	for(uint32 i = 0; i < (uint32)vecConnectID.size(); i++)
 	{
 		//判断命中到哪一个线程组里面去
+		u4ConnectID = vecConnectID[i];
 		uint16 u2ThreadIndex = u4ConnectID % m_u2ThreadQueueCount;
 
 		mapConnectManager::iterator f = m_mapConnectManager.find(u2ThreadIndex);
